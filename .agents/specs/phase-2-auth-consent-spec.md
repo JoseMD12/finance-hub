@@ -106,8 +106,26 @@ CREATE INDEX idx_bank_consents_status_expires ON bank_consents(status, expires_a
 
 ---
 
-## 🧪 Plano de Testes & Cobertura
+## 🧪 Plano de Testes & Ciclo TDD (Upfront Test Cases)
 
-- [ ] **Unit Tests**: Cobertura ≥ 85% em `Domain` e `Application`.
-- [ ] **Integration Tests**: Validação da persistência com **Testcontainers PostgreSQL** isolado.
-- [ ] **Background Worker Test**: Validação de renovação em mock quando `ExpiresAtUtc` está a 4 minutos do tempo atual.
+Seguindo a regra de **TDD Obrigatório ([`.agents/rules/tdd-workflow.md`](file:///mnt/c/Code/FinanceHub/.agents/rules/tdd-workflow.md))**, toda a codificação da Fase 2 será puxada pela escrita prévia dos testes falhando (**🔴 RED**).
+
+### Bateria 1: Domínio Rico & Agregado (`BankConsent.cs`) — TDD Step 1
+- [ ] 🔴 `RequestConsent_ComDadosValidos_DeveCriarConsentimentoEmStatusPending`
+- [ ] 🔴 `RequestConsent_ComUserIdVazio_DeveLancarConsentDomainException`
+- [ ] 🔴 `Authorize_QuandoPendente_DeveAtualizarTokensEStatusParaAuthorized`
+- [ ] 🔴 `Authorize_QuandoJaRevogadoOuExpirado_DeveLancarConsentDomainException`
+- [ ] 🔴 `RotateTokens_QuandoTokensValidos_DeveSubstituirConsentTokenEDataExpiracao`
+- [ ] 🔴 `Revoke_QuandoAtivo_DeveAlterarStatusParaRevoked`
+- [ ] 🔴 `IsExpiringSoon_QuandoFaltarMenosDe5Minutos_DeveRetornarTrue`
+
+### Bateria 2: Use Cases / Application (`AuthorizeConsentCommandHandler.cs`) — TDD Step 2
+- [ ] 🔴 `Handle_ComCodigoValido_DeveChamarStrategy_PersistirAgregado_EEMitirBankAccountLinked`
+- [ ] 🔴 `Handle_ComConsentimentoInexistente_DeveLancarKeyNotFoundException`
+
+### Bateria 3: Worker de Renovação (`TokenRenewalBackgroundService.cs`) — TDD Step 3
+- [ ] 🔴 `ExecuteAsync_QuandoHouverTokensPrestesAExpirar_DeveRenovarProativamente`
+
+### Bateria 4: Testcontainers PostgreSQL Integration — TDD Step 4
+- [ ] 🔴 `BankConsentRepository_AddAsync_E_GetByIdAsync_DevePersistirEObterAgregadoNoPostgresIsolado`
+
