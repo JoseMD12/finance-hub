@@ -1,6 +1,0 @@
-@FinanceHub.ItauIntegration.Api_HostAddress = http://localhost:5062
-
-GET {{FinanceHub.ItauIntegration.Api_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
