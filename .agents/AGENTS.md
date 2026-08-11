@@ -63,6 +63,11 @@ When generating code or configuring integrations, subagents **must** adhere to:
    - Strictly enforce consent verification before fetching bank statements or balances.
    - Redact all sensitive fields (CPF, account numbers, names) in logs.
 
+7. **DDD Aggregate Root & Rich Domain Model**:
+   - Strictly enforce Rich Domain Models (no anemic DTO-like entities with public `get; set;`).
+   - Internal entities and Value Objects are encapsulated and managed EXCLUSIVELY through the Aggregate Root (see `.agents/rules/ddd-aggregate-rich-domain.md`).
+
+
 ---
 
 ## 🛠️ Developer & AI Conventions
