@@ -9,6 +9,7 @@ public static class CertificateExtensions
         this IServiceCollection services,
         IConfiguration configuration)
     {
+        services.AddSingleton(configuration);
         services.AddSingleton<ICertificateProvider, FileSystemCertificateProvider>();
         return services;
     }
