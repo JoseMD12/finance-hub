@@ -11,6 +11,7 @@
     <PackageReference Include="Bogus" Version="35.6.1" />
     <PackageReference Include="coverlet.collector" Version="6.0.4" />
     <PackageReference Include="FluentAssertions" Version="8.0.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="9.0.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageReference Include="NSubstitute" Version="5.3.0" />
     <PackageReference Include="xunit" Version="2.9.3" />
@@ -26,6 +27,11 @@
     <ProjectReference Include="..\..\src\Services\TransactionAggregator\FinanceHub.TransactionAggregator.Domain\FinanceHub.TransactionAggregator.Domain.csproj" />
     <ProjectReference Include="..\..\src\Shared\FinanceHub.Shared.Certificates\FinanceHub.Shared.Certificates.csproj" />
     <ProjectReference Include="..\..\src\Shared\FinanceHub.Shared.Observability\FinanceHub.Shared.Observability.csproj" />
+    <ProjectReference Include="..\..\src\Services\ApiGateway\FinanceHub.ApiGateway\FinanceHub.ApiGateway.csproj" />
+    <ProjectReference Include="..\..\src\Services\AuthConsent\FinanceHub.AuthConsent.Api\FinanceHub.AuthConsent.Api.csproj" />
+    <ProjectReference Include="..\..\src\Services\ItauIntegration\FinanceHub.ItauIntegration.Api\FinanceHub.ItauIntegration.Api.csproj" />
+    <ProjectReference Include="..\..\src\Services\MercadoPagoIntegration\FinanceHub.MercadoPagoIntegration.Api\FinanceHub.MercadoPagoIntegration.Api.csproj" />
+    <ProjectReference Include="..\..\src\Services\TransactionAggregator\FinanceHub.TransactionAggregator.Api\FinanceHub.TransactionAggregator.Api.csproj" />
   </ItemGroup>
 
 </Project>
