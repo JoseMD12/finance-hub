@@ -192,3 +192,14 @@ public ValueTask<AccountCacheEntry?> GetAccountFromCacheAsync(string accountId, 
 ### 7.5 Options Validation (`ValidateOnStart`)
 - **Regra**: Validar se seções de configuração do `appsettings.json` possuem credenciais antes de subir o serviço usando `ValidateOnStart()`.
 
+### 7.6 Clean Code & Política de Comentários Essenciais
+- **Regra de Ouro**: O código limpo deve ser autoexplicativo. Evitar estritamente comentários triviais ou redundantes que apenas parafraseiam a sintaxe do C#.
+- **Comentários Proibidos**:
+  - `// Arrange`, `// Act`, `// Assert` em arquivos de teste unitário.
+  - `// For EF Core`, `// Constructor`, `// Properties`, `// Methods`.
+  - Comentários em cima de getters/setters ou exceções óbvias.
+- **Comentários Permitidos (Exclusivos)**:
+  - Explicações de **motivos não-óbvios** de decisões de arquitetura.
+  - Requisitos regulatórios do Banco Central / Open Finance Brasil que exigem lógica específica.
+
+
