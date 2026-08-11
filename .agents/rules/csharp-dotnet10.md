@@ -1,0 +1,169 @@
+# Modern C# 13 and .NET 10 Guidelines
+
+This document defines mandatory guidelines and code formatting standards for modern C# 13 and .NET 10 development within **FinanceHub**.
+
+---
+
+## 1. Primary Constructors
+Use primary constructors for classes, structs, and records to eliminate boilerplate dependency injection and field assignments.
+
+### Guidelines
+* Standardize class dependency injection using primary constructors.
+* Mark injected service dependencies as `private readonly` explicitly when captured by internal members if state encapsulation is required, or rely on primary constructor parameter scope.
+* For records, use positional primary constructors for concise immutable data representation.
+
+```csharp
+// Recommended: Primary Constructor for Services
+public sealed class TransactionService(
+    ITransactionRepository repository,
+    ILogger<TransactionService> logger,
+    IDateTimeProvider dateTimeProvider) : ITransactionService
+{
+    public async Task<TransactionResult> ProcessAsync(CreateTransactionCommand command, CancellationToken ct)
+    {
+        logger.LogInformation("Processing transaction {TransactionId}", command.Id);
+        // ... implementation
+    }
+}
+```
+
+---
+
+## 2. Collection Expressions and Spread Operator
+Always prefer C# 12/13 collection expressions `[...]` and spread syntax `..` over array instantiation (`new T[]`), `List<T>` constructors, or `Array.Empty<T>()`.
+
+### Guidelines
+* Use `[]` for empty collection initialization.
+* Use `[item1, item2]` for inline collection construction.
+* Use spread operator `[.. collection1, .. collection2]` for concatenating or passing sequences.
+* Utilize `params` collections in C# 13 for ref-safe or allocation-friendly varargs APIs (e.g., `params ReadOnlySpan<T>`).
+
+```csharp
+// Empty collections
+IEnumerable<Transaction> emptyTransactions = [];
+List<string> emptyTags = [];
+
+// Collection concatenation
+ReadOnlySpan<string> coreAccountTypes = ["Checking", "Savings"];
+ReadOnlySpan<string> investmentAccountTypes = ["Brokerage", "Crypto"];
+string[] allAccountTypes = [.. coreAccountTypes, .. investmentAccountTypes, "Escrow"];
+
+// C# 13 params collections
+public void ProcessBatch(params ReadOnlySpan<Guid> transactionIds)
+{
+    foreach (ref readonly var id in transactionIds)
+    {
+        // Allocation-free iteration
+    }
+}
+```
+
+---
+
+## 3. Pattern Matching
+Leverage pattern matching to replace complex `if-else` cascades, type checks, and null assertions.
+
+### Guidelines
+* Use **Property Patterns** for state checks.
+* Use **Positional Patterns** with tuple deconstruction.
+* Use **List Patterns** for sequence structure matching.
+* Use relational patterns for value ranges (e.g., risk scoring, transaction limits).
+
+```csharp
+// Property and Relational Patterns
+public static RiskLevel EvaluateTransactionRisk(Transaction tx) => tx switch
+{
+    { Amount: > 50_000, Account.IsVerified: false } => RiskLevel.Critical,
+    { Amount: > 10_000 } or { Account.CountryCode: not "BRA" } => RiskLevel.High,
+    { Status: TransactionStatus.Pending, LedgerEntries.Count: 0 } => RiskLevel.Invalid,
+    _ => RiskLevel.Low
+};
+
+// List Patterns
+public static decimal CalculateTieredFee(decimal[] dailyHistory) => dailyHistory switch
+{
+    [] => 0.00m,
+    [var single] => single * 0.01m,
+    [.., var secondLast, var last] when last > secondLast * 2 => 15.00m,
+    [var first, ..] when first > 100_000m => 5.00m,
+    _ => 2.50m
+};
+```
+
+---
+
+## 4. Record Types & Immutability
+Represent domain events, DTOs, messages, and value objects using C# `record` types to ensure value equality and thread-safe immutability.
+
+### Guidelines
+* Use `record class` (or simply `record`) for reference-based immutable objects (DTOs, Domain Events, CQRS Commands/Queries).
+* Use `readonly record struct` for ultra-lightweight value types created frequently (e.g., Money value object, Currency pair, GeoCoordinate) to avoid heap allocations.
+* Leverage `with` expressions for non-destructive mutation.
+
+```csharp
+// Lightweight Value Object allocation-free on heap
+public readonly record struct Money(decimal Amount, string Currency)
+{
+    public static Money Reais(decimal amount) => new(amount, "BRL");
+}
+
+// Immutable DTO / Command
+public record CreatePaymentCommand(
+    Guid IdempotencyKey,
+    Money Amount,
+    string SourceAccountId,
+    string DestinationAccountId) : IRequest<Result<PaymentResponse>>;
+```
+
+---
+
+## 5. Minimal APIs & FastEndpoints
+Prefer **FastEndpoints** or standard .NET 10 Minimal APIs over heavy MVC Controllers for clear, high-performance vertical slices.
+
+### Guidelines
+* Keep endpoints focused: 1 file per endpoint class.
+* Use explicit type annotations and typed results (`TypedResults.Ok()`, `TypedResults.Problem()`).
+* Enforce route group constraints and automatic OpenAPI/Swagger metadata generation.
+
+```csharp
+public class GetAccountBalanceEndpoint : Endpoint<GetAccountBalanceRequest, AccountBalanceResponse>
+{
+    public override void Configure()
+    {
+        Get("/api/v1/accounts/{AccountId}/balance");
+        Policies("Bearer", "RequireOpenFinanceScope");
+        Description(b => b.Produces<AccountBalanceResponse>(200).ProducesProblem(404));
+    }
+
+    public override async Task HandleAsync(GetAccountBalanceRequest req, CancellationToken ct)
+    {
+        var result = await QueryAsync(new GetBalanceQuery(req.AccountId), ct);
+        await SendOkAsync(result, ct);
+    }
+}
+```
+
+---
+
+## 6. Async Performance & Memory Efficiency
+FinanceHub demands low-latency, non-blocking high-throughput execution.
+
+### Guidelines
+* **`CancellationToken` propagation**: Pass `CancellationToken` through every asynchronous call without exception.
+* **`ValueTask` usage**: Use `ValueTask<T>` for hot-path asynchronous methods that frequently complete synchronously (e.g., cache hits, inline validations).
+* **Memory & Span**: Use `ReadOnlySpan<char>`, `Span<byte>`, and `ArrayPool<T>` in message parsing, token validation, and string manipulations to prevent GC pressure.
+* **Avoid `async void`**: Use `async void` ONLY in event handlers (if any); use `Task` or `ValueTask` everywhere else.
+* **Avoid `Task.Result` / `.Wait()`**: Never block on asynchronous calls; sync-over-async causes thread pool starvation.
+
+```csharp
+// ValueTask hot-path optimization
+public ValueTask<AccountCacheEntry?> GetAccountFromCacheAsync(string accountId, CancellationToken ct = default)
+{
+    if (_localMemoryCache.TryGetValue(accountId, out AccountCacheEntry? entry))
+    {
+        return ValueTask.FromResult(entry); // Zero allocation
+    }
+
+    return FetchFromDistributedCacheAsync(accountId, ct);
+}
+```

@@ -1,0 +1,6 @@
+@FinanceHub.TransactionAggregator.Api_HostAddress = http://localhost:5167
+
+GET {{FinanceHub.TransactionAggregator.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

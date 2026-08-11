@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\FinanceHub.AuthConsent.Domain\FinanceHub.AuthConsent.Domain.csproj" />
+    <ProjectReference Include="..\..\..\Shared\FinanceHub.Shared.Messaging\FinanceHub.Shared.Messaging.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>

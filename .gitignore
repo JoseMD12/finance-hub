@@ -1,0 +1,55 @@
+# Visual Studio / .NET Core / .NET 10 standard gitignore
+
+## Build results
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+[Tt]est[Rr]esults/
+[Bb]uild/
+[Dd]ist/
+[Aa]rtifacts/
+*.componentcache
+*.compcache
+
+## User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.userprefs
+
+## Visual Studio & JetBrains IDEs
+.vs/
+.idea/
+*.cache
+*.sublime-workspace
+
+## Environment & User Secrets
+appsettings.*.local.json
+UserSecrets/
+*.pfx
+*.p12
+
+## Agents & AI Scaffolding (Local/Generated state)
+.agents/local.json
+.agents/generated/
+.agents/mcp_config.json
+.codex/
+.gemini/
+.mcp.json
+.vscode/mcp.json
+.claude/skills
+.cursor/
+.antigravity/
+.windsurf/
+.opencode/
+opencode.json
+.junie/mcp/
+.junie/skills
+
+## Operating System Files
+.DS_Store
+Thumbs.db
+desktop.ini

@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <ItemGroup>
+    <ProjectReference Include="..\FinanceHub.MercadoPagoIntegration.Application\FinanceHub.MercadoPagoIntegration.Application.csproj" />
+    <ProjectReference Include="..\FinanceHub.MercadoPagoIntegration.Infrastructure\FinanceHub.MercadoPagoIntegration.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\Shared\FinanceHub.Shared.Observability\FinanceHub.Shared.Observability.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+</Project>
