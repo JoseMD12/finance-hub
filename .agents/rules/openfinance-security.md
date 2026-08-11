@@ -85,3 +85,24 @@ public class PiiRedactionEnricher : ILogEventEnricher
     }
 }
 ```
+
+---
+
+## 6. OWASP Top 10 API Security Protection Rules
+
+### 🛡️ API1:2023 - Broken Object Level Authorization (BOLA / IDOR)
+- **Proteção**: Todo endpoint ou handler que acesse recursos (consentimentos, contas, transações) **deve validar explicitamente se o `UserId` do JWT do chamador é idêntico ao proprietário do recurso**.
+- **Regra**: Proibido buscar recursos passando apenas o ID sem filtrar pelo `UserId` do contexto autenticado.
+
+### 🛡️ API2:2023 - Broken Authentication
+- **Proteção**: Renovação automática com `refresh_token` de uso único (rotacionado a cada uso). Tokens at-rest sempre criptografados com AES-256-GCM.
+
+### 🛡️ API3:2023 - Broken Object Property Level Authorization (Data Leaks)
+- **Proteção**: Entidades de domínio nunca são serializadas diretamente na resposta HTTP. Usar exclusivamente DTOs imutáveis com mapeamento estrito.
+
+### 🛡️ API4:2023 - Unrestricted Resource Consumption (Rate Limiting)
+- **Proteção**: O `ApiGateway` aplica `AddRateLimiter` do .NET 10 limitando sincronizações manuais a no máximo 10 requisições por minuto por IP/Usuário.
+
+### 🛡️ API8:2023 - Security Misconfiguration & Logging Leakage
+- **Proteção**: Redação automática de PII (CPF, Tokens, Senhas) nos logs do Serilog via `PiiRedactionEnricher`.
+

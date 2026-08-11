@@ -167,3 +167,28 @@ public ValueTask<AccountCacheEntry?> GetAccountFromCacheAsync(string accountId, 
     return FetchFromDistributedCacheAsync(accountId, ct);
 }
 ```
+
+---
+
+## 7. Arquitetura & Manutenibilidade (.NET 10 Best Practices)
+
+### 7.1 TimeProvider Nativo (.NET 10)
+- **Regra**: Nunca chamar `DateTime.UtcNow` diretamente em lógicas de expiração de token ou regras de negócio. Injetar o `TimeProvider` nativo.
+- **Motivação**: Permitir testes TDD ultra-rápidos manipulando a passagem do tempo com `FakeTimeProvider` sem delays reais.
+
+### 7.2 Keyed Services Nativos (`AddKeyedScoped`)
+- **Regra**: Registrar estratégias de bancos usando Keyed Services do .NET 10 em vez de factories manuais com `switch/case`:
+  ```csharp
+  builder.Services.AddKeyedScoped<IOOAuthBankClientStrategy, ItauOAuthStrategy>("itau");
+  builder.Services.AddKeyedScoped<IOOAuthBankClientStrategy, MercadoPagoOAuthStrategy>("mercadopago");
+  ```
+
+### 7.3 Pattern `Result<T>`
+- **Regra**: Usar `Result<T>` ou `Result` em Use Cases em vez de exceções para fluxos previsíveis de negócio.
+
+### 7.4 Strongly Typed IDs (`readonly record struct`)
+- **Regra**: Usar structs imutáveis para IDs de domínio em vez de `Guid` ou `string` puros (ex: `public readonly record struct ConsentId(Guid Value)`).
+
+### 7.5 Options Validation (`ValidateOnStart`)
+- **Regra**: Validar se seções de configuração do `appsettings.json` possuem credenciais antes de subir o serviço usando `ValidateOnStart()`.
+
