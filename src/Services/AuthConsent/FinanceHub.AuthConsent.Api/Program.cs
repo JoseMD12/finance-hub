@@ -1,34 +1,28 @@
-var builder = WebApplication.CreateBuilder(args);
+using FinanceHub.Shared.Observability;
 
-// Add services to the container.
+namespace FinanceHub.AuthConsent.Api;
 
-var app = builder.Build();
-
-// Configure the HTTP request pipeline.
-
-app.UseHttpsRedirection();
-
-var summaries = new[]
+public class Program
 {
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+    public static void Main(string[] args)
+    {
+        var builder = WebApplication.CreateBuilder(args);
 
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-});
+        builder.Host.UseFinanceHubSerilog();
+        builder.Services.AddFinanceHubObservability(builder.Configuration, "FinanceHub.AuthConsent.Api");
 
-app.Run();
+        var app = builder.Build();
 
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
+        app.UseHttpsRedirection();
+
+        app.MapGet("/health", () => Results.Ok(new
+        {
+            Status = "Healthy",
+            Service = "FinanceHub.AuthConsent.Api",
+            Timestamp = DateTime.UtcNow,
+            Version = "1.0.0-net10"
+        })).WithName("GetHealth");
+
+        app.Run();
+    }
 }
