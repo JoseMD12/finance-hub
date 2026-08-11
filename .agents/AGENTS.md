@@ -67,6 +67,11 @@ When generating code or configuring integrations, subagents **must** adhere to:
    - Strictly enforce Rich Domain Models (no anemic DTO-like entities with public `get; set;`).
    - Internal entities and Value Objects are encapsulated and managed EXCLUSIVELY through the Aggregate Root (see `.agents/rules/ddd-aggregate-rich-domain.md`).
 
+8. **TDD Mandatory Workflow (Red -> Green -> Refactor)**:
+   - All feature implementation MUST start with writing a failing test first (**Red**).
+   - Write minimal production code to pass (**Green**), then refactor with domain patterns (**Refactor / Yellow**).
+   - Specifications must define test cases upfront before code implementation (see `.agents/rules/tdd-workflow.md`).
+
 
 ---
 
