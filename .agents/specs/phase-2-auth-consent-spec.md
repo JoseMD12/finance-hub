@@ -106,6 +106,20 @@ CREATE INDEX idx_bank_consents_status_expires ON bank_consents(status, expires_a
 
 ---
 
+## ⚠️ Mapeamento de Exceções de Domínio (RFC 7807 ProblemDetails)
+
+Seguindo a regra de tratamento global ([`.agents/rules/exception-handling-rfc7807.md`](file:///mnt/c/Code/FinanceHub/.agents/rules/exception-handling-rfc7807.md)), todas as falhas de negócio do `FinanceHub.AuthConsent` serão tratadas sem `try/catch` pelo `GlobalExceptionHandler`:
+
+| Exceção de Domínio | Condição de Disparo | Status HTTP | ErrorCode |
+|--------------------|---------------------|-------------|-----------|
+| `ConsentDomainException` | Dados inválidos ou invariante violada ao criar consentimento | 400 Bad Request | `INVALID_CONSENT_DATA` |
+| `ConsentNotFoundException` | Consentimento não localizado no PostgreSQL pelo ID | 404 Not Found | `CONSENT_NOT_FOUND` |
+| `ConsentInvalidStateException` | Tentativa de autorizar ou rotacionar consentimento revogado | 409 Conflict | `CONSENT_INVALID_STATE` |
+| `UnauthorizedBankException` | Falha na troca de tokens OAuth2 com a API do banco | 401 Unauthorized | `UNAUTHORIZED_BANK_ACCESS` |
+
+
+---
+
 ## 🧪 Plano de Testes & Ciclo TDD (Upfront Test Cases)
 
 Seguindo a regra de **TDD Obrigatório ([`.agents/rules/tdd-workflow.md`](file:///mnt/c/Code/FinanceHub/.agents/rules/tdd-workflow.md))**, toda a codificação da Fase 2 será puxada pela escrita prévia dos testes falhando (**🔴 RED**).

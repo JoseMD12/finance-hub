@@ -72,6 +72,10 @@ When generating code or configuring integrations, subagents **must** adhere to:
    - Write minimal production code to pass (**Green**), then refactor with domain patterns (**Refactor / Yellow**).
    - Specifications must define test cases upfront before code implementation (see `.agents/rules/tdd-workflow.md`).
 
+9. **Domain Exception Hierarchy & RFC 7807 ProblemDetails**:
+   - Domain errors throw strongly-typed exceptions derived from `DomainException` carrying `ErrorCode` and `StatusCode`.
+   - APIs handle exceptions globally using native .NET 10 `IExceptionHandler` returning RFC 7807 `ProblemDetails` with `traceId` and `errorCode`. Zero manual `try/catch` in endpoints (see `.agents/rules/exception-handling-rfc7807.md`).
+
 
 ---
 
