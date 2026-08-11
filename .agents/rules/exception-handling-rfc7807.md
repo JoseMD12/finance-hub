@@ -7,9 +7,11 @@
 
 ## 🎯 1. Princípio do Tratamento de Exceções
 
-No **FinanceHub**, o tratamento de erros segue duas diretrizes fundamentais:
+No **FinanceHub**, o tratamento de erros segue três diretrizes fundamentais integradas:
 1. **Hierarquia de Exceções de Domínio**: Erros de negócio lançam exceções fortemente tipadas derivadas de `DomainException`, contendo `ErrorCode` e `StatusCode` HTTP sugerido.
-2. **Tratamento Global com RFC 7807**: NENHUM endpoint Minimal API ou Handler deve usar blocos `try/catch` para gerar respostas HTTP de erro. O middleware nativo `IExceptionHandler` do .NET 10 intercepta a exceção e devolve uma resposta estruturada **RFC 7807 (`ProblemDetails`)**.
+2. **Criação Orientada a TDD ([`tdd-workflow.md`](file:///mnt/c/Code/FinanceHub/.agents/rules/tdd-workflow.md))**: Toda exceção de domínio é criada e validada **no passo 🔴 RED do TDD**, garantindo que seus testes unitários asserção exatamente a mensagem (default ou parametrizada) e o tipo da exceção.
+3. **Tratamento Global com RFC 7807**: NENHUM endpoint Minimal API ou Handler deve usar blocos `try/catch` para gerar respostas HTTP de erro. O middleware nativo `IExceptionHandler` do .NET 10 intercepta a exceção e devolve uma resposta estruturada **RFC 7807 (`ProblemDetails`)**.
+
 
 ---
 
@@ -32,12 +34,51 @@ public abstract class DomainException : Exception
 }
 ```
 
-### Regras de Herança:
-- `ConsentNotFoundException`: herda com `statusCode: 404`, `errorCode: "CONSENT_NOT_FOUND"`.
-- `ConsentInvalidStateException`: herda com `statusCode: 409`, `errorCode: "CONSENT_INVALID_STATE"`.
-- `UnauthorizedBankException`: herda com `statusCode: 401`, `errorCode: "UNAUTHORIZED_BANK_ACCESS"`.
+### 2.1 Mensagens Reutilizáveis, Parametrizáveis e Exceções Pré-Construídas
+
+Para evitar duplicação de strings de erro pelo código e garantir mensagens padronizadas em todos os microsserviços, crie exceções de domínio fortemente tipadas com **mensagens default e construtores parametrizáveis**:
+
+```csharp
+// Exceção pronta e parametrizável para UserId nulo ou inválido
+public class InvalidUserIdDomainException : DomainException
+{
+    public InvalidUserIdDomainException(string? userId = null) 
+        : base(
+            string.IsNullOrWhiteSpace(userId) 
+                ? "UserId não pode ser nulo ou vazio." 
+                : $"UserId '{userId}' não é válido.", 
+            "INVALID_USER_ID", 
+            statusCode: 400)
+    {
+    }
+}
+
+// Exceção pronta para InstitutionId nulo ou inválido
+public class InvalidInstitutionIdDomainException : DomainException
+{
+    public InvalidInstitutionIdDomainException(string? institutionId = null) 
+        : base(
+            string.IsNullOrWhiteSpace(institutionId) 
+                ? "InstitutionId não pode ser nulo ou vazio." 
+                : $"Instituição bancária '{institutionId}' não é suportada ou é inválida.", 
+            "INVALID_INSTITUTION_ID", 
+            statusCode: 400)
+    {
+    }
+}
+
+// Exceção parametrizável para estado inválido do consentimento
+public class ConsentInvalidStateException : DomainException
+{
+    public ConsentInvalidStateException(string currentStatus, string targetAction) 
+        : base($"Consentimento no estado '{currentStatus}' não pode executar a ação '{targetAction}'.", "CONSENT_INVALID_STATE", statusCode: 409)
+    {
+    }
+}
+```
 
 ---
+
 
 ## 🛠️ 3. Middleware Global `IExceptionHandler` (.NET 10)
 
