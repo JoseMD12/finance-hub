@@ -29,7 +29,8 @@ public static class DependencyInjection
         {
             if (connectionString.StartsWith("InMemory", StringComparison.OrdinalIgnoreCase))
             {
-                options.UseInMemoryDatabase("financehub_transactionaggregator");
+                options.UseInMemoryDatabase("financehub_transactionaggregator")
+                       .ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.InMemoryEventId.TransactionIgnoredWarning));
             }
             else
             {
@@ -44,11 +45,14 @@ public static class DependencyInjection
         // ── Messaging — MassTransit + Transactional Outbox ──────────────────────
         services.AddFinanceHubMessaging(configuration, busConfig =>
         {
-            busConfig.AddEntityFrameworkOutbox<TransactionAggregatorDbContext>(outbox =>
+            if (!connectionString.StartsWith("InMemory", StringComparison.OrdinalIgnoreCase))
             {
-                outbox.UsePostgres();
-                outbox.UseBusOutbox();
-            });
+                busConfig.AddEntityFrameworkOutbox<TransactionAggregatorDbContext>(outbox =>
+                {
+                    outbox.UsePostgres();
+                    outbox.UseBusOutbox();
+                });
+            }
         });
 
         services.AddScoped<IEventPublisher, EventPublisher>();
