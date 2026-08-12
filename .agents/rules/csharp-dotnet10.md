@@ -208,5 +208,14 @@ public ValueTask<AccountCacheEntry?> GetAccountFromCacheAsync(string accountId, 
   - Todas as constantes de identificadores de bancos (ex: `BankIdentifiers.Itau`, `BankIdentifiers.MercadoPago`), prefixos de tokens (ex: `BankPrefixes.MercadoPago`, `BankPrefixes.Itau`) e tipos de ação (ex: `TokenActions.Access`, `TokenActions.Refresh`, `TokenActions.Renewed`) DEVEM ser centralizadas em constantes/estruturas globais no Domínio/Infraestrutura.
 - **Motivação**: Evitar duplicação de código, eliminar erros de digitação (typos) e garantir refatorações limpas em toda a solução.
 
+### 7.8 Classes Dedicadas de Injeção de Dependência (`DependencyInjection.cs`)
+- **Regra de Ouro**: Cada camada (`Infrastructure`, `Application`, `Api`) DEVE possuir sua própria classe estática de extensão `DependencyInjection.cs` contendo os registros de DI correspondentes.
+- **Encapsulamento de Persistência**: O registro do `DbContext` e da string de conexão PostgreSQL DEVE residir 100% na camada de Infraestrutura (`AddInfrastructureServices`). O `Program.cs` deve apenas orquestrar chamando os métodos de extensão.
+
+### 7.9 Gestão Estrita de Variáveis de Ambiente & `.env` (Zero Default Values)
+- **Regra de Ouro**: Todas as variáveis de ambiente (strings de conexão, RabbitMQ, portas) DEVEM ser carregadas a partir de um arquivo `.env` ou do ambiente do sistema.
+- **PROIBIDO**: Inline default values ou fallbacks hardcoded no C# (ex: `?? "Host=localhost;Database=..."`). Se uma configuração necessária estiver ausente, o serviço DEVE falhar na inicialização (fail-fast) informando a variável faltante.
+
+
 
 
