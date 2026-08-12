@@ -1,4 +1,5 @@
 using FinanceHub.TransactionAggregator.Domain.Entities;
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
 
 namespace FinanceHub.TransactionAggregator.Infrastructure.Persistence;
@@ -17,6 +18,7 @@ public class TransactionAggregatorDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        modelBuilder.AddTransactionalOutboxEntities();
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(TransactionAggregatorDbContext).Assembly);
     }
 }
