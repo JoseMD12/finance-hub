@@ -23,12 +23,12 @@ public class CanonicalTransaction
     private CanonicalTransaction()
     {
         UserId = string.Empty;
-        AccountInfo = null!;
-        Hash = null!;
-        Amount = null!;
-        Description = null!;
-        BankDetails = null!;
-        AuditInfo = null!;
+        AccountInfo = new AccountIdentifier(string.Empty, string.Empty);
+        Hash = new TransactionHash("0000000000000000000000000000000000000000000000000000000000000000");
+        Amount = new Money(0m, "BRL");
+        Description = SanitizedDescription.Create("NON_EMPTY");
+        BankDetails = new BankTransactionDetails(string.Empty, TransactionChannel.Other, string.Empty);
+        AuditInfo = new TransactionAuditInfo(DateTime.UtcNow, DateTime.UtcNow);
     }
 
     private CanonicalTransaction(

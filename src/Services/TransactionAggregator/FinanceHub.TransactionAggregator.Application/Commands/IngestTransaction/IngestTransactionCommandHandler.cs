@@ -1,0 +1,102 @@
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+using FinanceHub.TransactionAggregator.Application.Interfaces;
+using FinanceHub.TransactionAggregator.Application.Services.Categorization;
+using FinanceHub.TransactionAggregator.Domain.Entities;
+using FinanceHub.TransactionAggregator.Domain.ValueObjects;
+
+namespace FinanceHub.TransactionAggregator.Application.Commands.IngestTransaction;
+
+public record IngestTransactionCommand(
+    string UserId,
+    string InstitutionId,
+    string AccountNumber,
+    string BankTransactionId,
+    decimal Amount,
+    string Currency,
+    TransactionType Type,
+    string RawDescription,
+    DateTime TransactionDateUtc,
+    TransactionChannel Channel,
+    string MerchantName);
+
+public interface IIngestTransactionCommandHandler
+{
+    Task<Guid> Handle(IngestTransactionCommand command, CancellationToken cancellationToken);
+}
+
+public class IngestTransactionCommandHandler : IIngestTransactionCommandHandler
+{
+    private readonly ITransactionRepository _transactionRepository;
+    private readonly IAccountBalanceRepository _accountBalanceRepository;
+    private readonly ICategoryResolverPipeline _categoryResolverPipeline;
+
+    public IngestTransactionCommandHandler(
+        ITransactionRepository transactionRepository,
+        IAccountBalanceRepository accountBalanceRepository,
+        ICategoryResolverPipeline categoryResolverPipeline)
+    {
+        _transactionRepository = transactionRepository;
+        _accountBalanceRepository = accountBalanceRepository;
+        _categoryResolverPipeline = categoryResolverPipeline;
+    }
+
+    public async Task<Guid> Handle(IngestTransactionCommand command, CancellationToken cancellationToken)
+    {
+        var accountInfo = new AccountIdentifier(command.InstitutionId, command.AccountNumber);
+        var moneyAmount = new Money(command.Amount, command.Currency);
+        var sanitizedDescription = SanitizedDescription.Create(command.RawDescription);
+
+        var hash = TransactionHash.ComputeHash(
+            command.InstitutionId,
+            command.AccountNumber,
+            command.BankTransactionId,
+            command.Amount,
+            command.TransactionDateUtc);
+
+        if (await _transactionRepository.ExistsByHashAsync(hash, cancellationToken))
+        {
+            var existingId = await _transactionRepository.GetIdByHashAsync(hash, cancellationToken);
+            return existingId ?? Guid.Empty;
+        }
+
+        var categorization = await _categoryResolverPipeline.ResolveCategoryAsync(
+            command.UserId,
+            command.RawDescription,
+            cancellationToken);
+
+        var bankDetails = new BankTransactionDetails(
+            command.BankTransactionId,
+            command.Channel,
+            command.MerchantName);
+
+        var transaction = CanonicalTransaction.Create(
+            command.UserId,
+            accountInfo,
+            hash,
+            moneyAmount,
+            command.Type,
+            sanitizedDescription,
+            categorization.CategoryId,
+            categorization.Source,
+            command.TransactionDateUtc,
+            bankDetails);
+
+        await _transactionRepository.AddAsync(transaction, cancellationToken);
+
+        var balance = await _accountBalanceRepository.GetByUserAndAccountAsync(command.UserId, accountInfo, cancellationToken);
+        if (balance == null)
+        {
+            balance = AccountBalance.Create(command.UserId, accountInfo, moneyAmount);
+        }
+        else
+        {
+            balance.ApplyTransaction(moneyAmount, command.Type);
+        }
+
+        await _accountBalanceRepository.AddOrUpdateAsync(balance, cancellationToken);
+
+        return transaction.Id;
+    }
+}

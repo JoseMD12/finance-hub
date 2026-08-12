@@ -16,8 +16,8 @@ public class AccountBalance
     private AccountBalance()
     {
         UserId = string.Empty;
-        AccountInfo = null!;
-        CurrentBalance = null!;
+        AccountInfo = new AccountIdentifier(string.Empty, string.Empty);
+        CurrentBalance = new Money(0m, "BRL");
     }
 
     private AccountBalance(Guid id, string userId, AccountIdentifier accountInfo, Money currentBalance, DateTime lastUpdatedAtUtc)
