@@ -27,6 +27,8 @@ Phase 5: API Gateway / BFF (Aggregated Rest Endpoints) (Especificado)
 Phase 6: Frontend Dashboard (React + Vite + Financial Charts) (Especificado)
    │
 Phase 7: Docker Compose Unificado & Validação E2E (Especificado)
+   │
+Phase 8: Módulo IRPF & Tax Analytics (Relatórios & Snapshots de Imposto de Renda) (Stand-By / Planejado)
 ```
 
 ---
@@ -95,8 +97,10 @@ Phase 7: Docker Compose Unificado & Validação E2E (Especificado)
   - Consumo de eventos `TransactionIngested` publicados via Outbox pelos conectores bancários.
 - [ ] **4.2 Deduplicação Determinística**:
   - Hash SHA-256 (`SHA256(InstituicaoId + ContaId + DataTransacao + Valor + DescricaoOriginal)`) com índice composto no PostgreSQL.
-- [ ] **4.3 Consultas & Consolidação de Saldo**:
-  - Endpoints CQRS para saldo consolidado, histórico de extratos categorizados e conciliação.
+- [ ] **4.3 Motor Híbrido de Categorização**:
+  - Pipeline de categorização com sanitizador de texto + aprendizado continuado do usuário (`user_category_rules`) + regras globais de palavra-chave.
+- [ ] **4.4 Saldo Materializado das Contas**:
+  - Tabela `account_balances` em tempo real para alimentação imediata do Dashboard (`< 1ms`).
 
 ---
 
@@ -118,3 +122,12 @@ Phase 7: Docker Compose Unificado & Validação E2E (Especificado)
 
 - [ ] **7.1 Arquivo Docker Compose Unificado**:
   - Orquestração completa de todos os 6 microsserviços, PostgreSQL (DB por serviço), RabbitMQ e Jaeger.
+
+---
+
+### Phase 8: Módulo IRPF & Tax Analytics (`Stand-By / Planejado`)
+
+- [ ] **8.1 Congelamento de Saldo em 31/12 (`account_yearly_snapshots`)**:
+  - Tabela e job automático para gravar os saldos bancários em 31/12 de cada ano fiscal exigidos na Declaração de *Bens e Direitos* do IRPF.
+- [ ] **8.2 Relatórios de Rendimentos & Deduções de IRPF**:
+  - Endpoint `GET /api/v1/reports/irpf/{userId}` agrupando informe de rendimentos, aplicações e despesas por categoria fiscal da Receita Federal.
