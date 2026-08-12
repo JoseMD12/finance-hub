@@ -216,6 +216,18 @@ public ValueTask<AccountCacheEntry?> GetAccountFromCacheAsync(string accountId, 
 - **Regra de Ouro**: Todas as variáveis de ambiente (strings de conexão, RabbitMQ, portas) DEVEM ser carregadas a partir de um arquivo `.env` ou do ambiente do sistema.
 - **PROIBIDO**: Inline default values ou fallbacks hardcoded no C# (ex: `?? "Host=localhost;Database=..."`). Se uma configuração necessária estiver ausente, o serviço DEVE falhar na inicialização (fail-fast) informando a variável faltante.
 
+### 7.10 Arquivos Separados Obrigatórios para Interface e Implementação
+- **Regra de Ouro**: Uma interface (`public interface I<Name>`) e sua classe de implementação (`public class <Name>`) NUNCA devem residir no mesmo arquivo `.cs`. Cada uma deve ter seu próprio arquivo dedicado.
+- **Estrutura Obrigatória por Use Case**:
+  ```
+  Commands/<UseCase>/
+    ├── <UseCase>Command.cs              ← record Command / Query
+    ├── I<UseCase>CommandHandler.cs      ← interface de contrato (arquivo separado)
+    └── <UseCase>CommandHandler.cs       ← implementação concreta (arquivo separado)
+  ```
+- **Referência Canônica**: `FinanceHub.AuthConsent.Application` — todos os handlers e interfaces estão em arquivos `.cs` distintos (`IAuthorizeConsentCommandHandler.cs`, `AuthorizeConsentCommandHandler.cs`, etc.).
+- **Violação**: Co-localizar interface e implementação no mesmo arquivo é uma violação de DIP-001 e falha na auditoria de arquitetura.
+
 
 
 

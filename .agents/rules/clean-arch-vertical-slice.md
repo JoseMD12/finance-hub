@@ -18,7 +18,26 @@ FinanceHub is structured into autonomous microservices (`src/Services/`) and sha
 - **Shared Libraries**: Use `FinanceHub.Shared.Certificates`, `FinanceHub.Shared.Messaging`, and `FinanceHub.Shared.Observability`. No business logic allowed in `Shared.*`.
 
 ## 4. Inversão de Dependência Estrita (DIP) em Use Cases & Handlers
-- **Regra de Ouro**: TODOS os Handlers de Command e Query DEVEM implementar uma interface dedicada (ex: `IAuthorizeConsentCommandHandler`, `ICreateConsentCommandHandler`, `IRenewTokenCommandHandler`, `IRenewConsentTokenCommandHandler`, `IRevokeConsentCommandHandler`, `IGetConsentByUserIdQueryHandler`).
+- **Regra de Ouro**: TODOS os Handlers de Command e Query DEVEM implementar uma interface dedicada (ex: `IAuthorizeConsentCommandHandler`, `ICreateConsentCommandHandler`, `IRenewTokenCommandHandler`, `IRevokeConsentCommandHandler`, `IGetConsentByUserIdQueryHandler`).
 - **Exceção Única**: Apenas classes estáticas (métodos de extensão, utilitários puros sem estado) são isentas de interfaces.
 - **Injeção em Endpoints**: Endpoints de API DEVEM receber obrigatoriamente a interface do Handler em seus parâmetros (ex: `IAuthorizeConsentCommandHandler handler`), aplicando o princípio de Inversão de Dependência (DIP) em 100% da solução.
 
+## 5. Arquivos Separados Obrigatórios para Interface e Implementação
+
+**PROIBIDO**: Declarar `public interface I<Name>` e `public class <Name>` no mesmo arquivo `.cs`.
+
+Cada interface de Handler/Service e sua implementação DEVEM residir em arquivos `.cs` dedicados e separados dentro da mesma pasta de Use Case:
+
+```text
+Commands/AuthorizeConsent/
+  ├── AuthorizeConsentCommand.cs              ← record Command
+  ├── IAuthorizeConsentCommandHandler.cs      ← interface (contrato)
+  └── AuthorizeConsentCommandHandler.cs       ← class (implementação)
+
+Queries/GetConsentByUserId/
+  ├── GetConsentByUserIdQuery.cs              ← record Query
+  ├── IGetConsentByUserIdQueryHandler.cs      ← interface (contrato)
+  └── GetConsentByUserIdQueryHandler.cs       ← class (implementação)
+```
+
+O padrão de referência canônico do projeto é `FinanceHub.AuthConsent.Application`. **Qualquer violação desta regra é tratada como falha crítica de arquitetura (DIP-001).**
