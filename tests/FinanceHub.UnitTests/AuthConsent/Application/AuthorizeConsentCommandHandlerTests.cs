@@ -2,6 +2,7 @@ using FinanceHub.AuthConsent.Application.Commands.AuthorizeConsent;
 using FinanceHub.AuthConsent.Application.DTOs;
 using FinanceHub.AuthConsent.Application.Exceptions;
 using FinanceHub.AuthConsent.Application.Interfaces;
+using FinanceHub.AuthConsent.Domain.Constants;
 using FinanceHub.AuthConsent.Domain.Entities;
 using FinanceHub.Shared.Messaging.Events;
 using FluentAssertions;
@@ -22,13 +23,13 @@ public class AuthorizeConsentCommandHandlerTests
     public AuthorizeConsentCommandHandlerTests()
     {
         _fakeTimeProvider.SetUtcNow(new DateTimeOffset(2026, 8, 11, 12, 0, 0, TimeSpan.Zero));
-        _strategyFactory.GetStrategy("itau").Returns(_oauthStrategy);
+        _strategyFactory.GetStrategy(BankIdentifiers.Itau).Returns(_oauthStrategy);
     }
 
     [Fact]
     public async Task Handle_ComCodigoValido_DeveChamarStrategy_PersistirAgregado_E_PublicarOutbox()
     {
-        var consent = BankConsent.Request("user-123", "itau", "external-consent-999", _fakeTimeProvider);
+        var consent = BankConsent.Request("user-123", BankIdentifiers.Itau, "external-consent-999", _fakeTimeProvider);
         _repository.GetByIdAsync(consent.Id, Arg.Any<CancellationToken>())
                    .Returns(consent);
 
@@ -45,7 +46,7 @@ public class AuthorizeConsentCommandHandlerTests
         result.Status.Should().Be(ConsentStatus.Authorized.ToString());
 
         await _repository.Received(1).UpdateAsync(Arg.Is<BankConsent>(c => c.Status == ConsentStatus.Authorized), Arg.Any<CancellationToken>());
-        await _eventPublisher.Received(1).PublishAsync(Arg.Is<BankAccountLinked>(e => e.UserId == "user-123" && e.InstitutionId == "itau"), Arg.Any<CancellationToken>());
+        await _eventPublisher.Received(1).PublishAsync(Arg.Is<BankAccountLinked>(e => e.UserId == "user-123" && e.InstitutionId == BankIdentifiers.Itau), Arg.Any<CancellationToken>());
     }
 
     [Fact]

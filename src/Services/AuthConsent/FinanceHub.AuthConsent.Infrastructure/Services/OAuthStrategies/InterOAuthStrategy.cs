@@ -28,8 +28,8 @@ public sealed class InterOAuthStrategy : IOAuthBankClientStrategy
     public Task<OAuthTokenExchangeResult> RefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default)
     {
         var result = new OAuthTokenExchangeResult(
-            AccessToken: TokenMockGenerator.Generate(BankPrefixes.Inter, $"{TokenActions.Access}-{TokenActions.Renewed}"),
-            RefreshToken: TokenMockGenerator.Generate(BankPrefixes.Inter, $"{TokenActions.Refresh}-{TokenActions.Renewed}"),
+            AccessToken: TokenMockGenerator.Generate(BankPrefixes.Inter, TokenActions.Access, TokenActions.Renewed),
+            RefreshToken: TokenMockGenerator.Generate(BankPrefixes.Inter, TokenActions.Refresh, TokenActions.Renewed),
             ExpiresInSeconds: 3600
         );
 
