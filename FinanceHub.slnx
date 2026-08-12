@@ -10,6 +10,12 @@
     <Project Path="src/Services/AuthConsent/FinanceHub.AuthConsent.Domain/FinanceHub.AuthConsent.Domain.csproj" />
     <Project Path="src/Services/AuthConsent/FinanceHub.AuthConsent.Infrastructure/FinanceHub.AuthConsent.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/src/Services/InterIntegration/">
+    <Project Path="src/Services/InterIntegration/FinanceHub.InterIntegration.Api/FinanceHub.InterIntegration.Api.csproj" />
+    <Project Path="src/Services/InterIntegration/FinanceHub.InterIntegration.Application/FinanceHub.InterIntegration.Application.csproj" />
+    <Project Path="src/Services/InterIntegration/FinanceHub.InterIntegration.Domain/FinanceHub.InterIntegration.Domain.csproj" />
+    <Project Path="src/Services/InterIntegration/FinanceHub.InterIntegration.Infrastructure/FinanceHub.InterIntegration.Infrastructure.csproj" />
+  </Folder>
   <Folder Name="/src/Services/ItauIntegration/">
     <Project Path="src/Services/ItauIntegration/FinanceHub.ItauIntegration.Api/FinanceHub.ItauIntegration.Api.csproj" />
     <Project Path="src/Services/ItauIntegration/FinanceHub.ItauIntegration.Application/FinanceHub.ItauIntegration.Application.csproj" />
