@@ -57,6 +57,6 @@ public class BankConsentConfiguration : IEntityTypeConfiguration<BankConsent>
         });
 
         builder.HasIndex(c => c.UserId).HasDatabaseName("idx_bank_consents_user_id");
-        builder.HasIndex(c => new { c.Status, c.Token.ExpiresAtUtc }).HasDatabaseName("idx_bank_consents_status_expires");
+        builder.HasIndex(c => c.Status).HasDatabaseName("idx_bank_consents_status");
     }
 }
