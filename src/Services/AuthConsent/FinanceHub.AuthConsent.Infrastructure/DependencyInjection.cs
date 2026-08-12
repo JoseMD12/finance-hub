@@ -26,7 +26,16 @@ public static class DependencyInjection
         }
 
         services.AddDbContext<AuthConsentDbContext>(options =>
-            options.UseNpgsql(connectionString));
+        {
+            if (connectionString.StartsWith("InMemory", StringComparison.OrdinalIgnoreCase))
+            {
+                options.UseInMemoryDatabase("financehub_authconsent");
+            }
+            else
+            {
+                options.UseNpgsql(connectionString);
+            }
+        });
 
         services.AddScoped<IBankConsentRepository, BankConsentRepository>();
         services.AddScoped<IEventPublisher, MassTransitEventPublisher>();
