@@ -80,6 +80,15 @@ When generating code or configuring integrations, subagents **must** adhere to:
     - Never inline magic strings (prefixes, bank identifiers, token action names like `"mp"`, `"access"`, `"refresh"`) or magic numbers.
     - Centralize all constants into strongly-typed domain/infrastructure constants classes (see `.agents/rules/csharp-dotnet10.md`).
 
+11. **Encapsulated Dependency Injection Extension Classes**:
+    - Each project layer (`Infrastructure`, `Application`, `Api`) MUST provide an exclusive `DependencyInjection.cs` static extension class (`Add<Layer>Services`).
+    - Database `DbContext` registrations and connection strings reside EXCLUSIVELY in the `Infrastructure` DI extension class.
+
+12. **Strict Environment Variable Loading via `.env`**:
+    - All environment configurations (database connections, ports, RabbitMQ credentials) MUST be loaded from a `.env` file or environment variables.
+    - Zero inline fallback defaults allowed in code. Fail-fast on startup if a required variable is missing.
+
+
 
 
 ---
