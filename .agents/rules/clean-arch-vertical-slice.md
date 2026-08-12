@@ -41,3 +41,68 @@ Queries/GetConsentByUserId/
 ```
 
 O padrão de referência canônico do projeto é `FinanceHub.AuthConsent.Application`. **Qualquer violação desta regra é tratada como falha crítica de arquitetura (DIP-001).**
+
+## 6. Hierarquia OCP de Eventos em `Shared.Messaging`
+
+### Princípio
+Eventos em `FinanceHub.Shared.Messaging` seguem o **Open/Closed Principle**: a base canônica é fechada para modificação; novos bancos, conectores ou contextos adicionam subtipos sem alterar contratos existentes.
+
+### Estrutura Obrigatória de Arquivos
+
+```text
+FinanceHub.Shared.Messaging/Events/
+  ├── IFinanceHubEvent.cs                  ← marker interface
+  ├── TransactionNormalized.cs             ← base canônica (campos sempre presentes)
+  ├── BankTransactionNormalized.cs         ← extensão para conectores de banco
+  └── TransactionCategorized.cs            ← evento dedicado à categorização
+```
+
+### Contratos
+
+```csharp
+public interface IFinanceHubEvent { }
+
+public record TransactionNormalized(
+    Guid TransactionId,
+    string Source,
+    string AccountId,
+    decimal Amount,
+    string Currency,
+    string TransactionType,
+    DateTime TransactionDate,
+    string CleanDescription,
+    string HashDeduplicacao,
+    DateTime ProcessedAtUtc) : IFinanceHubEvent;
+
+public record BankTransactionNormalized(
+    Guid TransactionId,
+    string Source,
+    string AccountId,
+    decimal Amount,
+    string Currency,
+    string TransactionType,
+    DateTime TransactionDate,
+    string CleanDescription,
+    string HashDeduplicacao,
+    DateTime ProcessedAtUtc,
+    Guid IngestionId,
+    string? RawPayloadJson)
+    : TransactionNormalized(TransactionId, Source, AccountId, Amount, Currency,
+                            TransactionType, TransactionDate, CleanDescription,
+                            HashDeduplicacao, ProcessedAtUtc);
+
+public record TransactionCategorized(
+    Guid TransactionId,
+    Guid CategoryId,
+    string CategoryName,
+    string CategorizationSource,
+    DateTime CategorizedAtUtc) : IFinanceHubEvent;
+```
+
+### Regras de Uso
+- `TransactionNormalized` é publicado pelo `TransactionAggregator` após ingestão REST direta.
+- `BankTransactionNormalized` é publicado pelos conectores de banco (Itaú, Mercado Pago, Inter) — carrega `IngestionId` e payload original.
+- `TransactionCategorized` é publicado quando a categorização ocorre de forma assíncrona ou é atualizada manualmente.
+- Consumers devem depender do contrato mais específico que precisam; nunca realizar cast entre tipos de evento.
+- **Proibido**: adicionar campos opcionais ou específicos de banco diretamente em `TransactionNormalized`. Criar um subtipo.
+

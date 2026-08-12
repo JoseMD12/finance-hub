@@ -1,7 +1,7 @@
 # Spec: OUTBOX-001 — Publicação de `TransactionNormalized` via MassTransit Outbox
 **Feature Branch**: `feature/aggregator-outbox`
 **Serviço**: `FinanceHub.TransactionAggregator`
-**Status**: ✅ APROVADA — Pronta para implementação
+**Status**: 🔵 EM ANDAMENTO — Refactoring de hierarquia de eventos
 
 ---
 
@@ -24,23 +24,49 @@ Após persistir uma `CanonicalTransaction` com sucesso no banco de dados, o `Ing
 
 ---
 
-## 3. Evento a Publicar
+## 3. Hierarquia de Eventos (Open/Closed Principle)
 
-O `TransactionNormalized` existente em `Shared.Messaging`:
+Adotada hierarquia OCP em `Shared.Messaging/Events/` em vez de um record plano com todos os campos. Cada novo banco ou contexto **estende** a base sem modificá-la.
 
 ```csharp
 public record TransactionNormalized(
     Guid TransactionId,
-    Guid IngestionId,   // ← DECISÃO PENDENTE (ver Seção 5.1)
     string Source,
     string AccountId,
-    string Category,
     decimal Amount,
+    string Currency,
+    string TransactionType,
     DateTime TransactionDate,
     string CleanDescription,
     string HashDeduplicacao,
-    DateTime ProcessedAtUtc);
+    DateTime ProcessedAtUtc) : IFinanceHubEvent;
+
+public record BankTransactionNormalized(
+    Guid TransactionId,
+    string Source,
+    string AccountId,
+    decimal Amount,
+    string Currency,
+    string TransactionType,
+    DateTime TransactionDate,
+    string CleanDescription,
+    string HashDeduplicacao,
+    DateTime ProcessedAtUtc,
+    Guid IngestionId,
+    string? RawPayloadJson)
+    : TransactionNormalized(TransactionId, Source, AccountId, Amount, Currency,
+                            TransactionType, TransactionDate, CleanDescription,
+                            HashDeduplicacao, ProcessedAtUtc);
+
+public record TransactionCategorized(
+    Guid TransactionId,
+    Guid CategoryId,
+    string CategoryName,
+    string CategorizationSource,
+    DateTime CategorizedAtUtc) : IFinanceHubEvent;
 ```
+
+**Motivação:** `IngestionId` só existe via conector de banco. `Category` pode ser resolvida assincronamente. Cada consumer escolhe qual contrato consumir sem acoplamento a campos fora do seu contexto.
 
 ---
 
@@ -83,10 +109,9 @@ O arquivo atual tem `?? "localhost"`, `?? "guest"`, etc. que violam a Rule 12 (`
 
 ## 6. Perguntas de Decisão
 
-- [x] **Pergunta 1**: `IngestionId` → `Guid.NewGuid()` gerado no handler ✅
-- [x] **Pergunta 2**: Outbox registrado em `Infrastructure DI` — `AddTransactionAggregatorInfrastructureServices()` ✅
-
-> ✅ **Todas as decisões tomadas — Spec aprovada para implementação.**
+- [x] **Pergunta 1**: `IngestionId` — `Guid.NewGuid()` no REST / do conector em ingestões via banco ✅
+- [x] **Pergunta 2**: Outbox registrado em `AddTransactionAggregatorInfrastructureServices()` ✅
+- [x] **Pergunta 3**: Hierarquia OCP de eventos — `TransactionNormalized` + `BankTransactionNormalized` + `TransactionCategorized` ✅
 
 ---
 
@@ -102,9 +127,12 @@ O arquivo atual tem `?? "localhost"`, `?? "guest"`, etc. que violam a Rule 12 (`
 
 ## 8. Critérios de Aceite
 
+- [ ] `IFinanceHubEvent` marker interface em `Shared.Messaging`
+- [ ] `TransactionNormalized`, `BankTransactionNormalized`, `TransactionCategorized` em arquivos separados
 - [ ] `IEventPublisher` reside em `Application.Interfaces` — zero referência a MassTransit na camada Application
 - [ ] `EventPublisher` reside em `Infrastructure.Messaging` — implementa `IEventPublisher` via `IBus`
+- [ ] `IngestTransactionCommandHandler` publica `TransactionNormalized` (base) via REST
 - [ ] `MessagingExtensions` sem nenhum `??` com valor default — fail-fast
 - [ ] Outbox registrado via `AddEntityFrameworkOutbox<TransactionAggregatorDbContext>`
-- [ ] `dotnet test` → todos os testes passando (incluindo T1, T2, T3)
+- [ ] `dotnet test` → todos os testes passando (T1–T5 do RED)
 - [ ] `dotnet build` → 0 erros
