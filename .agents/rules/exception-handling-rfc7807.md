@@ -34,48 +34,65 @@ public abstract class DomainException : Exception
 }
 ```
 
-### 2.1 Mensagens Reutilizáveis, Parametrizáveis e Exceções Pré-Construídas
+### 2.1 Regra Estrita: Uma Classe Dedicada por Mensagem de Erro (Proibido Strings Brutas)
 
-Para evitar duplicação de strings de erro pelo código e garantir mensagens padronizadas em todos os microsserviços, crie exceções de domínio fortemente tipadas com **mensagens default e construtores parametrizáveis**:
+- **PROIBIDO**: Passar strings brutas de erro em exceções genéricas (ex: `throw new Exception("...")` ou `throw new DomainException("...")`).
+- **OBRIGATÓRIO**: Cada validação ou mensagem de erro distinta **DEVE ser uma classe própria derivada de `DomainException`**, encapsulando sua mensagem default, `ErrorCode` e `StatusCode`.
 
 ```csharp
-// Exceção pronta e parametrizável para UserId nulo ou inválido
-public class InvalidUserIdDomainException : DomainException
+// Exceção pronta para AccessToken nulo ou vazio
+public class NullOrEmptyAccessTokenDomainException : DomainException
 {
-    public InvalidUserIdDomainException(string? userId = null) 
+    public NullOrEmptyAccessTokenDomainException() 
+        : base("AccessToken não pode ser vazio para autorização.", "NULL_OR_EMPTY_ACCESS_TOKEN", statusCode: 400) { }
+}
+
+// Exceção pronta para RefreshToken nulo ou vazio
+public class NullOrEmptyRefreshTokenDomainException : DomainException
+{
+    public NullOrEmptyRefreshTokenDomainException() 
+        : base("RefreshToken não pode ser vazio para autorização.", "NULL_OR_EMPTY_REFRESH_TOKEN", statusCode: 400) { }
+}
+
+// Exceção pronta para ExternalConsentId nulo ou vazio
+public class NullOrEmptyExternalConsentIdDomainException : DomainException
+{
+    public NullOrEmptyExternalConsentIdDomainException() 
+        : base("ExternalConsentId não pode ser nulo ou vazio.", "NULL_OR_EMPTY_EXTERNAL_CONSENT_ID", statusCode: 400) { }
+}
+
+// Exceção pronta para UserId nulo ou vazio
+public class NullOrEmptyUserIdDomainException : DomainException
+{
+    public NullOrEmptyUserIdDomainException(string? userId = null) 
         : base(
             string.IsNullOrWhiteSpace(userId) 
                 ? "UserId não pode ser nulo ou vazio." 
                 : $"UserId '{userId}' não é válido.", 
             "INVALID_USER_ID", 
-            statusCode: 400)
-    {
-    }
+            statusCode: 400) { }
 }
 
-// Exceção pronta para InstitutionId nulo ou inválido
-public class InvalidInstitutionIdDomainException : DomainException
+// Exceção pronta para InstitutionId nulo ou vazio
+public class NullOrEmptyInstitutionIdDomainException : DomainException
 {
-    public InvalidInstitutionIdDomainException(string? institutionId = null) 
+    public NullOrEmptyInstitutionIdDomainException(string? institutionId = null) 
         : base(
             string.IsNullOrWhiteSpace(institutionId) 
                 ? "InstitutionId não pode ser nulo ou vazio." 
-                : $"Instituição bancária '{institutionId}' não é suportada ou é inválida.", 
+                : $"Instituição bancária '{institutionId}' não é suportada.", 
             "INVALID_INSTITUTION_ID", 
-            statusCode: 400)
-    {
-    }
+            statusCode: 400) { }
 }
 
 // Exceção parametrizável para estado inválido do consentimento
 public class ConsentInvalidStateException : DomainException
 {
     public ConsentInvalidStateException(string currentStatus, string targetAction) 
-        : base($"Consentimento no estado '{currentStatus}' não pode executar a ação '{targetAction}'.", "CONSENT_INVALID_STATE", statusCode: 409)
-    {
-    }
+        : base($"Consentimento no estado '{currentStatus}' não pode executar a ação '{targetAction}'.", "CONSENT_INVALID_STATE", statusCode: 409) { }
 }
 ```
+
 
 ---
 
