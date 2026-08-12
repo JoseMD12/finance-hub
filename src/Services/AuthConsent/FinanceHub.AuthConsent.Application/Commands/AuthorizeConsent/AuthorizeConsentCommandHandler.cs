@@ -9,43 +9,43 @@ public sealed class AuthorizeConsentCommandHandler(
     IBankConsentRepository repository,
     IKeyedOAuthStrategyFactory strategyFactory,
     IEventPublisher eventPublisher,
-    TimeProvider timeProvider)
+    TimeProvider timeProvider) : IAuthorizeConsentCommandHandler
 {
-    public async Task<ConsentResponseDto> Handle(AuthorizeConsentCommand command, CancellationToken cancellationToken = default)
+    public async Task<ConsentResponseDto> Handle(AuthorizeConsentCommand command, CancellationToken cancellationToken)
     {
         var consent = await repository.GetByIdAsync(command.ConsentId, cancellationToken)
                       ?? throw new ConsentNotFoundDomainException(command.ConsentId);
 
-        var strategy = strategyFactory.GetStrategy(consent.InstitutionId);
+        var oauthStrategy = strategyFactory.GetStrategy(consent.InstitutionId);
 
-        var tokenResult = await strategy.ExchangeCodeForTokensAsync(command.AuthCode, command.RedirectUri, cancellationToken);
+        var tokenResult = await oauthStrategy.ExchangeCodeForTokensAsync(
+            command.AuthCode,
+            command.RedirectUri,
+            cancellationToken);
 
         consent.Authorize(
-            accessToken: tokenResult.AccessToken,
-            refreshToken: tokenResult.RefreshToken,
-            expiresInSeconds: tokenResult.ExpiresInSeconds,
-            timeProvider: timeProvider
-        );
+            tokenResult.AccessToken,
+            tokenResult.RefreshToken,
+            tokenResult.ExpiresInSeconds,
+            timeProvider);
 
         await repository.UpdateAsync(consent, cancellationToken);
 
-        var linkedEvent = new BankAccountLinked(
-            LinkId: Guid.NewGuid(),
-            InstitutionId: consent.InstitutionId,
-            UserId: consent.UserId,
-            ConsentId: consent.Id.ToString(),
-            LinkedAtUtc: timeProvider.GetUtcNow().UtcDateTime
-        );
+        var bankAccountLinkedEvent = new BankAccountLinked(
+            Guid.NewGuid(),
+            consent.InstitutionId,
+            consent.UserId,
+            consent.Id.ToString(),
+            timeProvider.GetUtcNow().UtcDateTime);
 
-        await eventPublisher.PublishAsync(linkedEvent, cancellationToken);
+        await eventPublisher.PublishAsync(bankAccountLinkedEvent, cancellationToken);
 
         return new ConsentResponseDto(
-            ConsentId: consent.Id,
-            UserId: consent.UserId,
-            InstitutionId: consent.InstitutionId,
-            Status: consent.Status.ToString(),
-            ExpiresAtUtc: consent.Token.ExpiresAtUtc,
-            CreatedAtUtc: consent.CreatedAtUtc
-        );
+            consent.Id,
+            consent.UserId,
+            consent.InstitutionId,
+            consent.Status.ToString(),
+            consent.Token.ExpiresAtUtc,
+            consent.CreatedAtUtc);
     }
 }
