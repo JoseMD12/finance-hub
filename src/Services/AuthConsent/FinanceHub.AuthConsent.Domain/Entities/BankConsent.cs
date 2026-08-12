@@ -32,10 +32,10 @@ public class BankConsent
         TimeProvider timeProvider)
     {
         if (string.IsNullOrWhiteSpace(userId))
-            throw new InvalidUserIdDomainException();
+            throw new NullOrEmptyUserIdDomainException();
 
         if (string.IsNullOrWhiteSpace(institutionId))
-            throw new InvalidInstitutionIdDomainException();
+            throw new NullOrEmptyInstitutionIdDomainException();
 
         var now = timeProvider.GetUtcNow().UtcDateTime;
 

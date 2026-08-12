@@ -18,7 +18,7 @@ public sealed record ConsentToken
         string tokenType = "Bearer")
     {
         if (string.IsNullOrWhiteSpace(externalConsentId))
-            throw new ConsentDomainException("ExternalConsentId não pode ser nulo ou vazio.");
+            throw new NullOrEmptyExternalConsentIdDomainException();
 
         ExternalConsentId = externalConsentId;
         AccessToken = accessToken;
@@ -40,10 +40,10 @@ public sealed record ConsentToken
         TimeProvider timeProvider)
     {
         if (string.IsNullOrWhiteSpace(accessToken))
-            throw new ConsentDomainException("AccessToken não pode ser vazio para autorização.");
+            throw new NullOrEmptyAccessTokenDomainException();
 
         if (string.IsNullOrWhiteSpace(refreshToken))
-            throw new ConsentDomainException("RefreshToken não pode ser vazio para autorização.");
+            throw new NullOrEmptyRefreshTokenDomainException();
 
         var expiresAtUtc = timeProvider.GetUtcNow().UtcDateTime.AddSeconds(expiresInSeconds);
         return new ConsentToken(externalConsentId, accessToken, refreshToken, expiresAtUtc);
