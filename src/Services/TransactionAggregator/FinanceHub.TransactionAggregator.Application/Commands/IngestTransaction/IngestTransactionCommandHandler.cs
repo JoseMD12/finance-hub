@@ -98,10 +98,8 @@ public class IngestTransactionCommandHandler : IIngestTransactionCommandHandler
 
         await _eventPublisher.PublishAsync(new TransactionNormalized(
             TransactionId:    transaction.Id,
-            IngestionId:      Guid.NewGuid(),
             Source:           command.InstitutionId,
             AccountId:        command.AccountNumber,
-            Category:         transaction.CategoryId.ToString(),
             Amount:           transaction.Amount.Amount,
             Currency:         transaction.Amount.Currency,
             TransactionType:  transaction.Type.ToString(),
