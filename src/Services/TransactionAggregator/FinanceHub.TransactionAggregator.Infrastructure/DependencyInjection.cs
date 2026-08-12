@@ -1,6 +1,9 @@
+using FinanceHub.Shared.Messaging.Extensions;
 using FinanceHub.TransactionAggregator.Application.Interfaces;
+using FinanceHub.TransactionAggregator.Infrastructure.Messaging;
 using FinanceHub.TransactionAggregator.Infrastructure.Persistence;
 using FinanceHub.TransactionAggregator.Infrastructure.Persistence.Repositories;
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,6 +16,7 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
+        // ── Persistence ─────────────────────────────────────────────────────────
         var connectionString = configuration.GetConnectionString("DefaultConnection");
 
         if (string.IsNullOrWhiteSpace(connectionString))
@@ -36,6 +40,18 @@ public static class DependencyInjection
         services.AddScoped<ITransactionRepository, TransactionRepository>();
         services.AddScoped<IAccountBalanceRepository, AccountBalanceRepository>();
         services.AddScoped<IUserCategoryRuleRepository, UserCategoryRuleRepository>();
+
+        // ── Messaging — MassTransit + Transactional Outbox ──────────────────────
+        services.AddFinanceHubMessaging(configuration, busConfig =>
+        {
+            busConfig.AddEntityFrameworkOutbox<TransactionAggregatorDbContext>(outbox =>
+            {
+                outbox.UsePostgres();
+                outbox.UseBusOutbox();
+            });
+        });
+
+        services.AddScoped<IEventPublisher, EventPublisher>();
 
         return services;
     }
