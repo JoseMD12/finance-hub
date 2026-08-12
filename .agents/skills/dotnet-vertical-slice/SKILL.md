@@ -93,8 +93,11 @@ public class CanonicalTransaction
 }
 ```
 
-### Step 2: Define Command/Query & Handler Interface (Application Layer)
+### Step 2: Define Command DTO (Application Layer)
 
+The Command or Query record is defined in its own file alongside the handler, **but the interface contract MUST always live in a separate dedicated file**:
+
+**`CategorizeTransactionCommand.cs`**:
 ```csharp
 namespace FinanceHub.TransactionAggregator.Application.Commands.CategorizeTransaction;
 
@@ -103,12 +106,20 @@ public record CategorizeTransactionCommand(
     string UserId,
     Guid NewCategoryId,
     bool CreateCustomRule);
+```
+
+**`ICategorizeTransactionCommandHandler.cs`** ← dedicated contract file:
+```csharp
+namespace FinanceHub.TransactionAggregator.Application.Commands.CategorizeTransaction;
 
 public interface ICategorizeTransactionCommandHandler
 {
     Task Handle(CategorizeTransactionCommand command, CancellationToken cancellationToken);
 }
 ```
+
+> [!IMPORTANT]
+> Interface and implementation MUST ALWAYS be in **separate files**. Never co-locate a `public interface I<Name>` and `public class <Name>` in the same `.cs` file. This rule applies to all handlers, repositories, and services. Follow the pattern established in `FinanceHub.AuthConsent.Application` (e.g., `IAuthorizeConsentCommandHandler.cs` and `AuthorizeConsentCommandHandler.cs` as separate files).
 
 ### Step 3: Implement Handler Class (Application Layer)
 

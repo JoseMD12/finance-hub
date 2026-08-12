@@ -13,11 +13,6 @@ public record CategorizeTransactionCommand(
     Guid NewCategoryId,
     bool CreateCustomRule);
 
-public interface ICategorizeTransactionCommandHandler
-{
-    Task Handle(CategorizeTransactionCommand command, CancellationToken cancellationToken);
-}
-
 public class CategorizeTransactionCommandHandler : ICategorizeTransactionCommandHandler
 {
     private readonly ITransactionRepository _transactionRepository;

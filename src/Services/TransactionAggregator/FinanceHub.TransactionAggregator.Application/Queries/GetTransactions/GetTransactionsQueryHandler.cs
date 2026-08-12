@@ -9,11 +9,6 @@ namespace FinanceHub.TransactionAggregator.Application.Queries.GetTransactions;
 
 public record GetTransactionsQuery(string UserId, int Page = 1, int PageSize = 20);
 
-public interface IGetTransactionsQueryHandler
-{
-    Task<IEnumerable<TransactionDto>> Handle(GetTransactionsQuery query, CancellationToken cancellationToken);
-}
-
 public class GetTransactionsQueryHandler : IGetTransactionsQueryHandler
 {
     private readonly ITransactionRepository _repository;

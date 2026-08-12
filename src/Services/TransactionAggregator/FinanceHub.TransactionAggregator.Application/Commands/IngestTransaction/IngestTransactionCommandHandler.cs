@@ -21,11 +21,6 @@ public record IngestTransactionCommand(
     TransactionChannel Channel,
     string MerchantName);
 
-public interface IIngestTransactionCommandHandler
-{
-    Task<Guid> Handle(IngestTransactionCommand command, CancellationToken cancellationToken);
-}
-
 public class IngestTransactionCommandHandler : IIngestTransactionCommandHandler
 {
     private readonly ITransactionRepository _transactionRepository;

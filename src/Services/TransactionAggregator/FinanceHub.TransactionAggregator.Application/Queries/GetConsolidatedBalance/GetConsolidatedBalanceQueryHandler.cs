@@ -8,11 +8,6 @@ namespace FinanceHub.TransactionAggregator.Application.Queries.GetConsolidatedBa
 
 public record GetConsolidatedBalanceQuery(string UserId);
 
-public interface IGetConsolidatedBalanceQueryHandler
-{
-    Task<ConsolidatedBalanceDto> Handle(GetConsolidatedBalanceQuery query, CancellationToken cancellationToken);
-}
-
 public class GetConsolidatedBalanceQueryHandler : IGetConsolidatedBalanceQueryHandler
 {
     private readonly IAccountBalanceRepository _repository;
