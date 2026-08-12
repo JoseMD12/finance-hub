@@ -76,6 +76,11 @@ When generating code or configuring integrations, subagents **must** adhere to:
    - Domain errors throw strongly-typed exceptions derived from `DomainException` carrying `ErrorCode` and `StatusCode`.
    - APIs handle exceptions globally using native .NET 10 `IExceptionHandler` returning RFC 7807 `ProblemDetails` with `traceId` and `errorCode`. Zero manual `try/catch` in endpoints (see `.agents/rules/exception-handling-rfc7807.md`).
 
+10. **Zero Magic Strings & Zero Magic Numbers**:
+    - Never inline magic strings (prefixes, bank identifiers, token action names like `"mp"`, `"access"`, `"refresh"`) or magic numbers.
+    - Centralize all constants into strongly-typed domain/infrastructure constants classes (see `.agents/rules/csharp-dotnet10.md`).
+
+
 
 ---
 
