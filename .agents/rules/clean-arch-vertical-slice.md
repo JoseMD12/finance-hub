@@ -17,9 +17,8 @@ FinanceHub is structured into autonomous microservices (`src/Services/`) and sha
 - **No Integration Coupling**: Never reference one Bank Integration Service from another.
 - **Shared Libraries**: Use `FinanceHub.Shared.Certificates`, `FinanceHub.Shared.Messaging`, and `FinanceHub.Shared.Observability`. No business logic allowed in `Shared.*`.
 
-## 3. Clean Architecture within Services
-Each service follows Clean Architecture:
-- `Domain`: Pure aggregates, value objects, domain events. Zero external dependencies.
-- `Application`: CQRS Use cases, MediatR handlers, FluentValidation rules.
-- `Infrastructure`: EF Core DbContext, Outbox pattern, mTLS clients.
-- `Api`: Minimal API endpoints (.NET 10).
+## 4. Inversão de Dependência Estrita (DIP) em Use Cases & Handlers
+- **Regra de Ouro**: TODOS os Handlers de Command e Query DEVEM implementar uma interface dedicada (ex: `IAuthorizeConsentCommandHandler`, `ICreateConsentCommandHandler`, `IRenewTokenCommandHandler`, `IRenewConsentTokenCommandHandler`, `IRevokeConsentCommandHandler`, `IGetConsentByUserIdQueryHandler`).
+- **Exceção Única**: Apenas classes estáticas (métodos de extensão, utilitários puros sem estado) são isentas de interfaces.
+- **Injeção em Endpoints**: Endpoints de API DEVEM receber obrigatoriamente a interface do Handler em seus parâmetros (ex: `IAuthorizeConsentCommandHandler handler`), aplicando o princípio de Inversão de Dependência (DIP) em 100% da solução.
+

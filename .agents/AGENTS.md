@@ -88,6 +88,11 @@ When generating code or configuring integrations, subagents **must** adhere to:
     - All environment configurations (database connections, ports, RabbitMQ credentials) MUST be loaded from a `.env` file or environment variables.
     - Zero inline fallback defaults allowed in code. Fail-fast on startup if a required variable is missing.
 
+13. **Mandatory Dependency Inversion for Handlers and Services**:
+    - All Command and Query Handlers MUST define and implement an explicit interface (e.g. `ICreateConsentCommandHandler`, `IAuthorizeConsentCommandHandler`, `IRenewTokenCommandHandler`, `IRenewConsentTokenCommandHandler`, `IRevokeConsentCommandHandler`, `IGetConsentByUserIdQueryHandler`).
+    - API endpoints MUST depend exclusively on these interfaces instead of concrete classes. Only static extension/utility classes are exempt from interfaces.
+
+
 
 
 
