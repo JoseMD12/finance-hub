@@ -202,4 +202,11 @@ public ValueTask<AccountCacheEntry?> GetAccountFromCacheAsync(string accountId, 
   - Explicações de **motivos não-óbvios** de decisões de arquitetura.
   - Requisitos regulatórios do Banco Central / Open Finance Brasil que exigem lógica específica.
 
+### 7.7 Política de Zero Magic Strings e Zero Magic Numbers
+- **Regra de Ouro**: NENHUMA string de prefixo, instituição bancária, ação de token ou número mágico pode ser declarada inline no código (ex: `$"mp-access-{Guid.NewGuid():N}"`).
+- **Padrão Obrigatório**:
+  - Todas as constantes de identificadores de bancos (ex: `BankIdentifiers.Itau`, `BankIdentifiers.MercadoPago`), prefixos de tokens (ex: `BankPrefixes.MercadoPago`, `BankPrefixes.Itau`) e tipos de ação (ex: `TokenActions.Access`, `TokenActions.Refresh`, `TokenActions.Renewed`) DEVEM ser centralizadas em constantes/estruturas globais no Domínio/Infraestrutura.
+- **Motivação**: Evitar duplicação de código, eliminar erros de digitação (typos) e garantir refatorações limpas em toda a solução.
+
+
 
