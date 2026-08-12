@@ -27,6 +27,9 @@
 *.sublime-workspace
 
 ## Environment & User Secrets
+.env
+*.env
+!.env.example
 appsettings.*.local.json
 UserSecrets/
 *.pfx
