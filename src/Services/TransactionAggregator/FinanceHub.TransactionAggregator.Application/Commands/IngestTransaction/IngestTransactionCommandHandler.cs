@@ -97,16 +97,16 @@ public class IngestTransactionCommandHandler : IIngestTransactionCommandHandler
         await _accountBalanceRepository.AddOrUpdateAsync(balance, cancellationToken);
 
         await _eventPublisher.PublishAsync(new TransactionNormalized(
-            TransactionId:    transaction.Id,
-            Source:           command.InstitutionId,
-            AccountId:        command.AccountNumber,
-            Amount:           transaction.Amount.Amount,
-            Currency:         transaction.Amount.Currency,
-            TransactionType:  transaction.Type.ToString(),
-            TransactionDate:  transaction.TransactionDateUtc,
+            TransactionId: transaction.Id,
+            Source: command.InstitutionId,
+            AccountId: command.AccountNumber,
+            Amount: transaction.Amount.Amount,
+            Currency: transaction.Amount.Currency,
+            TransactionType: transaction.Type.ToString(),
+            TransactionDate: transaction.TransactionDateUtc,
             CleanDescription: transaction.Description.CleanText,
             HashDeduplicacao: transaction.Hash.Value,
-            ProcessedAtUtc:   DateTime.UtcNow), cancellationToken);
+            ProcessedAtUtc: DateTime.UtcNow), cancellationToken);
 
         return transaction.Id;
     }
