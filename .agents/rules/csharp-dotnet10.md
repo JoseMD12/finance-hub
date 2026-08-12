@@ -167,3 +167,55 @@ public ValueTask<AccountCacheEntry?> GetAccountFromCacheAsync(string accountId, 
     return FetchFromDistributedCacheAsync(accountId, ct);
 }
 ```
+
+---
+
+## 7. Arquitetura & Manutenibilidade (.NET 10 Best Practices)
+
+### 7.1 TimeProvider Nativo (.NET 10)
+- **Regra**: Nunca chamar `DateTime.UtcNow` diretamente em lógicas de expiração de token ou regras de negócio. Injetar o `TimeProvider` nativo.
+- **Motivação**: Permitir testes TDD ultra-rápidos manipulando a passagem do tempo com `FakeTimeProvider` sem delays reais.
+
+### 7.2 Keyed Services Nativos (`AddKeyedScoped`)
+- **Regra**: Registrar estratégias de bancos usando Keyed Services do .NET 10 em vez de factories manuais com `switch/case`:
+  ```csharp
+  builder.Services.AddKeyedScoped<IOOAuthBankClientStrategy, ItauOAuthStrategy>("itau");
+  builder.Services.AddKeyedScoped<IOOAuthBankClientStrategy, MercadoPagoOAuthStrategy>("mercadopago");
+  ```
+
+### 7.3 Pattern `Result<T>`
+- **Regra**: Usar `Result<T>` ou `Result` em Use Cases em vez de exceções para fluxos previsíveis de negócio.
+
+### 7.4 Strongly Typed IDs (`readonly record struct`)
+- **Regra**: Usar structs imutáveis para IDs de domínio em vez de `Guid` ou `string` puros (ex: `public readonly record struct ConsentId(Guid Value)`).
+
+### 7.5 Options Validation (`ValidateOnStart`)
+- **Regra**: Validar se seções de configuração do `appsettings.json` possuem credenciais antes de subir o serviço usando `ValidateOnStart()`.
+
+### 7.6 Clean Code & Política de Comentários Essenciais
+- **Regra de Ouro**: O código limpo deve ser autoexplicativo. Evitar estritamente comentários triviais ou redundantes que apenas parafraseiam a sintaxe do C#.
+- **Comentários Proibidos**:
+  - `// Arrange`, `// Act`, `// Assert` em arquivos de teste unitário.
+  - `// For EF Core`, `// Constructor`, `// Properties`, `// Methods`.
+  - Comentários em cima de getters/setters ou exceções óbvias.
+- **Comentários Permitidos (Exclusivos)**:
+  - Explicações de **motivos não-óbvios** de decisões de arquitetura.
+  - Requisitos regulatórios do Banco Central / Open Finance Brasil que exigem lógica específica.
+
+### 7.7 Política de Zero Magic Strings e Zero Magic Numbers
+- **Regra de Ouro**: NENHUMA string de prefixo, instituição bancária, ação de token ou número mágico pode ser declarada inline no código (ex: `$"mp-access-{Guid.NewGuid():N}"`).
+- **Padrão Obrigatório**:
+  - Todas as constantes de identificadores de bancos (ex: `BankIdentifiers.Itau`, `BankIdentifiers.MercadoPago`), prefixos de tokens (ex: `BankPrefixes.MercadoPago`, `BankPrefixes.Itau`) e tipos de ação (ex: `TokenActions.Access`, `TokenActions.Refresh`, `TokenActions.Renewed`) DEVEM ser centralizadas em constantes/estruturas globais no Domínio/Infraestrutura.
+- **Motivação**: Evitar duplicação de código, eliminar erros de digitação (typos) e garantir refatorações limpas em toda a solução.
+
+### 7.8 Classes Dedicadas de Injeção de Dependência (`DependencyInjection.cs`)
+- **Regra de Ouro**: Cada camada (`Infrastructure`, `Application`, `Api`) DEVE possuir sua própria classe estática de extensão `DependencyInjection.cs` contendo os registros de DI correspondentes.
+- **Encapsulamento de Persistência**: O registro do `DbContext` e da string de conexão PostgreSQL DEVE residir 100% na camada de Infraestrutura (`AddInfrastructureServices`). O `Program.cs` deve apenas orquestrar chamando os métodos de extensão.
+
+### 7.9 Gestão Estrita de Variáveis de Ambiente & `.env` (Zero Default Values)
+- **Regra de Ouro**: Todas as variáveis de ambiente (strings de conexão, RabbitMQ, portas) DEVEM ser carregadas a partir de um arquivo `.env` ou do ambiente do sistema.
+- **PROIBIDO**: Inline default values ou fallbacks hardcoded no C# (ex: `?? "Host=localhost;Database=..."`). Se uma configuração necessária estiver ausente, o serviço DEVE falhar na inicialização (fail-fast) informando a variável faltante.
+
+
+
+
