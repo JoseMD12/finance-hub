@@ -1,7 +1,10 @@
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 
 using FinanceHub.ApiGateway.Exceptions;
 using FinanceHub.ApiGateway.Middleware;
+using FinanceHub.Shared.Observability.Exceptions.Mapping;
 
 using FluentAssertions;
 
@@ -17,12 +20,18 @@ namespace FinanceHub.UnitTests.ApiGateway.Middleware;
 public class GlobalExceptionHandlerTests
 {
     private readonly ILogger<GlobalExceptionHandler> _logger = Substitute.For<ILogger<GlobalExceptionHandler>>();
+    private readonly IExceptionMapperRegistry _registry = new ExceptionMapperRegistry(new IExceptionMapper[]
+    {
+        new InfrastructureExceptionMapper(),
+        new DomainExceptionMapper(),
+        new DefaultExceptionMapper()
+    });
 
     [Fact]
     public async Task TryHandleAsync_WithGatewayDownstreamException_ShouldSet502Status()
     {
         // Arrange
-        var handler = new GlobalExceptionHandler(_logger);
+        var handler = new GlobalExceptionHandler(_registry, _logger);
         var httpContext = new DefaultHttpContext();
         httpContext.Response.Body = new MemoryStream();
 

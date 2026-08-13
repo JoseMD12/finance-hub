@@ -30,10 +30,10 @@ public static class AuthGatewayEndpoints
         {
             var userId = string.IsNullOrWhiteSpace(request.UserId) ? "usr_dev_001" : request.UserId;
 
-            var secretKey = Environment.GetEnvironmentVariable(GatewayConstants.Auth.JwtSecretKeyEnvVar)
-                         ?? configuration[GatewayConstants.Auth.JwtSecretKeyEnvVar];
+            var configuredKey = Environment.GetEnvironmentVariable(GatewayConstants.Auth.JwtSecretKeyEnvVar)
+                             ?? configuration[GatewayConstants.Auth.JwtSecretKeyEnvVar];
 
-            if (string.IsNullOrWhiteSpace(secretKey))
+            if (string.IsNullOrWhiteSpace(configuredKey))
             {
                 throw new InvalidOperationException($"A variável de ambiente '{GatewayConstants.Auth.JwtSecretKeyEnvVar}' é obrigatória e não foi configurada.");
             }
@@ -54,7 +54,7 @@ public static class AuthGatewayEndpoints
                 throw new InvalidOperationException($"A variável de ambiente '{GatewayConstants.Auth.JwtAudienceEnvVar}' é obrigatória e não foi configurada.");
             }
 
-            var keyBytes = Encoding.UTF8.GetBytes(secretKey);
+            var keyBytes = Encoding.UTF8.GetBytes(configuredKey);
             var signingCredentials = new SigningCredentials(
                 new SymmetricSecurityKey(keyBytes),
                 SecurityAlgorithms.HmacSha256);
