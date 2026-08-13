@@ -17,25 +17,18 @@ public static class DependencyInjection
         IConfiguration configuration)
     {
         // ── Persistence ─────────────────────────────────────────────────────────
-        var connectionString = configuration.GetConnectionString("DefaultConnection");
+        var connectionString = configuration.GetConnectionString("TransactionAggregatorDb")
+                            ?? configuration.GetConnectionString("DefaultConnection");
 
         if (string.IsNullOrWhiteSpace(connectionString))
         {
             throw new InvalidOperationException(
-                "A string de conexão 'ConnectionStrings:DefaultConnection' não foi informada no arquivo .env ou no ambiente.");
+                "A string de conexão 'ConnectionStrings:TransactionAggregatorDb' (ou 'ConnectionStrings:DefaultConnection') não foi informada no ambiente.");
         }
 
         services.AddDbContext<TransactionAggregatorDbContext>(options =>
         {
-            if (connectionString.StartsWith("InMemory", StringComparison.OrdinalIgnoreCase))
-            {
-                options.UseInMemoryDatabase("financehub_transactionaggregator")
-                       .ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.InMemoryEventId.TransactionIgnoredWarning));
-            }
-            else
-            {
-                options.UseNpgsql(connectionString);
-            }
+            options.UseNpgsql(connectionString);
         });
 
         services.AddScoped<ITransactionRepository, TransactionRepository>();
@@ -45,14 +38,11 @@ public static class DependencyInjection
         // ── Messaging — MassTransit + Transactional Outbox ──────────────────────
         services.AddFinanceHubMessaging(configuration, busConfig =>
         {
-            if (!connectionString.StartsWith("InMemory", StringComparison.OrdinalIgnoreCase))
+            busConfig.AddEntityFrameworkOutbox<TransactionAggregatorDbContext>(outbox =>
             {
-                busConfig.AddEntityFrameworkOutbox<TransactionAggregatorDbContext>(outbox =>
-                {
-                    outbox.UsePostgres();
-                    outbox.UseBusOutbox();
-                });
-            }
+                outbox.UsePostgres();
+                outbox.UseBusOutbox();
+            });
         });
 
         services.AddScoped<IEventPublisher, EventPublisher>();
