@@ -1,7 +1,6 @@
 using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Text;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -10,19 +9,13 @@ namespace FinanceHub.ApiGateway.Services;
 
 public class JwtTokenGenerator : IJwtTokenGenerator
 {
-    private readonly SymmetricSecurityKey _securityKey;
+    private readonly SecurityKey _securityKey;
     private readonly string _issuer;
     private readonly string _audience;
 
-    public JwtTokenGenerator(IConfiguration configuration)
+    public JwtTokenGenerator(SecurityKey securityKey, IConfiguration configuration)
     {
-        var rawKey = Environment.GetEnvironmentVariable(GatewayConstants.Auth.JwtSecretKeyEnvVar)
-                  ?? configuration[GatewayConstants.Auth.JwtSecretKeyEnvVar];
-
-        if (string.IsNullOrWhiteSpace(rawKey))
-        {
-            throw new InvalidOperationException($"A variável de ambiente '{GatewayConstants.Auth.JwtSecretKeyEnvVar}' é obrigatória.");
-        }
+        _securityKey = securityKey ?? throw new ArgumentNullException(nameof(securityKey));
 
         _issuer = Environment.GetEnvironmentVariable(GatewayConstants.Auth.JwtIssuerEnvVar)
                ?? configuration[GatewayConstants.Auth.JwtIssuerEnvVar]
@@ -31,8 +24,6 @@ public class JwtTokenGenerator : IJwtTokenGenerator
         _audience = Environment.GetEnvironmentVariable(GatewayConstants.Auth.JwtAudienceEnvVar)
                  ?? configuration[GatewayConstants.Auth.JwtAudienceEnvVar]
                  ?? throw new InvalidOperationException($"A variável de ambiente '{GatewayConstants.Auth.JwtAudienceEnvVar}' é obrigatória.");
-
-        _securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(rawKey));
     }
 
     public string GenerateDevToken(string userId)

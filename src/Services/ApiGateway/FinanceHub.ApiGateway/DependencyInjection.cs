@@ -23,16 +23,14 @@ public static class DependencyInjection
         services.AddExceptionHandler<GlobalExceptionHandler>();
         services.AddProblemDetails();
 
-        // 2. JWT Services & Token Generator
-        services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
-
-        var rawSecretKey = Environment.GetEnvironmentVariable(GatewayConstants.Auth.JwtSecretKeyEnvVar)
-                        ?? configuration[GatewayConstants.Auth.JwtSecretKeyEnvVar];
-
-        if (string.IsNullOrWhiteSpace(rawSecretKey))
+        // 2. JWT Security Key Registration
+        services.AddSingleton<SecurityKey>(sp =>
         {
-            throw new InvalidOperationException($"A variável de ambiente '{GatewayConstants.Auth.JwtSecretKeyEnvVar}' é obrigatória.");
-        }
+            var config = sp.GetRequiredService<IConfiguration>();
+            return CreateSecurityKeyFromConfig(config);
+        });
+
+        services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
 
         var issuer = Environment.GetEnvironmentVariable(GatewayConstants.Auth.JwtIssuerEnvVar)
                   ?? configuration[GatewayConstants.Auth.JwtIssuerEnvVar];
@@ -49,6 +47,8 @@ public static class DependencyInjection
         {
             throw new InvalidOperationException($"A variável de ambiente '{GatewayConstants.Auth.JwtAudienceEnvVar}' é obrigatória.");
         }
+
+        var signingKey = CreateSecurityKeyFromConfig(configuration);
 
         services.AddAuthentication(options =>
         {
@@ -67,7 +67,7 @@ public static class DependencyInjection
                 ValidateIssuerSigningKey = true,
                 ValidIssuer = issuer,
                 ValidAudience = audience,
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(rawSecretKey)),
+                IssuerSigningKey = signingKey,
                 ClockSkew = TimeSpan.Zero
             };
         });
@@ -143,5 +143,20 @@ public static class DependencyInjection
         services.AddHealthChecks();
 
         return services;
+    }
+
+    private static SecurityKey CreateSecurityKeyFromConfig(IConfiguration configuration)
+    {
+        var envVal = Environment.GetEnvironmentVariable(GatewayConstants.Auth.JwtSecretKeyEnvVar);
+        var configVal = configuration[GatewayConstants.Auth.JwtSecretKeyEnvVar];
+        var text = !string.IsNullOrEmpty(envVal) ? envVal : configVal;
+
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            throw new InvalidOperationException($"A variável de ambiente '{GatewayConstants.Auth.JwtSecretKeyEnvVar}' é obrigatória.");
+        }
+
+        byte[] payload = Encoding.UTF8.GetBytes(text);
+        return new SymmetricSecurityKey(payload);
     }
 }
