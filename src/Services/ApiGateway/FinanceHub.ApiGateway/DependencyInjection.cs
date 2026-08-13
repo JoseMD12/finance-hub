@@ -1,3 +1,4 @@
+using System;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.RateLimiting;
@@ -30,7 +31,7 @@ public static class DependencyInjection
 
         var issuer = Environment.GetEnvironmentVariable(GatewayConstants.Auth.JwtIssuerEnvVar)
                   ?? configuration[GatewayConstants.Auth.JwtIssuerEnvVar]
-                  ?? GatewayConstants.Auth.DefaultIssuer;
+                  ?? GatewayConstants.Auth.GetDefaultIssuer();
 
         var audience = Environment.GetEnvironmentVariable(GatewayConstants.Auth.JwtAudienceEnvVar)
                     ?? configuration[GatewayConstants.Auth.JwtAudienceEnvVar]
@@ -95,13 +96,13 @@ public static class DependencyInjection
         });
 
         // 4. Typed HttpClients with Polly Resilience Handlers
-        var authConsentUrl = Environment.GetEnvironmentVariable(GatewayConstants.Downstream.AuthConsentBaseUrlEnvVar)
-                          ?? configuration[GatewayConstants.Downstream.AuthConsentBaseUrlEnvVar]
-                          ?? GatewayConstants.Downstream.DefaultAuthConsentUrl;
+        var authConsentRawUrl = Environment.GetEnvironmentVariable(GatewayConstants.Downstream.AuthConsentBaseUrlEnvVar)
+                             ?? configuration[GatewayConstants.Downstream.AuthConsentBaseUrlEnvVar];
+        var authConsentUrl = GatewayConstants.Downstream.GetAuthConsentUrl(authConsentRawUrl);
 
-        var transactionAggregatorUrl = Environment.GetEnvironmentVariable(GatewayConstants.Downstream.TransactionAggregatorBaseUrlEnvVar)
-                                    ?? configuration[GatewayConstants.Downstream.TransactionAggregatorBaseUrlEnvVar]
-                                    ?? GatewayConstants.Downstream.DefaultTransactionAggregatorUrl;
+        var transactionAggregatorRawUrl = Environment.GetEnvironmentVariable(GatewayConstants.Downstream.TransactionAggregatorBaseUrlEnvVar)
+                                        ?? configuration[GatewayConstants.Downstream.TransactionAggregatorBaseUrlEnvVar];
+        var transactionAggregatorUrl = GatewayConstants.Downstream.GetTransactionAggregatorUrl(transactionAggregatorRawUrl);
 
         services.AddHttpClient<IAuthConsentServiceClient, AuthConsentServiceClient>(client =>
         {

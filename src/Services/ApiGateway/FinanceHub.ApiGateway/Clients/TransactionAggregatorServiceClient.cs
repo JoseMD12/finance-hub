@@ -1,12 +1,22 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net.Http;
 using System.Net.Http.Json;
+using System.Threading;
+using System.Threading.Tasks;
 
 using FinanceHub.ApiGateway.DTOs;
 using FinanceHub.ApiGateway.Exceptions;
+
+using Microsoft.Extensions.Logging;
 
 namespace FinanceHub.ApiGateway.Clients;
 
 public class TransactionAggregatorServiceClient : ITransactionAggregatorServiceClient
 {
+    private const string ServiceName = GatewayConstants.Downstream.TransactionAggregatorServiceName;
+
     private readonly HttpClient _httpClient;
     private readonly ILogger<TransactionAggregatorServiceClient> _logger;
 
@@ -25,7 +35,7 @@ public class TransactionAggregatorServiceClient : ITransactionAggregatorServiceC
             if (!response.IsSuccessStatusCode)
             {
                 var errorContent = await response.Content.ReadAsStringAsync(ct);
-                throw new GatewayDownstreamException("TransactionAggregator", $"Falha ao buscar saldo consolidado para userId '{userId}'. Status: {response.StatusCode}. Detalhes: {errorContent}");
+                throw new GatewayDownstreamException(ServiceName, $"Falha ao buscar saldo consolidado para userId '{userId}'. Status: {response.StatusCode}. Detalhes: {errorContent}");
             }
 
             var balance = await response.Content.ReadFromJsonAsync<GatewayConsolidatedBalanceDto>(cancellationToken: ct);
@@ -34,7 +44,7 @@ public class TransactionAggregatorServiceClient : ITransactionAggregatorServiceC
         catch (HttpRequestException ex)
         {
             _logger.LogError(ex, "Erro de conexão ao chamar TransactionAggregator GetConsolidatedBalanceAsync para userId {UserId}", userId);
-            throw new GatewayDownstreamException("TransactionAggregator", ex.Message, ex);
+            throw new GatewayDownstreamException(ServiceName, ex.Message, ex);
         }
     }
 
@@ -47,7 +57,7 @@ public class TransactionAggregatorServiceClient : ITransactionAggregatorServiceC
             if (!response.IsSuccessStatusCode)
             {
                 var errorContent = await response.Content.ReadAsStringAsync(ct);
-                throw new GatewayDownstreamException("TransactionAggregator", $"Falha ao buscar transações para userId '{userId}'. Status: {response.StatusCode}. Detalhes: {errorContent}");
+                throw new GatewayDownstreamException(ServiceName, $"Falha ao buscar transações para userId '{userId}'. Status: {response.StatusCode}. Detalhes: {errorContent}");
             }
 
             var transactions = await response.Content.ReadFromJsonAsync<IEnumerable<GatewayTransactionDto>>(cancellationToken: ct);
@@ -56,7 +66,7 @@ public class TransactionAggregatorServiceClient : ITransactionAggregatorServiceC
         catch (HttpRequestException ex)
         {
             _logger.LogError(ex, "Erro de conexão ao buscar transações no TransactionAggregator");
-            throw new GatewayDownstreamException("TransactionAggregator", ex.Message, ex);
+            throw new GatewayDownstreamException(ServiceName, ex.Message, ex);
         }
     }
 
@@ -70,13 +80,13 @@ public class TransactionAggregatorServiceClient : ITransactionAggregatorServiceC
             if (!response.IsSuccessStatusCode)
             {
                 var errorContent = await response.Content.ReadAsStringAsync(ct);
-                throw new GatewayDownstreamException("TransactionAggregator", $"Falha ao categorizar transação '{transactionId}'. Status: {response.StatusCode}. Detalhes: {errorContent}");
+                throw new GatewayDownstreamException(ServiceName, $"Falha ao categorizar transação '{transactionId}'. Status: {response.StatusCode}. Detalhes: {errorContent}");
             }
         }
         catch (HttpRequestException ex)
         {
             _logger.LogError(ex, "Erro de conexão ao categorizar transação {TransactionId}", transactionId);
-            throw new GatewayDownstreamException("TransactionAggregator", ex.Message, ex);
+            throw new GatewayDownstreamException(ServiceName, ex.Message, ex);
         }
     }
 

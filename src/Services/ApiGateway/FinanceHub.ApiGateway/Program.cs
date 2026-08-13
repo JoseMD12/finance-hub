@@ -1,3 +1,6 @@
+using System;
+using System.Threading;
+
 using DotNetEnv;
 
 using FinanceHub.ApiGateway.Clients;
@@ -30,7 +33,7 @@ public class Program
         // 1. Health Endpoints
         app.MapGet("/health", () => Results.Ok(new
         {
-            Status = "Healthy",
+            Status = GatewayConstants.Status.Healthy,
             Service = "FinanceHub.ApiGateway",
             Timestamp = DateTime.UtcNow,
             Version = "1.0.0-net10"
@@ -48,13 +51,13 @@ public class Program
 
             var result = new
             {
-                Status = isHealthy ? "Healthy" : "Degraded",
+                Status = isHealthy ? GatewayConstants.Status.Healthy : GatewayConstants.Status.Degraded,
                 Service = "FinanceHub.ApiGateway",
                 Timestamp = DateTime.UtcNow,
                 DownstreamServices = new
                 {
-                    AuthConsent = authConsentHealthy ? "Healthy" : "Unhealthy",
-                    TransactionAggregator = aggregatorHealthy ? "Healthy" : "Unhealthy"
+                    AuthConsent = authConsentHealthy ? GatewayConstants.Status.Healthy : GatewayConstants.Status.Unhealthy,
+                    TransactionAggregator = aggregatorHealthy ? GatewayConstants.Status.Healthy : GatewayConstants.Status.Unhealthy
                 }
             };
 

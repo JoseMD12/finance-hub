@@ -1,3 +1,4 @@
+using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -29,11 +30,14 @@ public static class AuthGatewayEndpoints
         {
             var userId = string.IsNullOrWhiteSpace(request.UserId) ? "usr_dev_001" : request.UserId;
 
-            var secretKey = configuration[GatewayConstants.Auth.JwtSecretKeyEnvVar]
-                         ?? "FinanceHubSuperSecretDevKeyWithAtLeast32BytesLength!";
+            var secretKey = configuration[GatewayConstants.Auth.JwtSecretKeyEnvVar];
+            if (string.IsNullOrWhiteSpace(secretKey))
+            {
+                throw new InvalidOperationException($"A variável de ambiente '{GatewayConstants.Auth.JwtSecretKeyEnvVar}' é obrigatória.");
+            }
 
             var issuer = configuration[GatewayConstants.Auth.JwtIssuerEnvVar]
-                      ?? GatewayConstants.Auth.DefaultIssuer;
+                      ?? GatewayConstants.Auth.GetDefaultIssuer();
 
             var audience = configuration[GatewayConstants.Auth.JwtAudienceEnvVar]
                         ?? GatewayConstants.Auth.DefaultAudience;

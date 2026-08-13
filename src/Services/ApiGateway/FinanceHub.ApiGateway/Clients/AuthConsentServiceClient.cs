@@ -1,13 +1,23 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Net.Http.Json;
+using System.Threading;
+using System.Threading.Tasks;
 
 using FinanceHub.ApiGateway.DTOs;
 using FinanceHub.ApiGateway.Exceptions;
+
+using Microsoft.Extensions.Logging;
 
 namespace FinanceHub.ApiGateway.Clients;
 
 public class AuthConsentServiceClient : IAuthConsentServiceClient
 {
+    private const string ServiceName = GatewayConstants.Downstream.AuthConsentServiceName;
+
     private readonly HttpClient _httpClient;
     private readonly ILogger<AuthConsentServiceClient> _logger;
 
@@ -26,7 +36,7 @@ public class AuthConsentServiceClient : IAuthConsentServiceClient
             if (!response.IsSuccessStatusCode)
             {
                 var errorContent = await response.Content.ReadAsStringAsync(ct);
-                throw new GatewayDownstreamException("AuthConsent", $"Falha ao buscar consentimentos para o usuário '{userId}'. Status: {response.StatusCode}. Detalhes: {errorContent}");
+                throw new GatewayDownstreamException(ServiceName, $"Falha ao buscar consentimentos para o usuário '{userId}'. Status: {response.StatusCode}. Detalhes: {errorContent}");
             }
 
             var consents = await response.Content.ReadFromJsonAsync<IEnumerable<GatewayConsentDto>>(cancellationToken: ct);
@@ -35,7 +45,7 @@ public class AuthConsentServiceClient : IAuthConsentServiceClient
         catch (HttpRequestException ex)
         {
             _logger.LogError(ex, "Erro de conexão ao chamar AuthConsent GetConsentsByUserIdAsync para userId {UserId}", userId);
-            throw new GatewayDownstreamException("AuthConsent", ex.Message, ex);
+            throw new GatewayDownstreamException(ServiceName, ex.Message, ex);
         }
     }
 
@@ -49,7 +59,7 @@ public class AuthConsentServiceClient : IAuthConsentServiceClient
             if (!response.IsSuccessStatusCode)
             {
                 var errorContent = await response.Content.ReadAsStringAsync(ct);
-                throw new GatewayDownstreamException("AuthConsent", $"Falha ao criar consentimento. Status: {response.StatusCode}. Detalhes: {errorContent}");
+                throw new GatewayDownstreamException(ServiceName, $"Falha ao criar consentimento. Status: {response.StatusCode}. Detalhes: {errorContent}");
             }
 
             var result = await response.Content.ReadFromJsonAsync<CreateConsentResponse>(cancellationToken: ct);
@@ -58,7 +68,7 @@ public class AuthConsentServiceClient : IAuthConsentServiceClient
         catch (HttpRequestException ex)
         {
             _logger.LogError(ex, "Erro de conexão ao chamar AuthConsent CreateConsentAsync");
-            throw new GatewayDownstreamException("AuthConsent", ex.Message, ex);
+            throw new GatewayDownstreamException(ServiceName, ex.Message, ex);
         }
     }
 
@@ -72,13 +82,13 @@ public class AuthConsentServiceClient : IAuthConsentServiceClient
             if (!response.IsSuccessStatusCode)
             {
                 var errorContent = await response.Content.ReadAsStringAsync(ct);
-                throw new GatewayDownstreamException("AuthConsent", $"Falha ao autorizar consentimento '{consentId}'. Status: {response.StatusCode}. Detalhes: {errorContent}");
+                throw new GatewayDownstreamException(ServiceName, $"Falha ao autorizar consentimento '{consentId}'. Status: {response.StatusCode}. Detalhes: {errorContent}");
             }
 
             var consent = await response.Content.ReadFromJsonAsync<GatewayConsentDto>(cancellationToken: ct);
             if (consent == null)
             {
-                throw new GatewayDownstreamException("AuthConsent", "Resposta nula retornada pela autorização de consentimento.");
+                throw new GatewayDownstreamException(ServiceName, "Resposta nula retornada pela autorização de consentimento.");
             }
 
             return consent;
@@ -86,7 +96,7 @@ public class AuthConsentServiceClient : IAuthConsentServiceClient
         catch (HttpRequestException ex)
         {
             _logger.LogError(ex, "Erro de conexão ao autorizar consentimento {ConsentId}", consentId);
-            throw new GatewayDownstreamException("AuthConsent", ex.Message, ex);
+            throw new GatewayDownstreamException(ServiceName, ex.Message, ex);
         }
     }
 
@@ -99,13 +109,13 @@ public class AuthConsentServiceClient : IAuthConsentServiceClient
             if (!response.IsSuccessStatusCode && response.StatusCode != HttpStatusCode.NotFound)
             {
                 var errorContent = await response.Content.ReadAsStringAsync(ct);
-                throw new GatewayDownstreamException("AuthConsent", $"Falha ao revogar consentimento '{consentId}'. Status: {response.StatusCode}. Detalhes: {errorContent}");
+                throw new GatewayDownstreamException(ServiceName, $"Falha ao revogar consentimento '{consentId}'. Status: {response.StatusCode}. Detalhes: {errorContent}");
             }
         }
         catch (HttpRequestException ex)
         {
             _logger.LogError(ex, "Erro de conexão ao revogar consentimento {ConsentId}", consentId);
-            throw new GatewayDownstreamException("AuthConsent", ex.Message, ex);
+            throw new GatewayDownstreamException(ServiceName, ex.Message, ex);
         }
     }
 
@@ -122,5 +132,5 @@ public class AuthConsentServiceClient : IAuthConsentServiceClient
         }
     }
 
-    private record CreateConsentResponse(Guid ConsentId);
+    private sealed record CreateConsentResponse(Guid ConsentId);
 }

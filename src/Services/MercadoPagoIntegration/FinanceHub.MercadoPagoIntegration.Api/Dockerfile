@@ -4,4 +4,5 @@ EXPOSE 5004
 ENV ASPNETCORE_URLS=http://+:5004
 
 COPY src/Services/MercadoPagoIntegration/FinanceHub.MercadoPagoIntegration.Api/bin/publish .
+USER $APP_UID
 ENTRYPOINT ["dotnet", "FinanceHub.MercadoPagoIntegration.Api.dll"]

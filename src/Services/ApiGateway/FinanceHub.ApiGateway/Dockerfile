@@ -4,4 +4,5 @@ EXPOSE 5050
 ENV ASPNETCORE_URLS=http://+:5050
 
 COPY src/Services/ApiGateway/FinanceHub.ApiGateway/bin/publish .
+USER $APP_UID
 ENTRYPOINT ["dotnet", "FinanceHub.ApiGateway.dll"]
