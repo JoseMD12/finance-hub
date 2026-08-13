@@ -5,6 +5,7 @@ using System.Threading.RateLimiting;
 
 using FinanceHub.ApiGateway.Clients;
 using FinanceHub.ApiGateway.Middleware;
+using FinanceHub.ApiGateway.Services;
 using FinanceHub.Shared.Observability.Exceptions.Mapping;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -22,18 +23,32 @@ public static class DependencyInjection
         services.AddExceptionHandler<GlobalExceptionHandler>();
         services.AddProblemDetails();
 
-        // 2. JWT Authentication
-        var configuredKey = Environment.GetEnvironmentVariable(GatewayConstants.Auth.JwtSecretKeyEnvVar)
-                         ?? configuration[GatewayConstants.Auth.JwtSecretKeyEnvVar]
-                         ?? "FinanceHubSuperSecretDevKeyWithAtLeast32BytesLength!";
+        // 2. JWT Services & Token Generator
+        services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
+
+        var rawSecretKey = Environment.GetEnvironmentVariable(GatewayConstants.Auth.JwtSecretKeyEnvVar)
+                        ?? configuration[GatewayConstants.Auth.JwtSecretKeyEnvVar];
+
+        if (string.IsNullOrWhiteSpace(rawSecretKey))
+        {
+            throw new InvalidOperationException($"A variável de ambiente '{GatewayConstants.Auth.JwtSecretKeyEnvVar}' é obrigatória.");
+        }
 
         var issuer = Environment.GetEnvironmentVariable(GatewayConstants.Auth.JwtIssuerEnvVar)
-                  ?? configuration[GatewayConstants.Auth.JwtIssuerEnvVar]
-                  ?? "https://financehub.local";
+                  ?? configuration[GatewayConstants.Auth.JwtIssuerEnvVar];
+
+        if (string.IsNullOrWhiteSpace(issuer))
+        {
+            throw new InvalidOperationException($"A variável de ambiente '{GatewayConstants.Auth.JwtIssuerEnvVar}' é obrigatória.");
+        }
 
         var audience = Environment.GetEnvironmentVariable(GatewayConstants.Auth.JwtAudienceEnvVar)
-                    ?? configuration[GatewayConstants.Auth.JwtAudienceEnvVar]
-                    ?? "financehub-gateway";
+                    ?? configuration[GatewayConstants.Auth.JwtAudienceEnvVar];
+
+        if (string.IsNullOrWhiteSpace(audience))
+        {
+            throw new InvalidOperationException($"A variável de ambiente '{GatewayConstants.Auth.JwtAudienceEnvVar}' é obrigatória.");
+        }
 
         services.AddAuthentication(options =>
         {
@@ -52,7 +67,7 @@ public static class DependencyInjection
                 ValidateIssuerSigningKey = true,
                 ValidIssuer = issuer,
                 ValidAudience = audience,
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuredKey)),
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(rawSecretKey)),
                 ClockSkew = TimeSpan.Zero
             };
         });
@@ -64,7 +79,7 @@ public static class DependencyInjection
             options.AddPolicy("AdminScope", policy => policy.RequireClaim("scope", GatewayConstants.Scopes.Admin));
         });
 
-        // 3. Rate Limiting
+        // 3. Rate Limiting Policy
         services.AddRateLimiter(options =>
         {
             options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -93,14 +108,22 @@ public static class DependencyInjection
             });
         });
 
-        // 4. Typed HttpClients with Polly Resilience Handlers
+        // 4. Downstream HttpClients
         var authConsentUrl = Environment.GetEnvironmentVariable(GatewayConstants.Downstream.AuthConsentBaseUrlEnvVar)
-                          ?? configuration[GatewayConstants.Downstream.AuthConsentBaseUrlEnvVar]
-                          ?? "http://localhost:5001";
+                          ?? configuration[GatewayConstants.Downstream.AuthConsentBaseUrlEnvVar];
+
+        if (string.IsNullOrWhiteSpace(authConsentUrl))
+        {
+            throw new InvalidOperationException($"A variável de ambiente '{GatewayConstants.Downstream.AuthConsentBaseUrlEnvVar}' é obrigatória.");
+        }
 
         var transactionAggregatorUrl = Environment.GetEnvironmentVariable(GatewayConstants.Downstream.TransactionAggregatorBaseUrlEnvVar)
-                                    ?? configuration[GatewayConstants.Downstream.TransactionAggregatorBaseUrlEnvVar]
-                                    ?? "http://localhost:5002";
+                                    ?? configuration[GatewayConstants.Downstream.TransactionAggregatorBaseUrlEnvVar];
+
+        if (string.IsNullOrWhiteSpace(transactionAggregatorUrl))
+        {
+            throw new InvalidOperationException($"A variável de ambiente '{GatewayConstants.Downstream.TransactionAggregatorBaseUrlEnvVar}' é obrigatória.");
+        }
 
         services.AddHttpClient<IAuthConsentServiceClient, AuthConsentServiceClient>(client =>
         {

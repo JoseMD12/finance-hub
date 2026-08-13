@@ -1,15 +1,9 @@
-using System;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
-
 using FinanceHub.ApiGateway.DTOs;
+using FinanceHub.ApiGateway.Services;
 
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
-using Microsoft.Extensions.Configuration;
-using Microsoft.IdentityModel.Tokens;
 
 namespace FinanceHub.ApiGateway.Endpoints;
 
@@ -26,60 +20,11 @@ public static class AuthGatewayEndpoints
 
         group.MapPost("/dev-token", (
             DevTokenRequest request,
-            IConfiguration configuration) =>
+            IJwtTokenGenerator tokenGenerator) =>
         {
             var userId = string.IsNullOrWhiteSpace(request.UserId) ? "usr_dev_001" : request.UserId;
 
-            var configuredKey = Environment.GetEnvironmentVariable(GatewayConstants.Auth.JwtSecretKeyEnvVar)
-                             ?? configuration[GatewayConstants.Auth.JwtSecretKeyEnvVar];
-
-            if (string.IsNullOrWhiteSpace(configuredKey))
-            {
-                throw new InvalidOperationException($"A variável de ambiente '{GatewayConstants.Auth.JwtSecretKeyEnvVar}' é obrigatória e não foi configurada.");
-            }
-
-            var issuer = Environment.GetEnvironmentVariable(GatewayConstants.Auth.JwtIssuerEnvVar)
-                      ?? configuration[GatewayConstants.Auth.JwtIssuerEnvVar];
-
-            if (string.IsNullOrWhiteSpace(issuer))
-            {
-                throw new InvalidOperationException($"A variável de ambiente '{GatewayConstants.Auth.JwtIssuerEnvVar}' é obrigatória e não foi configurada.");
-            }
-
-            var audience = Environment.GetEnvironmentVariable(GatewayConstants.Auth.JwtAudienceEnvVar)
-                        ?? configuration[GatewayConstants.Auth.JwtAudienceEnvVar];
-
-            if (string.IsNullOrWhiteSpace(audience))
-            {
-                throw new InvalidOperationException($"A variável de ambiente '{GatewayConstants.Auth.JwtAudienceEnvVar}' é obrigatória e não foi configurada.");
-            }
-
-            var keyBytes = Encoding.UTF8.GetBytes(configuredKey);
-            var signingCredentials = new SigningCredentials(
-                new SymmetricSecurityKey(keyBytes),
-                SecurityAlgorithms.HmacSha256);
-
-            var claims = new[]
-            {
-                new Claim(JwtRegisteredClaimNames.Sub, userId),
-                new Claim(ClaimTypes.NameIdentifier, userId),
-                new Claim("scope", $"{GatewayConstants.Scopes.Read} {GatewayConstants.Scopes.Write}")
-            };
-
-            var expires = DateTime.UtcNow.AddHours(24);
-
-            var tokenDescriptor = new SecurityTokenDescriptor
-            {
-                Subject = new ClaimsIdentity(claims),
-                Expires = expires,
-                Issuer = issuer,
-                Audience = audience,
-                SigningCredentials = signingCredentials
-            };
-
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var securityToken = tokenHandler.CreateToken(tokenDescriptor);
-            var tokenString = tokenHandler.WriteToken(securityToken);
+            var tokenString = tokenGenerator.GenerateDevToken(userId);
 
             return Results.Ok(new DevTokenResponse(tokenString, "Bearer", 86400));
         })
