@@ -10,6 +10,7 @@ using FinanceHub.TransactionAggregator.Application.DTOs;
 using FinanceHub.TransactionAggregator.Application.Queries.GetConsolidatedBalance;
 using FinanceHub.TransactionAggregator.Application.Queries.GetTransactions;
 using FinanceHub.TransactionAggregator.Domain.Entities;
+using FinanceHub.UnitTests.Infrastructure;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,23 +19,24 @@ using Xunit;
 
 namespace FinanceHub.UnitTests.TransactionAggregator.Api;
 
-public class TransactionEndpointsTests : IClassFixture<WebApplicationFactory<Program>>
+public class TransactionEndpointsTests
 {
-    private readonly WebApplicationFactory<Program> _factory;
-
-    public TransactionEndpointsTests(WebApplicationFactory<Program> factory)
-    {
-        _factory = factory;
-    }
-
     [Fact]
     public async Task GetHealth_ShouldReturn200OK()
     {
-        var client = _factory.CreateClient();
+        using var factory = new CustomWebApplicationFactory<Program>();
+        await factory.InitializeAsync();
+        var client = factory.CreateClient();
 
-        var response = await client.GetAsync("/health");
-
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        try
+        {
+            var response = await client.GetAsync("/health");
+            response.StatusCode.Should().Be(HttpStatusCode.OK);
+        }
+        finally
+        {
+            await factory.DisposeAsync();
+        }
     }
 
     [Fact]
@@ -46,7 +48,10 @@ public class TransactionEndpointsTests : IClassFixture<WebApplicationFactory<Pro
         ingestHandler.Handle(Arg.Any<IngestTransactionCommand>(), Arg.Any<CancellationToken>())
             .Returns(generatedId);
 
-        var client = _factory.WithWebHostBuilder(builder =>
+        using var factory = new CustomWebApplicationFactory<Program>();
+        await factory.InitializeAsync();
+
+        var client = factory.WithWebHostBuilder(builder =>
         {
             builder.ConfigureServices(services =>
             {
@@ -54,22 +59,29 @@ public class TransactionEndpointsTests : IClassFixture<WebApplicationFactory<Pro
             });
         }).CreateClient();
 
-        var command = new IngestTransactionCommand(
-            "user-77",
-            "itau",
-            "acc-1",
-            "tx-123",
-            100m,
-            "BRL",
-            TransactionType.Debit,
-            "PAG*Mercado 12/08",
-            DateTime.UtcNow,
-            TransactionChannel.Pix,
-            "Mercado");
+        try
+        {
+            var command = new IngestTransactionCommand(
+                "user-77",
+                "itau",
+                "acc-1",
+                "tx-123",
+                100m,
+                "BRL",
+                TransactionType.Debit,
+                "PAG*Mercado 12/08",
+                DateTime.UtcNow,
+                TransactionChannel.Pix,
+                "Mercado");
 
-        var response = await client.PostAsJsonAsync("/api/v1/transactions/ingest", command);
+            var response = await client.PostAsJsonAsync("/api/v1/transactions/ingest", command);
 
-        response.StatusCode.Should().Be(HttpStatusCode.Created);
+            response.StatusCode.Should().Be(HttpStatusCode.Created);
+        }
+        finally
+        {
+            await factory.DisposeAsync();
+        }
     }
 
     [Fact]
@@ -84,7 +96,10 @@ public class TransactionEndpointsTests : IClassFixture<WebApplicationFactory<Pro
         balanceHandler.Handle(Arg.Any<GetConsolidatedBalanceQuery>(), Arg.Any<CancellationToken>())
             .Returns(expectedDto);
 
-        var client = _factory.WithWebHostBuilder(builder =>
+        using var factory = new CustomWebApplicationFactory<Program>();
+        await factory.InitializeAsync();
+
+        var client = factory.WithWebHostBuilder(builder =>
         {
             builder.ConfigureServices(services =>
             {
@@ -92,12 +107,19 @@ public class TransactionEndpointsTests : IClassFixture<WebApplicationFactory<Pro
             });
         }).CreateClient();
 
-        var response = await client.GetAsync("/api/v1/transactions/balances/user/user-77");
+        try
+        {
+            var response = await client.GetAsync("/api/v1/transactions/balances/user/user-77");
 
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var result = await response.Content.ReadFromJsonAsync<ConsolidatedBalanceDto>();
+            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            var result = await response.Content.ReadFromJsonAsync<ConsolidatedBalanceDto>();
 
-        result.Should().NotBeNull();
-        result!.TotalBalanceBrl.Should().Be(500m);
+            result.Should().NotBeNull();
+            result!.TotalBalanceBrl.Should().Be(500m);
+        }
+        finally
+        {
+            await factory.DisposeAsync();
+        }
     }
 }
