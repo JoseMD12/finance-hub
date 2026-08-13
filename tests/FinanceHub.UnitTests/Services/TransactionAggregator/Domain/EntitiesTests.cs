@@ -20,7 +20,7 @@ public class EntitiesTests
         var bankDetails = new BankTransactionDetails("bank-tx-123", TransactionChannel.Pix, "Restaurante");
 
         // Act
-        var transaction = CanonicalTransaction.Create(
+        var creationParams = new CanonicalTransactionCreationParams(
             "user-777",
             accountInfo,
             hash,
@@ -31,6 +31,8 @@ public class EntitiesTests
             CategorizationSource.GlobalRule,
             DateTime.UtcNow,
             bankDetails);
+
+        var transaction = CanonicalTransaction.Create(creationParams);
 
         // Assert
         transaction.Id.Should().NotBeEmpty();
@@ -90,7 +92,7 @@ public class EntitiesTests
 
     private static CanonicalTransaction CreateSampleTransaction()
     {
-        return CanonicalTransaction.Create(
+        var creationParams = new CanonicalTransactionCreationParams(
             "user-1",
             new AccountIdentifier("itau", "acc-1"),
             new TransactionHash(new string('c', 64)),
@@ -101,5 +103,7 @@ public class EntitiesTests
             CategorizationSource.Fallback,
             DateTime.UtcNow,
             new BankTransactionDetails("tx-1", TransactionChannel.Pix, "Pagador"));
+
+        return CanonicalTransaction.Create(creationParams);
     }
 }

@@ -33,65 +33,35 @@ public class CanonicalTransaction
 
     private CanonicalTransaction(
         Guid id,
-        string userId,
-        AccountIdentifier accountInfo,
-        TransactionHash hash,
-        Money amount,
-        TransactionType type,
-        SanitizedDescription description,
-        Guid categoryId,
-        CategorizationSource categorizationSource,
-        bool isManuallyCategorized,
-        DateTime transactionDateUtc,
-        BankTransactionDetails bankDetails,
+        CanonicalTransactionCreationParams creationParams,
         TransactionAuditInfo auditInfo)
     {
-        if (string.IsNullOrWhiteSpace(userId))
+        if (string.IsNullOrWhiteSpace(creationParams.UserId))
         {
             throw new TransactionAggregatorDomainException("UserId e obrigatorio.");
         }
 
         Id = id;
-        UserId = userId;
-        AccountInfo = accountInfo ?? throw new TransactionAggregatorDomainException("AccountInfo e obrigatorio.");
-        Hash = hash ?? throw new InvalidTransactionHashDomainException();
-        Amount = amount ?? throw new InvalidMoneyAmountDomainException();
-        Type = type;
-        Description = description ?? throw new TransactionAggregatorDomainException("Description e obrigatoria.");
-        CategoryId = categoryId;
-        CategorizationSource = categorizationSource;
-        IsManuallyCategorized = isManuallyCategorized;
-        TransactionDateUtc = transactionDateUtc;
-        BankDetails = bankDetails ?? new BankTransactionDetails(string.Empty, TransactionChannel.Other, string.Empty);
+        UserId = creationParams.UserId;
+        AccountInfo = creationParams.AccountInfo ?? throw new TransactionAggregatorDomainException("AccountInfo e obrigatorio.");
+        Hash = creationParams.Hash ?? throw new InvalidTransactionHashDomainException();
+        Amount = creationParams.Amount ?? throw new InvalidMoneyAmountDomainException();
+        Type = creationParams.Type;
+        Description = creationParams.Description ?? throw new TransactionAggregatorDomainException("Description e obrigatoria.");
+        CategoryId = creationParams.CategoryId;
+        CategorizationSource = creationParams.CategorizationSource;
+        IsManuallyCategorized = false;
+        TransactionDateUtc = creationParams.TransactionDateUtc;
+        BankDetails = creationParams.BankDetails ?? new BankTransactionDetails(string.Empty, TransactionChannel.Other, string.Empty);
         AuditInfo = auditInfo ?? new TransactionAuditInfo(DateTime.UtcNow, DateTime.UtcNow);
     }
 
-    public static CanonicalTransaction Create(
-        string userId,
-        AccountIdentifier accountInfo,
-        TransactionHash hash,
-        Money amount,
-        TransactionType type,
-        SanitizedDescription description,
-        Guid categoryId,
-        CategorizationSource categorizationSource,
-        DateTime transactionDateUtc,
-        BankTransactionDetails bankDetails)
+    public static CanonicalTransaction Create(CanonicalTransactionCreationParams creationParams)
     {
         var now = DateTime.UtcNow;
         return new CanonicalTransaction(
             Guid.NewGuid(),
-            userId,
-            accountInfo,
-            hash,
-            amount,
-            type,
-            description,
-            categoryId,
-            categorizationSource,
-            isManuallyCategorized: false,
-            transactionDateUtc,
-            bankDetails,
+            creationParams,
             new TransactionAuditInfo(now, now));
     }
 

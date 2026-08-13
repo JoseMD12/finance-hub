@@ -5,7 +5,8 @@ namespace FinanceHub.TransactionAggregator.Domain.ValueObjects;
 
 public record TransactionHash
 {
-    private static readonly Regex Hex64Regex = new("^[a-fA-F0-9]{64}$", RegexOptions.Compiled);
+    private static readonly System.TimeSpan RegexTimeout = System.TimeSpan.FromMilliseconds(250);
+    private static readonly Regex Hex64Regex = new("^[a-fA-F0-9]{64}$", RegexOptions.Compiled, RegexTimeout);
 
     public string Value { get; }
 

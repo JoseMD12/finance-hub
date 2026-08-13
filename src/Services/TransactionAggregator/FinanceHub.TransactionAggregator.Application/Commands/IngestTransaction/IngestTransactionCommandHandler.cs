@@ -70,7 +70,7 @@ public class IngestTransactionCommandHandler : IIngestTransactionCommandHandler
             command.Channel,
             command.MerchantName);
 
-        var transaction = CanonicalTransaction.Create(
+        var creationParams = new CanonicalTransactionCreationParams(
             command.UserId,
             accountInfo,
             hash,
@@ -81,6 +81,8 @@ public class IngestTransactionCommandHandler : IIngestTransactionCommandHandler
             categorization.Source,
             command.TransactionDateUtc,
             bankDetails);
+
+        var transaction = CanonicalTransaction.Create(creationParams);
 
         await _transactionRepository.AddAsync(transaction, cancellationToken);
 

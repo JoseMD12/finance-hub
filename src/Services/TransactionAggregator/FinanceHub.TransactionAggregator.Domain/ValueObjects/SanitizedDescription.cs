@@ -5,8 +5,9 @@ namespace FinanceHub.TransactionAggregator.Domain.ValueObjects;
 
 public record SanitizedDescription
 {
-    private static readonly Regex PrefixRegex = new(@"\b(PAG\*|DB\*|PIX\*|TED\*)\b", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-    private static readonly Regex CityStateDateRegex = new(@"\s+\d{2}/\d{2}\s+.*$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+    private static readonly TimeSpan RegexTimeout = TimeSpan.FromMilliseconds(250);
+    private static readonly Regex PrefixRegex = new(@"\b(PAG\*|DB\*|PIX\*|TED\*)\b", RegexOptions.Compiled | RegexOptions.IgnoreCase, RegexTimeout);
+    private static readonly Regex CityStateDateRegex = new(@"\s+\d{2}/\d{2}\s+.*$", RegexOptions.Compiled | RegexOptions.IgnoreCase, RegexTimeout);
 
     public string OriginalText { get; }
     public string CleanText { get; }
