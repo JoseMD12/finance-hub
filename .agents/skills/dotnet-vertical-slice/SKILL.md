@@ -1,245 +1,194 @@
 ---
 name: dotnet-vertical-slice
-description: Scaffolding guide for building vertical slice features in FinanceHub (.NET 10), including Use Cases, Minimal API endpoints, Command/Query handlers, FluentValidation, and financial reconciliation endpoints.
+description: Scaffolding guide for building clean CQRS vertical use-case slices in FinanceHub (.NET 10), covering Application Commands/Queries, Handler Interfaces, Rich Domain Models, and Minimal API endpoints.
 ---
 
-# .NET 10 Vertical Slice Architecture Guide
+# .NET 10 Clean Architecture & CQRS Use-Case Guide — FinanceHub
 
-This guide provides explicit patterns for scaffolding new features using **Vertical Slice Architecture** in **FinanceHub** (.NET 10 / C# 13). Features are organized around domain business capabilities within their respective microservices rather than technical layers.
+This guide provides explicit patterns for scaffolding new features (Use Cases) in **FinanceHub** (.NET 10 / C# 13). Features follow Clean Architecture and DDD principles per microservice, structured around CQRS Commands/Queries, Handler interfaces (DIP), Rich Domain Models, and Minimal API endpoints.
 
 ---
 
 ## 1. Directory Structure Conventions
 
-Each feature (Use Case) lives in its own self-contained directory under the target microservice project, e.g., `src/Services/FinanceHub.TransactionAggregator/Features/<DomainGroup>/<UseCaseName>/`.
+In FinanceHub microservices, code is organized by Clean Architecture layers with clear vertical Use-Case slicing inside Application and API projects:
 
 ```text
-src/Services/FinanceHub.TransactionAggregator/Features/Transactions/
-└── ReconcileTransactions/
-    ├── ReconcileTransactionsEndpoint.cs   // Minimal API Route Mapping
-    ├── ReconcileTransactionsCommand.cs    // Request & Response Records (CQRS)
-    ├── ReconcileTransactionsHandler.cs    // Business Logic / Mediator Handler
-    ├── ReconcileTransactionsValidator.cs  // FluentValidation Rules
-    └── ReconcileTransactionsModels.cs     // Response DTOs & Enums
+src/Services/FinanceHub.<ServiceName>/
+├── FinanceHub.<ServiceName>.Domain/
+│   ├── Entities/                 // Aggregate Roots & Rich Domain Entities
+│   ├── ValueObjects/              // Immutable Value Objects (Records)
+│   ├── Exceptions/                // Strongly-typed Domain Exceptions
+│   └── Events/                    // Domain Events
+├── FinanceHub.<ServiceName>.Application/
+│   ├── Commands/                  // Command DTOs & Handlers
+│   │   └── IngestTransaction/
+│   │       ├── IngestTransactionCommand.cs
+│   │       ├── IngestTransactionCommandHandler.cs
+│   │       └── IIngestTransactionCommandHandler.cs
+│   ├── Queries/                   // Query DTOs & Handlers
+│   │   └── GetTransactions/
+│   │       ├── GetTransactionsQuery.cs
+│   │       ├── GetTransactionsQueryHandler.cs
+│   │       └── IGetTransactionsQueryHandler.cs
+│   ├── Interfaces/                // Repository & Infrastructure Interfaces
+│   └── DTOs/                      // Output/Read DTOs
+├── FinanceHub.<ServiceName>.Infrastructure/
+│   ├── Persistence/               // DbContext, EF Core Configurations & Repositories
+│   └── DependencyInjection.cs
+└── FinanceHub.<ServiceName>.Api/
+    ├── Endpoints/                 // Minimal API Endpoint Mappings
+    ├── Middleware/                // GlobalExceptionHandler (RFC 7807)
+    ├── Program.cs                 // Top-Level Statements + namespaced Program
+    └── DependencyInjection.cs
 ```
 
 ---
 
-## 2. Step-by-Step Feature Scaffolding Workflow
+## 2. Architectural Guidelines & Hard Rules
 
-### Step 1: Define Command/Query Request & Response
-Use immutable `record` types with explicit property types (e.g. `decimal` for monetary values, `DateTimeOffset` for timestamps).
+1. **Rich Domain Model (No Anemic Entities)**:
+   - Invariants and validations MUST be encapsulated 100% inside Domain Aggregate Roots and Value Objects.
+   - Domain errors throw strongly-typed exceptions derived from `DomainException` (e.g. `InvalidCurrencyDomainException`, `TransactionNotFoundDomainException`).
+   - Zero FluentValidation classes — validation logic resides exclusively in the Domain layer.
 
-```csharp
-namespace FinanceHub.TransactionAggregator.Features.Transactions.ReconcileTransactions;
+2. **Strict Dependency Inversion Principle (DIP)**:
+   - Every Command Handler and Query Handler MUST define and implement a dedicated interface (e.g. `IIngestTransactionCommandHandler`, `IGetTransactionsQueryHandler`).
+   - Endpoints MUST inject Handler interfaces (`IIngestTransactionCommandHandler`), never concrete implementation classes.
 
-public record ReconcileTransactionsCommand(
-    Guid AccountId,
-    DateTimeOffset StartDate,
-    DateTimeOffset EndDate,
-    IReadOnlyCollection<ExternalTransactionItem> ExternalTransactions
-) : IRequest<Result<ReconcileTransactionsResult>>;
+3. **Global Exception Handling (RFC 7807 ProblemDetails)**:
+   - APIs handle domain and system exceptions globally via `IExceptionHandler` (`GlobalExceptionHandler`).
+   - Responses return RFC 7807 `ProblemDetails` with `traceId` and `errorCode`. Endpoints perform ZERO manual try/catch blocks.
 
-public record ExternalTransactionItem(
-    string ExternalId,
-    decimal Amount,
-    string Currency,
-    DateTimeOffset TransactionDate,
-    string Description,
-    string? FitId
-);
+4. **Environment Configuration Loading**:
+   - Environment variables must be loaded from `.env` via `DotNetEnv.Env.TraversePath().Load()` on `Program.cs` startup.
+   - Zero inline hardcoded fallback defaults in code. Fail-fast if required environment variables are missing.
 
-public record ReconcileTransactionsResult(
-    Guid BatchId,
-    int MatchedCount,
-    int UnmatchedInternalCount,
-    int UnmatchedExternalCount,
-    decimal TotalMatchedAmount,
-    IReadOnlyCollection<ReconciliationDiscrepancy> Discrepancies
-);
+---
 
-public record ReconciliationDiscrepancy(
-    string Type, // e.g. "AmountMismatch", "UnmatchedExternal", "UnmatchedInternal"
-    string Description,
-    decimal DiscrepancyAmount,
-    Guid? InternalTransactionId,
-    string? ExternalTransactionId
-);
-```
+## 3. Step-by-Step Feature Scaffolding Workflow
 
-### Step 2: Implement Request Validator (FluentValidation)
-Add strict validation rules to protect domain invariants prior to command execution:
+### Step 1: Define Domain Logic & Exception (Domain Layer)
+Encapsulate invariants directly inside Aggregate Root or Value Objects:
 
 ```csharp
-namespace FinanceHub.TransactionAggregator.Features.Transactions.ReconcileTransactions;
+namespace FinanceHub.TransactionAggregator.Domain.Entities;
 
-public sealed class ReconcileTransactionsValidator : AbstractValidator<ReconcileTransactionsCommand>
+public class CanonicalTransaction
 {
-    public ReconcileTransactionsValidator()
+    public Guid Id { get; private set; }
+    public string UserId { get; private set; }
+    public Money Amount { get; private set; }
+    public Guid CategoryId { get; private set; }
+
+    public void CategorizeManually(Guid newCategoryId)
     {
-        RuleFor(x => x.AccountId)
-            .NotEmpty()
-            .WithMessage("AccountId is required.");
-
-        RuleFor(x => x.StartDate)
-            .LessThanOrEqualTo(x => x.EndDate)
-            .WithMessage("StartDate must be before or equal to EndDate.");
-
-        RuleFor(x => x.ExternalTransactions)
-            .NotNull();
-
-        RuleForEach(x => x.ExternalTransactions).ChildRules(item =>
+        if (newCategoryId == Guid.Empty)
         {
-            item.RuleFor(t => t.ExternalId).NotEmpty();
-            item.RuleFor(t => t.Amount).NotEqual(0).WithMessage("Transaction amount cannot be zero.");
-            item.RuleFor(t => t.Currency).Length(3).WithMessage("Currency must be a valid 3-letter ISO code.");
-        });
+            throw new InvalidCategoryIdDomainException();
+        }
+
+        CategoryId = newCategoryId;
     }
 }
 ```
 
-### Step 3: Implement Business Logic Handler
-Inject domain repositories, microservice DbContext (`TransactionAggregatorDbContext`), or services. Enforce explicit transactional boundaries for financial integrity.
+### Step 2: Define Command DTO (Application Layer)
+
+The Command or Query record is defined in its own file alongside the handler, **but the interface contract MUST always live in a separate dedicated file**:
+
+**`CategorizeTransactionCommand.cs`**:
+```csharp
+namespace FinanceHub.TransactionAggregator.Application.Commands.CategorizeTransaction;
+
+public record CategorizeTransactionCommand(
+    Guid TransactionId,
+    string UserId,
+    Guid NewCategoryId,
+    bool CreateCustomRule);
+```
+
+**`ICategorizeTransactionCommandHandler.cs`** ← dedicated contract file:
+```csharp
+namespace FinanceHub.TransactionAggregator.Application.Commands.CategorizeTransaction;
+
+public interface ICategorizeTransactionCommandHandler
+{
+    Task Handle(CategorizeTransactionCommand command, CancellationToken cancellationToken);
+}
+```
+
+> [!IMPORTANT]
+> Interface and implementation MUST ALWAYS be in **separate files**. Never co-locate a `public interface I<Name>` and `public class <Name>` in the same `.cs` file. This rule applies to all handlers, repositories, and services. Follow the pattern established in `FinanceHub.AuthConsent.Application` (e.g., `IAuthorizeConsentCommandHandler.cs` and `AuthorizeConsentCommandHandler.cs` as separate files).
+
+### Step 3: Implement Handler Class (Application Layer)
 
 ```csharp
-namespace FinanceHub.TransactionAggregator.Features.Transactions.ReconcileTransactions;
+namespace FinanceHub.TransactionAggregator.Application.Commands.CategorizeTransaction;
 
-public sealed class ReconcileTransactionsHandler 
-    : IRequestHandler<ReconcileTransactionsCommand, Result<ReconcileTransactionsResult>>
+public class CategorizeTransactionCommandHandler : ICategorizeTransactionCommandHandler
 {
-    private readonly TransactionAggregatorDbContext _dbContext;
-    private readonly ILogger<ReconcileTransactionsHandler> _logger;
+    private readonly ITransactionRepository _transactionRepository;
 
-    public ReconcileTransactionsHandler(
-        TransactionAggregatorDbContext dbContext,
-        ILogger<ReconcileTransactionsHandler> logger)
+    public CategorizeTransactionCommandHandler(ITransactionRepository transactionRepository)
     {
-        _dbContext = dbContext;
-        _logger = logger;
+        _transactionRepository = transactionRepository;
     }
 
-    public async Task<Result<ReconcileTransactionsResult>> Handle(
-        ReconcileTransactionsCommand request, 
-        CancellationToken cancellationToken)
+    public async Task Handle(CategorizeTransactionCommand command, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Starting reconciliation for AccountId: {AccountId}", request.AccountId);
-
-        // Fetch internal ledger transactions for date range
-        var internalTransactions = await _dbContext.Transactions
-            .Where(t => t.AccountId == request.AccountId 
-                     && t.TransactionDate >= request.StartDate 
-                     && t.TransactionDate <= request.EndDate)
-            .ToListAsync(cancellationToken);
-
-        var discrepancies = new List<ReconciliationDiscrepancy>();
-        int matchedCount = 0;
-        decimal matchedTotal = 0m;
-
-        // Reconciliation matching logic
-        var unmatchedInternal = internalTransactions.ToDictionary(t => t.Id);
-        
-        foreach (var ext in request.ExternalTransactions)
+        var transaction = await _transactionRepository.GetByIdAsync(command.TransactionId, cancellationToken);
+        if (transaction == null)
         {
-            // Match rule: Exact amount + date within +/- 2 days + matching FitID or description key
-            var match = internalTransactions.FirstOrDefault(i => 
-                unmatchedInternal.ContainsKey(i.Id) &&
-                i.Amount == ext.Amount &&
-                Math.Abs((i.TransactionDate - ext.TransactionDate).TotalHours) <= 48);
-
-            if (match != null)
-            {
-                matchedCount++;
-                matchedTotal += match.Amount;
-                unmatchedInternal.Remove(match.Id);
-            }
-            else
-            {
-                discrepancies.Add(new ReconciliationDiscrepancy(
-                    Type: "UnmatchedExternal",
-                    Description: $"External transaction {ext.ExternalId} has no matching ledger entry.",
-                    DiscrepancyAmount: ext.Amount,
-                    InternalTransactionId: null,
-                    ExternalTransactionId: ext.ExternalId
-                ));
-            }
+            throw new TransactionNotFoundDomainException(command.TransactionId);
         }
 
-        foreach (var remaining in unmatchedInternal.Values)
-        {
-            discrepancies.Add(new ReconciliationDiscrepancy(
-                Type: "UnmatchedInternal",
-                Description: $"Ledger transaction {remaining.Id} was not found in bank feed.",
-                DiscrepancyAmount: remaining.Amount,
-                InternalTransactionId: remaining.Id,
-                ExternalTransactionId: null
-            ));
-        }
-
-        var result = new ReconcileTransactionsResult(
-            BatchId: Guid.NewGuid(),
-            MatchedCount: matchedCount,
-            UnmatchedInternalCount: unmatchedInternal.Count,
-            UnmatchedExternalCount: discrepancies.Count(d => d.Type == "UnmatchedExternal"),
-            TotalMatchedAmount: matchedTotal,
-            Discrepancies: discrepancies
-        );
-
-        return Result.Success(result);
+        transaction.CategorizeManually(command.NewCategoryId);
+        await _transactionRepository.UpdateAsync(transaction, cancellationToken);
     }
 }
 ```
 
-### Step 4: Map Minimal API Endpoint (.NET 10)
-Map endpoints explicitly in `Endpoint.cs` using .NET 10 Minimal API style with OpenAPI metadata and typed results:
+### Step 4: Map Minimal API Endpoint (API Layer)
 
 ```csharp
-namespace FinanceHub.TransactionAggregator.Features.Transactions.ReconcileTransactions;
+namespace FinanceHub.TransactionAggregator.Api.Endpoints;
 
-public static class ReconcileTransactionsEndpoint
+public static class TransactionEndpoints
 {
-    public static void MapReconcileTransactionsEndpoint(this IEndpointRouteBuilder app)
+    public static IEndpointRouteBuilder MapTransactionEndpoints(this IEndpointRouteBuilder endpoints)
     {
-        app.MapPost("/api/v1/accounts/{accountId:guid}/reconcile", async (
-            Guid accountId,
-            ReconcileTransactionsCommand command,
-            ISender mediator,
-            CancellationToken ct) =>
+        var group = endpoints.MapGroup("/api/v1/transactions")
+            .WithTags("Transactions");
+
+        group.MapPatch("/{id:guid}/categorize", async (
+            Guid id,
+            CategorizeTransactionRequest request,
+            ICategorizeTransactionCommandHandler handler,
+            CancellationToken cancellationToken) =>
         {
-            if (accountId != command.AccountId)
-            {
-                return Results.BadRequest("Route accountId does not match request body.");
-            }
+            var command = new CategorizeTransactionCommand(
+                id,
+                request.UserId,
+                request.NewCategoryId,
+                request.CreateCustomRule);
 
-            var result = await mediator.Send(command, ct);
-
-            return result.IsSuccess 
-                ? Results.Ok(result.Value) 
-                : Results.Problem(detail: result.Error.Message, statusCode: StatusCodes.Status400BadRequest);
+            await handler.Handle(command, cancellationToken);
+            return Results.NoContent();
         })
-        .WithName("ReconcileTransactions")
-        .WithTags("Transactions", "Reconciliation")
-        .Produces<ReconcileTransactionsResult>(StatusCodes.Status200OK)
-        .ProducesProblem(StatusCodes.Status400BadRequest)
-        .RequireAuthorization();
+        .WithName("CategorizeTransaction")
+        .Produces(StatusCodes.Status204NoContent)
+        .ProducesProblem(StatusCodes.Status404NotFound);
+
+        return endpoints;
     }
 }
 ```
-
----
-
-## 3. Financial Reconciliation Specific Guidelines
-
-Reconciliation endpoints must implement auditability and deterministic state matching:
-1. **Idempotency**: Requests must support an `Idempotency-Key` HTTP header to prevent duplicate reconciliation batch creation.
-2. **Audit Logging**: Store batch outcomes in microservice-scoped `ReconciliationBatches` and `ReconciliationItems` tables.
-3. **Tolerance Config**: Allow configurable matching tolerance thresholds (e.g. date skew tolerance, FX conversion spread).
 
 ---
 
 ## 4. Verification Checklist
 
-1. **Endpoint Auto-Discovery**: Register endpoint in `Program.cs` / `MapEndpoints()`.
-2. **Validator Unit Tests**: Add test cases covering invalid currency codes, empty transaction arrays, and mismatched dates.
-3. **Integration Test**: Verify endpoint behavior using `WebApplicationFactory<Program>` in `tests/FinanceHub.TransactionAggregator.Tests/`.
-4. **Execution**: Run `dotnet build` and `dotnet test`.
-
+1. **Interface Binding**: Register interface + implementation in `DependencyInjection.cs` (`services.AddScoped<ICategorizeTransactionCommandHandler, CategorizeTransactionCommandHandler>();`).
+2. **Unit Tests**: Add unit tests for Domain entity methods, Application Handlers (with `NSubstitute` mocks), and API endpoints (`WebApplicationFactory`).
+3. **Execution**: Run `dotnet test` to confirm 100% GREEN build and test execution.

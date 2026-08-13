@@ -10,7 +10,6 @@ public class Program
 {
     public static void Main(string[] args)
     {
-        // Procura e carrega o arquivo .env no diretorio atual ou em diretorios pai
         Env.TraversePath().Load();
 
         var builder = WebApplication.CreateBuilder(args);
@@ -19,7 +18,6 @@ public class Program
         builder.Services.AddFinanceHubObservability(builder.Configuration, "FinanceHub.AuthConsent.Api");
         builder.Services.AddFinanceHubMessaging(builder.Configuration);
 
-        // Modulos de Injecao de Dependencia isolados por camada
         builder.Services.AddAuthConsentInfrastructure(builder.Configuration);
         builder.Services.AddAuthConsentApi(builder.Configuration);
 

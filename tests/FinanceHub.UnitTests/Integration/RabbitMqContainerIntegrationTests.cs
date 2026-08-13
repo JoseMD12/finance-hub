@@ -1,22 +1,19 @@
 using FinanceHub.Shared.Messaging.Events;
 using FinanceHub.Shared.Messaging.Extensions;
-using FinanceHub.UnitTests.Fixtures;
+using FinanceHub.UnitTests.Infrastructure;
 using FluentAssertions;
 using MassTransit;
-using MassTransit.Testing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace FinanceHub.UnitTests.Integration;
 
-public class RabbitMqContainerIntegrationTests : IClassFixture<RabbitMqTestContainerFixture>
+public class RabbitMqContainerIntegrationTests : IntegrationTestBase<FinanceHub.ApiGateway.Program>
 {
-    private readonly RabbitMqTestContainerFixture _fixture;
-
-    public RabbitMqContainerIntegrationTests(RabbitMqTestContainerFixture fixture)
+    public RabbitMqContainerIntegrationTests(CustomWebApplicationFactory<FinanceHub.ApiGateway.Program> factory)
+        : base(factory)
     {
-        _fixture = fixture;
     }
 
     [Fact]
@@ -26,10 +23,10 @@ public class RabbitMqContainerIntegrationTests : IClassFixture<RabbitMqTestConta
         var services = new ServiceCollection();
         var config = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
         {
-            { "RabbitMQ:Host", _fixture.Host },
-            { "RabbitMQ:Port", _fixture.Port.ToString() },
-            { "RabbitMQ:Username", _fixture.Username },
-            { "RabbitMQ:Password", _fixture.Password }
+            { "RabbitMQ:Host", Factory.RabbitMqHost },
+            { "RabbitMQ:Port", Factory.RabbitMqPort },
+            { "RabbitMQ:Username", Factory.RabbitMqUsername },
+            { "RabbitMQ:Password", Factory.RabbitMqPassword }
         }).Build();
 
         services.AddFinanceHubMessaging(config);

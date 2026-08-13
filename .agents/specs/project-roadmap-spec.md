@@ -27,6 +27,8 @@ Phase 5: API Gateway / BFF (Aggregated Rest Endpoints) (Especificado)
 Phase 6: Frontend Dashboard (React + Vite + Financial Charts) (Especificado)
    │
 Phase 7: Docker Compose Unificado & Validação E2E (Especificado)
+   │
+Phase 8: Módulo IRPF & Tax Analytics (Relatórios & Snapshots de Imposto de Renda) (Stand-By / Planejado)
 ```
 
 ---
@@ -89,32 +91,57 @@ Phase 7: Docker Compose Unificado & Validação E2E (Especificado)
 
 ---
 
-### Phase 4: Transaction Aggregator Service (`FinanceHub.TransactionAggregator`) (`Próximo Passo`)
+### Phase 4: Transaction Aggregator Service (`FinanceHub.TransactionAggregator`) (`Concluída`)
 
-- [ ] **4.1 Ingestão & Ledger Canônico**:
-  - Consumo de eventos `TransactionIngested` publicados via Outbox pelos conectores bancários.
-- [ ] **4.2 Deduplicação Determinística**:
-  - Hash SHA-256 (`SHA256(InstituicaoId + ContaId + DataTransacao + Valor + DescricaoOriginal)`) com índice composto no PostgreSQL.
-- [ ] **4.3 Consultas & Consolidação de Saldo**:
-  - Endpoints CQRS para saldo consolidado, histórico de extratos categorizados e conciliação.
-
----
-
-### Phase 5: API Gateway / BFF (`FinanceHub.ApiGateway`) (`Pendente`)
-
-- [ ] **5.1 Entrypoint Rest & Autenticação JWT**:
-  - Proxy reverso YARP / Ocelot + autenticação JWT Bearer para a aplicação web.
+- [x] **4.1 Ingestão & Ledger Canônico**:
+  - Aggregate Root `CanonicalTransaction`, `AccountBalance`, `UserCategoryRule` e Value Objects imutáveis.
+- [x] **4.2 Deduplicação Determinística**:
+  - Hash SHA-256 (`SHA256(InstituicaoId + ContaId + BankTxId + DataTransacao + Valor)`) com verificação e retorno de ID idempotente.
+- [x] **4.3 Motor Híbrido de Categorização**:
+  - Pipeline de categorização com sanitizador de texto + aprendizado continuado do usuário (`user_category_rules`) + regras globais de palavra-chave.
+- [x] **4.4 Saldo Materializado das Contas**:
+  - Tabela `account_balances` em tempo real para alimentação imediata do Dashboard (`< 1ms`) com controle de concorrência otimista (`xmin`).
+- [x] **4.5 Publicação Outbox & Hierarquia OCP de Eventos (`OUTBOX-001`)**:
+  - `IEventPublisher` desacoplado na camada Application + `EventPublisher` com MassTransit + EF Core Transactional Outbox na Infrastructure.
+  - Hierarquia de eventos OCP em `Shared.Messaging`: `IFinanceHubEvent`, `TransactionNormalized` (base canônica), `BankTransactionNormalized` (extensão para conectores de banco) e `TransactionCategorized`.
 
 ---
 
-### Phase 6: Frontend Dashboard (`src/Web/finance-hub-web`) (`Pendente`)
+### Phase 5: API Gateway / BFF (`FinanceHub.ApiGateway`) (`Próximo Passo`)
 
-- [ ] **6.1 Dashboard Financeiro**:
+- [ ] **5.1 Entrypoint REST & Agregação**:
+  - Proxy reverso e agregação de chamadas para AuthConsent e TransactionAggregator.
+- [ ] **5.2 Autenticação & Autorização JWT**:
+  - Validação de Bearer tokens JWT e escopos de segurança Open Finance.
+
+---
+
+### Phase 6: Conectores de Bancos — Lógica de Negócio Real (`FinanceHub.ItauIntegration` & `FinanceHub.MercadoPagoIntegration`)
+
+- [ ] **6.1 Conector Itaú Open Finance**:
+  - Implementação completa do `IBankConnector` com FAPI (PAR, PKCE, `private_key_jwt`), mTLS e emissão de `BankTransactionNormalized`.
+- [ ] **6.2 Conector Mercado Pago Open Finance**:
+  - Implementação completa do conector Mercado Pago com OAuth2/mTLS e emissão de `BankTransactionNormalized`.
+
+---
+
+### Phase 7: Frontend Dashboard (`src/Web/finance-hub-web`) (`Pendente`)
+
+- [ ] **7.1 Dashboard Financeiro**:
   - React + Vite + TailwindCSS + Recharts para saldo consolidado, conciliação e navegação de contas conectadas.
 
 ---
 
-### Phase 7: Docker Compose & Orquestração Unificada (`Pendente`)
+### Phase 8: Docker Compose & Orquestração Unificada (`Pendente`)
 
-- [ ] **7.1 Arquivo Docker Compose Unificado**:
-  - Orquestração completa de todos os 6 microsserviços, PostgreSQL (DB por serviço), RabbitMQ e Jaeger.
+- [ ] **8.1 Arquivo Docker Compose Unificado**:
+  - Orquestração completa de todos os microsserviços, PostgreSQL (DB por serviço), RabbitMQ e Jaeger.
+
+---
+
+### Phase 9: Módulo IRPF & Tax Analytics (`Stand-By / Planejado`)
+
+- [ ] **9.1 Congelamento de Saldo em 31/12 (`account_yearly_snapshots`)**:
+  - Tabela e job automático para gravar os saldos bancários em 31/12 de cada ano fiscal exigidos na Declaração de *Bens e Direitos* do IRPF.
+- [ ] **9.2 Relatórios de Rendimentos & Deduções de IRPF**:
+  - Endpoint `GET /api/v1/reports/irpf/{userId}` agrupando informe de rendimentos, aplicações e despesas por categoria fiscal da Receita Federal.
