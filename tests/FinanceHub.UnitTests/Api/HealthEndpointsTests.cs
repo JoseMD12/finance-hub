@@ -30,10 +30,20 @@ public class CustomWebApplicationFactory<TProgram> : WebApplicationFactory<TProg
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        builder.UseSetting("ConnectionStrings:AuthConsentDb", _postgresFixture.ConnectionString);
+        builder.UseSetting("ConnectionStrings:TransactionAggregatorDb", _postgresFixture.ConnectionString);
+        builder.UseSetting("ConnectionStrings:DefaultConnection", _postgresFixture.ConnectionString);
+        builder.UseSetting("RabbitMQ:Host", _rabbitMqFixture.Host);
+        builder.UseSetting("RabbitMQ:Port", _rabbitMqFixture.Port.ToString());
+        builder.UseSetting("RabbitMQ:Username", _rabbitMqFixture.Username);
+        builder.UseSetting("RabbitMQ:Password", _rabbitMqFixture.Password);
+
         builder.ConfigureAppConfiguration((_, config) =>
         {
             config.AddInMemoryCollection(new Dictionary<string, string?>
             {
+                { "ConnectionStrings:AuthConsentDb", _postgresFixture.ConnectionString },
+                { "ConnectionStrings:TransactionAggregatorDb", _postgresFixture.ConnectionString },
                 { "ConnectionStrings:DefaultConnection", _postgresFixture.ConnectionString },
                 { "RabbitMQ:Host", _rabbitMqFixture.Host },
                 { "RabbitMQ:Port", _rabbitMqFixture.Port.ToString() },
