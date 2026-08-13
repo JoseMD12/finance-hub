@@ -1,5 +1,5 @@
 using System;
-using FinanceHub.TransactionAggregator.Domain.ValueObjects;
+using FinanceHub.TransactionAggregator.Domain.Entities;
 
 namespace FinanceHub.TransactionAggregator.Application.Services.Categorization;
 
