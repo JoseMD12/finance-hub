@@ -17,24 +17,18 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var connectionString = configuration.GetConnectionString("DefaultConnection");
+        var connectionString = configuration.GetConnectionString("AuthConsentDb")
+                            ?? configuration.GetConnectionString("DefaultConnection");
 
         if (string.IsNullOrWhiteSpace(connectionString))
         {
             throw new InvalidOperationException(
-                "A string de conexão 'ConnectionStrings:DefaultConnection' não foi informada no arquivo .env ou no ambiente.");
+                "A string de conexão 'ConnectionStrings:AuthConsentDb' (ou 'ConnectionStrings:DefaultConnection') não foi informada no ambiente.");
         }
 
         services.AddDbContext<AuthConsentDbContext>(options =>
         {
-            if (connectionString.StartsWith("InMemory", StringComparison.OrdinalIgnoreCase))
-            {
-                options.UseInMemoryDatabase("financehub_authconsent");
-            }
-            else
-            {
-                options.UseNpgsql(connectionString);
-            }
+            options.UseNpgsql(connectionString);
         });
 
         services.AddScoped<IBankConsentRepository, BankConsentRepository>();

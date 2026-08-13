@@ -1,6 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <ItemGroup>
+    <PackageReference Include="DotNetEnv" Version="3.1.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.2">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
     <ProjectReference Include="..\FinanceHub.TransactionAggregator.Application\FinanceHub.TransactionAggregator.Application.csproj" />
     <ProjectReference Include="..\FinanceHub.TransactionAggregator.Infrastructure\FinanceHub.TransactionAggregator.Infrastructure.csproj" />
     <ProjectReference Include="..\..\..\Shared\FinanceHub.Shared.Observability\FinanceHub.Shared.Observability.csproj" />

@@ -1,3 +1,4 @@
+using DotNetEnv;
 using FinanceHub.Shared.Observability;
 
 namespace FinanceHub.ApiGateway;
@@ -6,6 +7,8 @@ public class Program
 {
     public static void Main(string[] args)
     {
+        Env.TraversePath().Load();
+
         var builder = WebApplication.CreateBuilder(args);
 
         builder.Host.UseFinanceHubSerilog();

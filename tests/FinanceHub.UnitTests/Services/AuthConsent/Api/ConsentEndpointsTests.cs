@@ -7,6 +7,7 @@ using FinanceHub.AuthConsent.Application.Interfaces;
 using FinanceHub.AuthConsent.Domain.Constants;
 using FinanceHub.AuthConsent.Domain.Entities;
 using FinanceHub.Shared.Messaging.Events;
+using FinanceHub.UnitTests.Infrastructure;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,23 +17,24 @@ using Xunit;
 
 namespace FinanceHub.UnitTests.AuthConsent.Api;
 
-public class ConsentEndpointsTests : IClassFixture<WebApplicationFactory<Program>>
+public class ConsentEndpointsTests
 {
-    private readonly WebApplicationFactory<Program> _factory;
-
-    public ConsentEndpointsTests(WebApplicationFactory<Program> factory)
-    {
-        _factory = factory;
-    }
-
     [Fact]
     public async Task GetHealth_DeveRetornarStatus200OK_E_Healthy()
     {
-        var client = _factory.CreateClient();
+        using var factory = new CustomWebApplicationFactory<Program>();
+        await factory.InitializeAsync();
+        var client = factory.CreateClient();
 
-        var response = await client.GetAsync("/health");
-
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        try
+        {
+            var response = await client.GetAsync("/health");
+            response.StatusCode.Should().Be(HttpStatusCode.OK);
+        }
+        finally
+        {
+            await factory.DisposeAsync();
+        }
     }
 
     [Fact]
@@ -52,7 +54,10 @@ public class ConsentEndpointsTests : IClassFixture<WebApplicationFactory<Program
         oauthStrategy.ExchangeCodeForTokensAsync("auth-code-123", "https://redirect.uri", Arg.Any<CancellationToken>())
                       .Returns(new OAuthTokenExchangeResult("access-token-1", "refresh-token-1", 3600));
 
-        var client = _factory.WithWebHostBuilder(builder =>
+        using var factory = new CustomWebApplicationFactory<Program>();
+        await factory.InitializeAsync();
+
+        var client = factory.WithWebHostBuilder(builder =>
         {
             builder.ConfigureServices(services =>
             {
@@ -63,14 +68,21 @@ public class ConsentEndpointsTests : IClassFixture<WebApplicationFactory<Program
             });
         }).CreateClient();
 
-        var requestPayload = new AuthorizeConsentRequest("auth-code-123", "https://redirect.uri");
-        var response = await client.PostAsJsonAsync($"/api/v1/consents/{consent.Id}/authorize", requestPayload);
+        try
+        {
+            var requestPayload = new AuthorizeConsentRequest("auth-code-123", "https://redirect.uri");
+            var response = await client.PostAsJsonAsync($"/api/v1/consents/{consent.Id}/authorize", requestPayload);
 
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var result = await response.Content.ReadFromJsonAsync<ConsentResponseDto>();
+            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            var result = await response.Content.ReadFromJsonAsync<ConsentResponseDto>();
 
-        result.Should().NotBeNull();
-        result!.ConsentId.Should().Be(consent.Id);
-        result.Status.Should().Be(ConsentStatus.Authorized.ToString());
+            result.Should().NotBeNull();
+            result!.ConsentId.Should().Be(consent.Id);
+            result.Status.Should().Be(ConsentStatus.Authorized.ToString());
+        }
+        finally
+        {
+            await factory.DisposeAsync();
+        }
     }
 }

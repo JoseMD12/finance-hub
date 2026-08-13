@@ -1,11 +1,12 @@
 using System.Net;
 using System.Net.Http.Json;
+using FinanceHub.UnitTests.Infrastructure;
 using FluentAssertions;
-using Microsoft.AspNetCore.Mvc.Testing;
 using Xunit;
 
 namespace FinanceHub.UnitTests.Api;
 
+[Collection("IntegrationTests")]
 public class HealthEndpointsTests
 {
     private record HealthResponse(string Status, string Service, string Version);
@@ -13,90 +14,110 @@ public class HealthEndpointsTests
     [Fact]
     public async Task ApiGateway_GET_Health_ShouldReturnHealthyStatus()
     {
-        // Arrange
-        using var factory = new WebApplicationFactory<FinanceHub.ApiGateway.Program>();
+        using var factory = new CustomWebApplicationFactory<FinanceHub.ApiGateway.Program>();
+        await factory.InitializeAsync();
         var client = factory.CreateClient();
 
-        // Act
-        var response = await client.GetAsync("/health");
-
-        // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var content = await response.Content.ReadFromJsonAsync<HealthResponse>();
-        content.Should().NotBeNull();
-        content!.Status.Should().Be("Healthy");
-        content.Service.Should().Be("FinanceHub.ApiGateway");
+        try
+        {
+            var response = await client.GetAsync("/health");
+            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            var content = await response.Content.ReadFromJsonAsync<HealthResponse>();
+            content.Should().NotBeNull();
+            content!.Status.Should().Be("Healthy");
+            content.Service.Should().Be("FinanceHub.ApiGateway");
+        }
+        finally
+        {
+            await factory.DisposeAsync();
+        }
     }
 
     [Fact]
     public async Task AuthConsent_GET_Health_ShouldReturnHealthyStatus()
     {
-        // Arrange
-        using var factory = new WebApplicationFactory<FinanceHub.AuthConsent.Api.Program>();
+        using var factory = new CustomWebApplicationFactory<FinanceHub.AuthConsent.Api.Program>();
+        await factory.InitializeAsync();
         var client = factory.CreateClient();
 
-        // Act
-        var response = await client.GetAsync("/health");
-
-        // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var content = await response.Content.ReadFromJsonAsync<HealthResponse>();
-        content.Should().NotBeNull();
-        content!.Status.Should().Be("Healthy");
-        content.Service.Should().Be("FinanceHub.AuthConsent.Api");
+        try
+        {
+            var response = await client.GetAsync("/health");
+            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            var content = await response.Content.ReadFromJsonAsync<HealthResponse>();
+            content.Should().NotBeNull();
+            content!.Status.Should().Be("Healthy");
+            content.Service.Should().Be("FinanceHub.AuthConsent.Api");
+        }
+        finally
+        {
+            await factory.DisposeAsync();
+        }
     }
 
     [Fact]
     public async Task ItauIntegration_GET_Health_ShouldReturnHealthyStatus()
     {
-        // Arrange
-        using var factory = new WebApplicationFactory<FinanceHub.ItauIntegration.Api.Program>();
+        using var factory = new CustomWebApplicationFactory<FinanceHub.ItauIntegration.Api.Program>();
+        await factory.InitializeAsync();
         var client = factory.CreateClient();
 
-        // Act
-        var response = await client.GetAsync("/health");
-
-        // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var content = await response.Content.ReadFromJsonAsync<HealthResponse>();
-        content.Should().NotBeNull();
-        content!.Status.Should().Be("Healthy");
-        content.Service.Should().Be("FinanceHub.ItauIntegration.Api");
+        try
+        {
+            var response = await client.GetAsync("/health");
+            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            var content = await response.Content.ReadFromJsonAsync<HealthResponse>();
+            content.Should().NotBeNull();
+            content!.Status.Should().Be("Healthy");
+            content.Service.Should().Be("FinanceHub.ItauIntegration.Api");
+        }
+        finally
+        {
+            await factory.DisposeAsync();
+        }
     }
 
     [Fact]
     public async Task MercadoPagoIntegration_GET_Health_ShouldReturnHealthyStatus()
     {
-        // Arrange
-        using var factory = new WebApplicationFactory<FinanceHub.MercadoPagoIntegration.Api.Program>();
+        using var factory = new CustomWebApplicationFactory<FinanceHub.MercadoPagoIntegration.Api.Program>();
+        await factory.InitializeAsync();
         var client = factory.CreateClient();
 
-        // Act
-        var response = await client.GetAsync("/health");
-
-        // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var content = await response.Content.ReadFromJsonAsync<HealthResponse>();
-        content.Should().NotBeNull();
-        content!.Status.Should().Be("Healthy");
-        content.Service.Should().Be("FinanceHub.MercadoPagoIntegration.Api");
+        try
+        {
+            var response = await client.GetAsync("/health");
+            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            var content = await response.Content.ReadFromJsonAsync<HealthResponse>();
+            content.Should().NotBeNull();
+            content!.Status.Should().Be("Healthy");
+            content.Service.Should().Be("FinanceHub.MercadoPagoIntegration.Api");
+        }
+        finally
+        {
+            await factory.DisposeAsync();
+        }
     }
 
     [Fact]
     public async Task TransactionAggregator_GET_Health_ShouldReturnHealthyStatus()
     {
-        // Arrange
-        using var factory = new WebApplicationFactory<FinanceHub.TransactionAggregator.Api.Program>();
+        using var factory = new CustomWebApplicationFactory<FinanceHub.TransactionAggregator.Api.Program>();
+        await factory.InitializeAsync();
         var client = factory.CreateClient();
 
-        // Act
-        var response = await client.GetAsync("/health");
-
-        // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var content = await response.Content.ReadFromJsonAsync<HealthResponse>();
-        content.Should().NotBeNull();
-        content!.Status.Should().Be("Healthy");
-        content.Service.Should().Be("FinanceHub.TransactionAggregator.Api");
+        try
+        {
+            var response = await client.GetAsync("/health");
+            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            var content = await response.Content.ReadFromJsonAsync<HealthResponse>();
+            content.Should().NotBeNull();
+            content!.Status.Should().Be("Healthy");
+            content.Service.Should().Be("FinanceHub.TransactionAggregator.Api");
+        }
+        finally
+        {
+            await factory.DisposeAsync();
+        }
     }
 }

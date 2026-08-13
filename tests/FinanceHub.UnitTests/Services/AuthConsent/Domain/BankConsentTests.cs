@@ -176,4 +176,52 @@ public class BankConsentTests
 
         consent.IsExpiringSoon(_fakeTimeProvider).Should().BeTrue();
     }
+
+    [Fact]
+    public void RotateTokens_QuandoStatusForPending_DeveLancarConsentInvalidStateException()
+    {
+        var consent = BankConsent.Request("user-123", "itau", "consent-999", _fakeTimeProvider);
+
+        var act = () => consent.RotateTokens("acc-new", "ref-new", 3600, _fakeTimeProvider);
+
+        act.Should().Throw<ConsentInvalidStateException>()
+           .WithMessage("Consentimento no estado 'Pending' não pode executar a ação 'RotateTokens'.");
+    }
+
+    [Fact]
+    public void RotateTokens_QuandoStatusForRevoked_DeveLancarConsentInvalidStateException()
+    {
+        var consent = BankConsent.Request("user-123", "itau", "consent-999", _fakeTimeProvider);
+        consent.Authorize("acc-123", "ref-456", 3600, _fakeTimeProvider);
+        consent.Revoke(_fakeTimeProvider);
+
+        var act = () => consent.RotateTokens("acc-new", "ref-new", 3600, _fakeTimeProvider);
+
+        act.Should().Throw<ConsentInvalidStateException>()
+           .WithMessage("Consentimento no estado 'Revoked' não pode executar a ação 'RotateTokens'.");
+    }
+
+    [Fact]
+    public void Revoke_QuandoJaRevogado_DeveSerIdempotenteENaoLancarExcecao()
+    {
+        var consent = BankConsent.Request("user-123", "itau", "consent-999", _fakeTimeProvider);
+        consent.Revoke(_fakeTimeProvider);
+
+        var act = () => consent.Revoke(_fakeTimeProvider);
+
+        act.Should().NotThrow();
+        consent.Status.Should().Be(ConsentStatus.Revoked);
+    }
+
+    [Fact]
+    public void Status_QuandoExpirado_DevePermanecerAuthorizedAteRotacaoOuRevogacao()
+    {
+        var consent = BankConsent.Request("user-123", "itau", "consent-999", _fakeTimeProvider);
+        consent.Authorize("acc-123", "ref-456", 3600, _fakeTimeProvider);
+
+        _fakeTimeProvider.Advance(TimeSpan.FromHours(2));
+
+        consent.Status.Should().Be(ConsentStatus.Authorized);
+        consent.IsExpiringSoon(_fakeTimeProvider).Should().BeTrue();
+    }
 }

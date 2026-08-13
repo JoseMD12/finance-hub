@@ -15,7 +15,7 @@ Subagents operating in this workspace perform autonomous tasks such as scaffoldi
 ## 🏛️ System Architecture Matrix
 
 ```
-/mnt/c/Code/FastFinance/
+/mnt/c/Code/FinanceHub/
 ├── .agents/
 │   ├── AGENTS.md               <-- Subagent entrypoint & operational rules
 │   ├── agents.json             <-- MCP server configurations
@@ -89,8 +89,9 @@ When generating code or configuring integrations, subagents **must** adhere to:
     - Zero inline fallback defaults allowed in code. Fail-fast on startup if a required variable is missing.
 
 13. **Mandatory Dependency Inversion for Handlers and Services**:
-    - All Command and Query Handlers MUST define and implement an explicit interface (e.g. `ICreateConsentCommandHandler`, `IAuthorizeConsentCommandHandler`, `IRenewTokenCommandHandler`, `IRenewConsentTokenCommandHandler`, `IRevokeConsentCommandHandler`, `IGetConsentByUserIdQueryHandler`).
+    - All Command and Query Handlers MUST define and implement an explicit interface (e.g. `ICreateConsentCommandHandler`, `IAuthorizeConsentCommandHandler`, `IRenewTokenCommandHandler`, `IRevokeConsentCommandHandler`, `IGetConsentByUserIdQueryHandler`).
     - API endpoints MUST depend exclusively on these interfaces instead of concrete classes. Only static extension/utility classes are exempt from interfaces.
+    - **MANDATORY SEPARATE FILES**: The interface (`I<Name>.cs`) and its implementation (`<Name>.cs`) MUST ALWAYS reside in separate, dedicated `.cs` files. It is strictly forbidden to declare a `public interface` and its implementing `public class` in the same file. Reference pattern: `FinanceHub.AuthConsent.Application` (e.g., `IAuthorizeConsentCommandHandler.cs` + `AuthorizeConsentCommandHandler.cs` as distinct files in the same folder).
 
 
 

@@ -1,24 +1,22 @@
-using FinanceHub.UnitTests.Fixtures;
+using FinanceHub.UnitTests.Infrastructure;
 using FluentAssertions;
 using Npgsql;
 using Xunit;
 
 namespace FinanceHub.UnitTests.Integration;
 
-public class PostgresContainerIntegrationTests : IClassFixture<PostgreSqlTestContainerFixture>
+public class PostgresContainerIntegrationTests : IntegrationTestBase<FinanceHub.ApiGateway.Program>
 {
-    private readonly PostgreSqlTestContainerFixture _fixture;
-
-    public PostgresContainerIntegrationTests(PostgreSqlTestContainerFixture fixture)
+    public PostgresContainerIntegrationTests(CustomWebApplicationFactory<FinanceHub.ApiGateway.Program> factory)
+        : base(factory)
     {
-        _fixture = fixture;
     }
 
     [Fact]
     public async Task PostgresContainer_ShouldExecuteQueriesInIsolatedEnvironment()
     {
         // Arrange
-        await using var conn = new NpgsqlConnection(_fixture.ConnectionString);
+        await using var conn = new NpgsqlConnection(Factory.PostgresConnectionString);
         await conn.OpenAsync();
 
         await using (var cmd = conn.CreateCommand())
