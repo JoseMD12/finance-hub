@@ -16,6 +16,11 @@ public class Program
         builder.Services.AddFinanceHubObservability(builder.Configuration, "FinanceHub.TransactionAggregator.Api");
         builder.Services.AddTransactionAggregatorApiServices(builder.Configuration);
 
+        builder.Services.ConfigureHttpJsonOptions(options =>
+        {
+            options.SerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+        });
+
         var app = builder.Build();
 
         app.UseExceptionHandler();

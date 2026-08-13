@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using FinanceHub.Shared.Messaging.Events;
 using FinanceHub.TransactionAggregator.Application.Interfaces;
 using FinanceHub.TransactionAggregator.Application.Services.Categorization;
 using FinanceHub.TransactionAggregator.Domain.Entities;
@@ -26,15 +27,18 @@ public class IngestTransactionCommandHandler : IIngestTransactionCommandHandler
     private readonly ITransactionRepository _transactionRepository;
     private readonly IAccountBalanceRepository _accountBalanceRepository;
     private readonly ICategoryResolverPipeline _categoryResolverPipeline;
+    private readonly IEventPublisher _eventPublisher;
 
     public IngestTransactionCommandHandler(
         ITransactionRepository transactionRepository,
         IAccountBalanceRepository accountBalanceRepository,
-        ICategoryResolverPipeline categoryResolverPipeline)
+        ICategoryResolverPipeline categoryResolverPipeline,
+        IEventPublisher eventPublisher)
     {
         _transactionRepository = transactionRepository;
         _accountBalanceRepository = accountBalanceRepository;
         _categoryResolverPipeline = categoryResolverPipeline;
+        _eventPublisher = eventPublisher;
     }
 
     public async Task<Guid> Handle(IngestTransactionCommand command, CancellationToken cancellationToken)
@@ -91,6 +95,18 @@ public class IngestTransactionCommandHandler : IIngestTransactionCommandHandler
         }
 
         await _accountBalanceRepository.AddOrUpdateAsync(balance, cancellationToken);
+
+        await _eventPublisher.PublishAsync(new TransactionNormalized(
+            TransactionId: transaction.Id,
+            Source: command.InstitutionId,
+            AccountId: command.AccountNumber,
+            Amount: transaction.Amount.Amount,
+            Currency: transaction.Amount.Currency,
+            TransactionType: transaction.Type.ToString(),
+            TransactionDate: transaction.TransactionDateUtc,
+            CleanDescription: transaction.Description.CleanText,
+            HashDeduplicacao: transaction.Hash.Value,
+            ProcessedAtUtc: DateTime.UtcNow), cancellationToken);
 
         return transaction.Id;
     }
