@@ -19,10 +19,14 @@ public static class DependencyInjection
         services.AddExceptionHandler<GlobalExceptionHandler>();
         services.AddProblemDetails();
 
-        // 2. JWT Authentication
+        // 2. JWT Authentication (Rule 12: Fail-Fast if missing)
         var secretKey = Environment.GetEnvironmentVariable(GatewayConstants.Auth.JwtSecretKeyEnvVar)
-                     ?? configuration[GatewayConstants.Auth.JwtSecretKeyEnvVar]
-                     ?? "FinanceHubSuperSecretDevKeyWithAtLeast32BytesLength!";
+                     ?? configuration[GatewayConstants.Auth.JwtSecretKeyEnvVar];
+
+        if (string.IsNullOrWhiteSpace(secretKey))
+        {
+            throw new InvalidOperationException($"A variável de ambiente '{GatewayConstants.Auth.JwtSecretKeyEnvVar}' é obrigatória e não foi configurada.");
+        }
 
         var issuer = Environment.GetEnvironmentVariable(GatewayConstants.Auth.JwtIssuerEnvVar)
                   ?? configuration[GatewayConstants.Auth.JwtIssuerEnvVar]
@@ -90,7 +94,7 @@ public static class DependencyInjection
             });
         });
 
-        // 4. Typed HttpClients for Downstream Microservices
+        // 4. Typed HttpClients with Polly Resilience Handlers
         var authConsentUrl = Environment.GetEnvironmentVariable(GatewayConstants.Downstream.AuthConsentBaseUrlEnvVar)
                           ?? configuration[GatewayConstants.Downstream.AuthConsentBaseUrlEnvVar]
                           ?? GatewayConstants.Downstream.DefaultAuthConsentUrl;
@@ -103,13 +107,15 @@ public static class DependencyInjection
         {
             client.BaseAddress = new Uri(authConsentUrl);
             client.Timeout = TimeSpan.FromSeconds(GatewayConstants.Downstream.DefaultTimeoutSeconds);
-        });
+        })
+        .AddStandardResilienceHandler();
 
         services.AddHttpClient<ITransactionAggregatorServiceClient, TransactionAggregatorServiceClient>(client =>
         {
             client.BaseAddress = new Uri(transactionAggregatorUrl);
             client.Timeout = TimeSpan.FromSeconds(GatewayConstants.Downstream.DefaultTimeoutSeconds);
-        });
+        })
+        .AddStandardResilienceHandler();
 
         // 5. Health Checks
         services.AddHealthChecks();
