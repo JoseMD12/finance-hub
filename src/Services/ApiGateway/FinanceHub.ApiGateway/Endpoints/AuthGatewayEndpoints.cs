@@ -30,17 +30,29 @@ public static class AuthGatewayEndpoints
         {
             var userId = string.IsNullOrWhiteSpace(request.UserId) ? "usr_dev_001" : request.UserId;
 
-            var secretKey = configuration[GatewayConstants.Auth.JwtSecretKeyEnvVar];
+            var secretKey = Environment.GetEnvironmentVariable(GatewayConstants.Auth.JwtSecretKeyEnvVar)
+                         ?? configuration[GatewayConstants.Auth.JwtSecretKeyEnvVar];
+
             if (string.IsNullOrWhiteSpace(secretKey))
             {
-                throw new InvalidOperationException($"A variável de ambiente '{GatewayConstants.Auth.JwtSecretKeyEnvVar}' é obrigatória.");
+                throw new InvalidOperationException($"A variável de ambiente '{GatewayConstants.Auth.JwtSecretKeyEnvVar}' é obrigatória e não foi configurada.");
             }
 
-            var issuer = configuration[GatewayConstants.Auth.JwtIssuerEnvVar]
-                      ?? GatewayConstants.Auth.GetDefaultIssuer();
+            var issuer = Environment.GetEnvironmentVariable(GatewayConstants.Auth.JwtIssuerEnvVar)
+                      ?? configuration[GatewayConstants.Auth.JwtIssuerEnvVar];
 
-            var audience = configuration[GatewayConstants.Auth.JwtAudienceEnvVar]
-                        ?? GatewayConstants.Auth.DefaultAudience;
+            if (string.IsNullOrWhiteSpace(issuer))
+            {
+                throw new InvalidOperationException($"A variável de ambiente '{GatewayConstants.Auth.JwtIssuerEnvVar}' é obrigatória e não foi configurada.");
+            }
+
+            var audience = Environment.GetEnvironmentVariable(GatewayConstants.Auth.JwtAudienceEnvVar)
+                        ?? configuration[GatewayConstants.Auth.JwtAudienceEnvVar];
+
+            if (string.IsNullOrWhiteSpace(audience))
+            {
+                throw new InvalidOperationException($"A variável de ambiente '{GatewayConstants.Auth.JwtAudienceEnvVar}' é obrigatória e não foi configurada.");
+            }
 
             var keyBytes = Encoding.UTF8.GetBytes(secretKey);
             var signingCredentials = new SigningCredentials(

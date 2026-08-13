@@ -20,7 +20,7 @@ public static class DependencyInjection
         services.AddExceptionHandler<GlobalExceptionHandler>();
         services.AddProblemDetails();
 
-        // 2. JWT Authentication (Rule 12: Fail-Fast if missing)
+        // 2. JWT Authentication (Rule 12: Fail-Fast on Startup if Missing)
         var secretKey = Environment.GetEnvironmentVariable(GatewayConstants.Auth.JwtSecretKeyEnvVar)
                      ?? configuration[GatewayConstants.Auth.JwtSecretKeyEnvVar];
 
@@ -30,12 +30,20 @@ public static class DependencyInjection
         }
 
         var issuer = Environment.GetEnvironmentVariable(GatewayConstants.Auth.JwtIssuerEnvVar)
-                  ?? configuration[GatewayConstants.Auth.JwtIssuerEnvVar]
-                  ?? GatewayConstants.Auth.GetDefaultIssuer();
+                  ?? configuration[GatewayConstants.Auth.JwtIssuerEnvVar];
+
+        if (string.IsNullOrWhiteSpace(issuer))
+        {
+            throw new InvalidOperationException($"A variável de ambiente '{GatewayConstants.Auth.JwtIssuerEnvVar}' é obrigatória e não foi configurada.");
+        }
 
         var audience = Environment.GetEnvironmentVariable(GatewayConstants.Auth.JwtAudienceEnvVar)
-                    ?? configuration[GatewayConstants.Auth.JwtAudienceEnvVar]
-                    ?? GatewayConstants.Auth.DefaultAudience;
+                    ?? configuration[GatewayConstants.Auth.JwtAudienceEnvVar];
+
+        if (string.IsNullOrWhiteSpace(audience))
+        {
+            throw new InvalidOperationException($"A variável de ambiente '{GatewayConstants.Auth.JwtAudienceEnvVar}' é obrigatória e não foi configurada.");
+        }
 
         services.AddAuthentication(options =>
         {
@@ -95,14 +103,22 @@ public static class DependencyInjection
             });
         });
 
-        // 4. Typed HttpClients with Polly Resilience Handlers
-        var authConsentRawUrl = Environment.GetEnvironmentVariable(GatewayConstants.Downstream.AuthConsentBaseUrlEnvVar)
-                             ?? configuration[GatewayConstants.Downstream.AuthConsentBaseUrlEnvVar];
-        var authConsentUrl = GatewayConstants.Downstream.GetAuthConsentUrl(authConsentRawUrl);
+        // 4. Typed HttpClients with Polly Resilience Handlers (Rule 12: Fail-Fast if Missing)
+        var authConsentUrl = Environment.GetEnvironmentVariable(GatewayConstants.Downstream.AuthConsentBaseUrlEnvVar)
+                          ?? configuration[GatewayConstants.Downstream.AuthConsentBaseUrlEnvVar];
 
-        var transactionAggregatorRawUrl = Environment.GetEnvironmentVariable(GatewayConstants.Downstream.TransactionAggregatorBaseUrlEnvVar)
-                                        ?? configuration[GatewayConstants.Downstream.TransactionAggregatorBaseUrlEnvVar];
-        var transactionAggregatorUrl = GatewayConstants.Downstream.GetTransactionAggregatorUrl(transactionAggregatorRawUrl);
+        if (string.IsNullOrWhiteSpace(authConsentUrl))
+        {
+            throw new InvalidOperationException($"A variável de ambiente '{GatewayConstants.Downstream.AuthConsentBaseUrlEnvVar}' é obrigatória e não foi configurada.");
+        }
+
+        var transactionAggregatorUrl = Environment.GetEnvironmentVariable(GatewayConstants.Downstream.TransactionAggregatorBaseUrlEnvVar)
+                                    ?? configuration[GatewayConstants.Downstream.TransactionAggregatorBaseUrlEnvVar];
+
+        if (string.IsNullOrWhiteSpace(transactionAggregatorUrl))
+        {
+            throw new InvalidOperationException($"A variável de ambiente '{GatewayConstants.Downstream.TransactionAggregatorBaseUrlEnvVar}' é obrigatória e não foi configurada.");
+        }
 
         services.AddHttpClient<IAuthConsentServiceClient, AuthConsentServiceClient>(client =>
         {

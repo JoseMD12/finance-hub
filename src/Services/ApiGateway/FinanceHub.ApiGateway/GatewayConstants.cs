@@ -1,5 +1,3 @@
-using System;
-
 namespace FinanceHub.ApiGateway;
 
 public static class GatewayConstants
@@ -16,10 +14,6 @@ public static class GatewayConstants
         public const string JwtSecretKeyEnvVar = "JWT_SECRET_KEY";
         public const string JwtIssuerEnvVar = "JWT_ISSUER";
         public const string JwtAudienceEnvVar = "JWT_AUDIENCE";
-        public const string DefaultIssuerDomain = "financehub.local";
-        public const string DefaultAudience = "financehub-gateway";
-
-        public static string GetDefaultIssuer() => $"{Uri.UriSchemeHttps}://{DefaultIssuerDomain}";
     }
 
     public static class Scopes
@@ -36,12 +30,6 @@ public static class GatewayConstants
         public const string AuthConsentServiceName = "AuthConsent";
         public const string TransactionAggregatorServiceName = "TransactionAggregator";
         public const int DefaultTimeoutSeconds = 10;
-
-        public static string GetAuthConsentUrl(string? configuredUrl) =>
-            !string.IsNullOrWhiteSpace(configuredUrl) ? configuredUrl : $"{Uri.UriSchemeHttp}://localhost:5001";
-
-        public static string GetTransactionAggregatorUrl(string? configuredUrl) =>
-            !string.IsNullOrWhiteSpace(configuredUrl) ? configuredUrl : $"{Uri.UriSchemeHttp}://localhost:5002";
     }
 
     public static class RateLimiting
