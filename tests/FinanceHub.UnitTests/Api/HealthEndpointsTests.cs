@@ -54,6 +54,12 @@ public class CustomWebApplicationFactory<TProgram> : WebApplicationFactory<TProg
     }
 }
 
+[CollectionDefinition("IntegrationTests", DisableParallelization = true)]
+public class IntegrationTestCollection : ICollectionFixture<PostgreSqlTestContainerFixture>
+{
+}
+
+[Collection("IntegrationTests")]
 public class HealthEndpointsTests
 {
     private record HealthResponse(string Status, string Service, string Version);
