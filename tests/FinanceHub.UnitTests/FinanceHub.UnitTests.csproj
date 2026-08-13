@@ -28,7 +28,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="..\..\.env" CopyToOutputDirectory="PreserveNewest" Link=".env" />
+    <None Include="..\..\.env" Condition="Exists('..\..\.env')" CopyToOutputDirectory="PreserveNewest" Link=".env" />
   </ItemGroup>
 
   <ItemGroup>
