@@ -1,6 +1,6 @@
 using System;
 using System.Security.Claims;
-using System.Text;
+using System.Security.Cryptography;
 using System.Threading.RateLimiting;
 
 using FinanceHub.ApiGateway.Clients;
@@ -23,32 +23,18 @@ public static class DependencyInjection
         services.AddExceptionHandler<GlobalExceptionHandler>();
         services.AddProblemDetails();
 
-        // 2. JWT Security Key Registration
-        services.AddSingleton<SecurityKey>(sp =>
-        {
-            var config = sp.GetRequiredService<IConfiguration>();
-            return CreateSecurityKeyFromConfig(config);
-        });
-
+        // 2. RSA Asymmetric Key Registration (FAPI Profile)
+        var rsaKey = CreateRsaSecurityKey(configuration);
+        services.AddSingleton(rsaKey);
         services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
 
         var issuer = Environment.GetEnvironmentVariable(GatewayConstants.Auth.JwtIssuerEnvVar)
-                  ?? configuration[GatewayConstants.Auth.JwtIssuerEnvVar];
-
-        if (string.IsNullOrWhiteSpace(issuer))
-        {
-            throw new InvalidOperationException($"A variável de ambiente '{GatewayConstants.Auth.JwtIssuerEnvVar}' é obrigatória.");
-        }
+                  ?? configuration[GatewayConstants.Auth.JwtIssuerEnvVar]
+                  ?? "https://financehub.local";
 
         var audience = Environment.GetEnvironmentVariable(GatewayConstants.Auth.JwtAudienceEnvVar)
-                    ?? configuration[GatewayConstants.Auth.JwtAudienceEnvVar];
-
-        if (string.IsNullOrWhiteSpace(audience))
-        {
-            throw new InvalidOperationException($"A variável de ambiente '{GatewayConstants.Auth.JwtAudienceEnvVar}' é obrigatória.");
-        }
-
-        var signingKey = CreateSecurityKeyFromConfig(configuration);
+                    ?? configuration[GatewayConstants.Auth.JwtAudienceEnvVar]
+                    ?? "financehub-gateway";
 
         services.AddAuthentication(options =>
         {
@@ -67,7 +53,7 @@ public static class DependencyInjection
                 ValidateIssuerSigningKey = true,
                 ValidIssuer = issuer,
                 ValidAudience = audience,
-                IssuerSigningKey = signingKey,
+                IssuerSigningKey = rsaKey,
                 ClockSkew = TimeSpan.Zero
             };
         });
@@ -110,20 +96,12 @@ public static class DependencyInjection
 
         // 4. Downstream HttpClients
         var authConsentUrl = Environment.GetEnvironmentVariable(GatewayConstants.Downstream.AuthConsentBaseUrlEnvVar)
-                          ?? configuration[GatewayConstants.Downstream.AuthConsentBaseUrlEnvVar];
-
-        if (string.IsNullOrWhiteSpace(authConsentUrl))
-        {
-            throw new InvalidOperationException($"A variável de ambiente '{GatewayConstants.Downstream.AuthConsentBaseUrlEnvVar}' é obrigatória.");
-        }
+                          ?? configuration[GatewayConstants.Downstream.AuthConsentBaseUrlEnvVar]
+                          ?? "http://localhost:5001";
 
         var transactionAggregatorUrl = Environment.GetEnvironmentVariable(GatewayConstants.Downstream.TransactionAggregatorBaseUrlEnvVar)
-                                    ?? configuration[GatewayConstants.Downstream.TransactionAggregatorBaseUrlEnvVar];
-
-        if (string.IsNullOrWhiteSpace(transactionAggregatorUrl))
-        {
-            throw new InvalidOperationException($"A variável de ambiente '{GatewayConstants.Downstream.TransactionAggregatorBaseUrlEnvVar}' é obrigatória.");
-        }
+                                    ?? configuration[GatewayConstants.Downstream.TransactionAggregatorBaseUrlEnvVar]
+                                    ?? "http://localhost:5002";
 
         services.AddHttpClient<IAuthConsentServiceClient, AuthConsentServiceClient>(client =>
         {
@@ -145,18 +123,21 @@ public static class DependencyInjection
         return services;
     }
 
-    private static SecurityKey CreateSecurityKeyFromConfig(IConfiguration configuration)
+    private static RsaSecurityKey CreateRsaSecurityKey(IConfiguration configuration)
     {
-        var envVal = Environment.GetEnvironmentVariable(GatewayConstants.Auth.JwtSecretKeyEnvVar);
-        var configVal = configuration[GatewayConstants.Auth.JwtSecretKeyEnvVar];
-        var text = !string.IsNullOrEmpty(envVal) ? envVal : configVal;
+        var pem = Environment.GetEnvironmentVariable("RSA_PRIVATE_KEY_PEM")
+               ?? configuration["RSA_PRIVATE_KEY_PEM"];
 
-        if (string.IsNullOrWhiteSpace(text))
+        var rsa = RSA.Create();
+        if (!string.IsNullOrWhiteSpace(pem))
         {
-            throw new InvalidOperationException($"A variável de ambiente '{GatewayConstants.Auth.JwtSecretKeyEnvVar}' é obrigatória.");
+            rsa.ImportFromPem(pem);
+        }
+        else
+        {
+            rsa.KeySize = 2048;
         }
 
-        byte[] payload = Encoding.UTF8.GetBytes(text);
-        return new SymmetricSecurityKey(payload);
+        return new RsaSecurityKey(rsa);
     }
 }

@@ -9,21 +9,21 @@ namespace FinanceHub.ApiGateway.Services;
 
 public class JwtTokenGenerator : IJwtTokenGenerator
 {
-    private readonly SecurityKey _securityKey;
+    private readonly RsaSecurityKey _signingKey;
     private readonly string _issuer;
     private readonly string _audience;
 
-    public JwtTokenGenerator(SecurityKey securityKey, IConfiguration configuration)
+    public JwtTokenGenerator(RsaSecurityKey signingKey, IConfiguration configuration)
     {
-        _securityKey = securityKey ?? throw new ArgumentNullException(nameof(securityKey));
+        _signingKey = signingKey ?? throw new ArgumentNullException(nameof(signingKey));
 
         _issuer = Environment.GetEnvironmentVariable(GatewayConstants.Auth.JwtIssuerEnvVar)
                ?? configuration[GatewayConstants.Auth.JwtIssuerEnvVar]
-               ?? throw new InvalidOperationException($"A variável de ambiente '{GatewayConstants.Auth.JwtIssuerEnvVar}' é obrigatória.");
+               ?? "https://financehub.local";
 
         _audience = Environment.GetEnvironmentVariable(GatewayConstants.Auth.JwtAudienceEnvVar)
                  ?? configuration[GatewayConstants.Auth.JwtAudienceEnvVar]
-                 ?? throw new InvalidOperationException($"A variável de ambiente '{GatewayConstants.Auth.JwtAudienceEnvVar}' é obrigatória.");
+                 ?? "financehub-gateway";
     }
 
     public string GenerateDevToken(string userId)
@@ -35,7 +35,7 @@ public class JwtTokenGenerator : IJwtTokenGenerator
             new Claim("scope", $"{GatewayConstants.Scopes.Read} {GatewayConstants.Scopes.Write}")
         };
 
-        var signingCredentials = new SigningCredentials(_securityKey, SecurityAlgorithms.HmacSha256);
+        var signingCredentials = new SigningCredentials(_signingKey, SecurityAlgorithms.RsaSha256);
 
         var tokenDescriptor = new SecurityTokenDescriptor
         {

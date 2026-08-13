@@ -8,6 +8,12 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 
+env:
+  JWT_ISSUER: "https://financehub.local"
+  JWT_AUDIENCE: "financehub-gateway"
+  AUTH_CONSENT_BASE_URL: "http://localhost:5001"
+  TRANSACTION_AGGREGATOR_BASE_URL: "http://localhost:5002"
+
 jobs:
   build:
     name: Build Solution
