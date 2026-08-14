@@ -4,6 +4,7 @@ using System.Security.Cryptography;
 using System.Threading.RateLimiting;
 
 using FinanceHub.ApiGateway.Clients;
+using FinanceHub.ApiGateway.Exceptions;
 using FinanceHub.ApiGateway.Middleware;
 using FinanceHub.ApiGateway.Services;
 using FinanceHub.Shared.Observability.Exceptions.Mapping;
@@ -30,11 +31,11 @@ public static class DependencyInjection
 
         var issuer = Environment.GetEnvironmentVariable(GatewayConstants.Auth.JwtIssuerEnvVar)
                   ?? configuration[GatewayConstants.Auth.JwtIssuerEnvVar]
-                  ?? "https://financehub.local";
+                  ?? throw new GatewayConfigurationException(GatewayConstants.Auth.JwtIssuerEnvVar);
 
         var audience = Environment.GetEnvironmentVariable(GatewayConstants.Auth.JwtAudienceEnvVar)
                     ?? configuration[GatewayConstants.Auth.JwtAudienceEnvVar]
-                    ?? "financehub-gateway";
+                    ?? throw new GatewayConfigurationException(GatewayConstants.Auth.JwtAudienceEnvVar);
 
         services.AddAuthentication(options =>
         {
@@ -97,11 +98,11 @@ public static class DependencyInjection
         // 4. Downstream HttpClients
         var authConsentUrl = Environment.GetEnvironmentVariable(GatewayConstants.Downstream.AuthConsentBaseUrlEnvVar)
                           ?? configuration[GatewayConstants.Downstream.AuthConsentBaseUrlEnvVar]
-                          ?? "http://localhost:5001";
+                          ?? throw new GatewayConfigurationException(GatewayConstants.Downstream.AuthConsentBaseUrlEnvVar);
 
         var transactionAggregatorUrl = Environment.GetEnvironmentVariable(GatewayConstants.Downstream.TransactionAggregatorBaseUrlEnvVar)
                                     ?? configuration[GatewayConstants.Downstream.TransactionAggregatorBaseUrlEnvVar]
-                                    ?? "http://localhost:5002";
+                                    ?? throw new GatewayConfigurationException(GatewayConstants.Downstream.TransactionAggregatorBaseUrlEnvVar);
 
         services.AddHttpClient<IAuthConsentServiceClient, AuthConsentServiceClient>(client =>
         {

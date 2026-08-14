@@ -5,6 +5,8 @@ using System.Security.Claims;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 
+using FinanceHub.ApiGateway.Exceptions;
+
 namespace FinanceHub.ApiGateway.Services;
 
 public class JwtTokenGenerator : IJwtTokenGenerator
@@ -19,11 +21,11 @@ public class JwtTokenGenerator : IJwtTokenGenerator
 
         _issuer = Environment.GetEnvironmentVariable(GatewayConstants.Auth.JwtIssuerEnvVar)
                ?? configuration[GatewayConstants.Auth.JwtIssuerEnvVar]
-               ?? "https://financehub.local";
+               ?? throw new GatewayConfigurationException(GatewayConstants.Auth.JwtIssuerEnvVar);
 
         _audience = Environment.GetEnvironmentVariable(GatewayConstants.Auth.JwtAudienceEnvVar)
                  ?? configuration[GatewayConstants.Auth.JwtAudienceEnvVar]
-                 ?? "financehub-gateway";
+                 ?? throw new GatewayConfigurationException(GatewayConstants.Auth.JwtAudienceEnvVar);
     }
 
     public string GenerateDevToken(string userId)
