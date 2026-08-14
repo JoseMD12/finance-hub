@@ -19,17 +19,12 @@ public class DefaultExceptionMapper : IExceptionMapper
             _ => (StatusCodes.Status500InternalServerError, "Erro Interno no Servidor", "INTERNAL_SERVER_ERROR")
         };
 
-        var problem = new ProblemDetails
-        {
-            Status = status,
-            Title = title,
-            Detail = exception.Message,
-            Instance = context.Request.Path
-        };
-
-        problem.Extensions["errorCode"] = errorCode;
-        problem.Extensions["traceId"] = traceId;
-
-        return problem;
+        return ProblemDetailsFactory.Create(
+            status,
+            title,
+            exception.Message,
+            errorCode,
+            traceId,
+            context.Request.Path);
     }
 }

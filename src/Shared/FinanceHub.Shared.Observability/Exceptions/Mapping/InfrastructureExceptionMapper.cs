@@ -15,17 +15,12 @@ public class InfrastructureExceptionMapper : IExceptionMapper
     {
         var infraEx = (InfrastructureException)exception;
 
-        var problem = new ProblemDetails
-        {
-            Status = infraEx.StatusCode,
-            Title = "Erro de Infraestrutura",
-            Detail = infraEx.Message,
-            Instance = context.Request.Path
-        };
-
-        problem.Extensions["errorCode"] = infraEx.ErrorCode;
-        problem.Extensions["traceId"] = traceId;
-
-        return problem;
+        return ProblemDetailsFactory.Create(
+            infraEx.StatusCode,
+            "Erro de Infraestrutura",
+            infraEx.Message,
+            infraEx.ErrorCode,
+            traceId,
+            context.Request.Path);
     }
 }

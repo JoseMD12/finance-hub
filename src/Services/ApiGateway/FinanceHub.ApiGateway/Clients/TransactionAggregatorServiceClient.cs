@@ -6,6 +6,7 @@ using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
+using FinanceHub.ApiGateway.Clients.Extensions;
 using FinanceHub.ApiGateway.DTOs;
 using FinanceHub.ApiGateway.Exceptions;
 
@@ -28,66 +29,27 @@ public class TransactionAggregatorServiceClient : ITransactionAggregatorServiceC
 
     public async Task<GatewayConsolidatedBalanceDto> GetConsolidatedBalanceAsync(string userId, CancellationToken ct = default)
     {
-        try
-        {
-            var response = await _httpClient.GetAsync($"/api/v1/transactions/balances/user/{userId}", ct);
-
-            if (!response.IsSuccessStatusCode)
-            {
-                var errorContent = await response.Content.ReadAsStringAsync(ct);
-                throw new GatewayDownstreamException(ServiceName, $"Falha ao buscar saldo consolidado para userId '{userId}'. Status: {response.StatusCode}. Detalhes: {errorContent}");
-            }
-
-            var balance = await response.Content.ReadFromJsonAsync<GatewayConsolidatedBalanceDto>(cancellationToken: ct);
-            return balance ?? new GatewayConsolidatedBalanceDto(userId, 0m, Enumerable.Empty<GatewayAccountBalanceDto>());
-        }
-        catch (HttpRequestException ex)
-        {
-            _logger.LogError(ex, "Erro de conexão ao chamar TransactionAggregator GetConsolidatedBalanceAsync para userId {UserId}", userId);
-            throw new GatewayDownstreamException(ServiceName, ex.Message, ex);
-        }
+        using var request = new HttpRequestMessage(HttpMethod.Get, $"/api/v1/transactions/balances/user/{userId}");
+        var balance = await _httpClient.SendAndDeserializeAsync<GatewayConsolidatedBalanceDto>(request, ServiceName, _logger, ct);
+        return balance ?? new GatewayConsolidatedBalanceDto(userId, 0m, Enumerable.Empty<GatewayAccountBalanceDto>());
     }
 
     public async Task<IEnumerable<GatewayTransactionDto>> GetTransactionsAsync(string userId, int page = 1, int pageSize = 20, CancellationToken ct = default)
     {
-        try
-        {
-            var response = await _httpClient.GetAsync($"/api/v1/transactions?userId={userId}&page={page}&pageSize={pageSize}", ct);
-
-            if (!response.IsSuccessStatusCode)
-            {
-                var errorContent = await response.Content.ReadAsStringAsync(ct);
-                throw new GatewayDownstreamException(ServiceName, $"Falha ao buscar transações para userId '{userId}'. Status: {response.StatusCode}. Detalhes: {errorContent}");
-            }
-
-            var transactions = await response.Content.ReadFromJsonAsync<IEnumerable<GatewayTransactionDto>>(cancellationToken: ct);
-            return transactions ?? Enumerable.Empty<GatewayTransactionDto>();
-        }
-        catch (HttpRequestException ex)
-        {
-            _logger.LogError(ex, "Erro de conexão ao buscar transações no TransactionAggregator");
-            throw new GatewayDownstreamException(ServiceName, ex.Message, ex);
-        }
+        using var request = new HttpRequestMessage(HttpMethod.Get, $"/api/v1/transactions?userId={userId}&page={page}&pageSize={pageSize}");
+        var transactions = await _httpClient.SendAndDeserializeAsync<IEnumerable<GatewayTransactionDto>>(request, ServiceName, _logger, ct);
+        return transactions ?? Enumerable.Empty<GatewayTransactionDto>();
     }
 
     public async Task CategorizeTransactionAsync(Guid transactionId, string userId, Guid categoryId, bool createCustomRule = false, CancellationToken ct = default)
     {
-        try
+        var payload = new { UserId = userId, NewCategoryId = categoryId, CreateCustomRule = createCustomRule };
+        using var request = new HttpRequestMessage(HttpMethod.Patch, $"/api/v1/transactions/{transactionId}/categorize")
         {
-            var payload = new { UserId = userId, NewCategoryId = categoryId, CreateCustomRule = createCustomRule };
-            var response = await _httpClient.PatchAsJsonAsync($"/api/v1/transactions/{transactionId}/categorize", payload, ct);
+            Content = JsonContent.Create(payload)
+        };
 
-            if (!response.IsSuccessStatusCode)
-            {
-                var errorContent = await response.Content.ReadAsStringAsync(ct);
-                throw new GatewayDownstreamException(ServiceName, $"Falha ao categorizar transação '{transactionId}'. Status: {response.StatusCode}. Detalhes: {errorContent}");
-            }
-        }
-        catch (HttpRequestException ex)
-        {
-            _logger.LogError(ex, "Erro de conexão ao categorizar transação {TransactionId}", transactionId);
-            throw new GatewayDownstreamException(ServiceName, ex.Message, ex);
-        }
+        await _httpClient.SendOrThrowAsync(request, ServiceName, _logger, null, ct);
     }
 
     public async Task<bool> HealthCheckAsync(CancellationToken ct = default)

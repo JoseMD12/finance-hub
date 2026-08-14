@@ -4,6 +4,7 @@ using System.Net.Http.Json;
 using FinanceHub.ApiGateway.Clients;
 using FinanceHub.ApiGateway.DTOs;
 using FinanceHub.ApiGateway.Exceptions;
+using FinanceHub.UnitTests.Helpers;
 
 using FluentAssertions;
 
@@ -18,16 +19,6 @@ namespace FinanceHub.UnitTests.ApiGateway.Clients;
 public class TransactionAggregatorServiceClientTests
 {
     private readonly ILogger<TransactionAggregatorServiceClient> _logger = Substitute.For<ILogger<TransactionAggregatorServiceClient>>();
-
-    private class MockHttpMessageHandler : HttpMessageHandler
-    {
-        public HttpResponseMessage ResponseToReturn { get; set; } = new(HttpStatusCode.OK);
-
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
-        {
-            return Task.FromResult(ResponseToReturn);
-        }
-    }
 
     [Fact]
     public async Task GetConsolidatedBalanceAsync_WhenSuccess_ShouldReturnConsolidatedBalanceDto()
