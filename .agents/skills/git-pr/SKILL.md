@@ -6,9 +6,12 @@ description: Pull Request creator skill with automated template, testing checkli
 # Pull Request Creator & Automation Skill
 
 ## ⚡ Trigger / Slash Command
-- `/git-pr` -> Prepara e abre o Pull Request com template padronizado, release notes e checklist.
+```bash
+/git-pr <destination-branch>
+```
+*Exemplo:* `/git-pr main` ou `/git-pr develop`. Se não especificado, o padrão é `main`.
 
-Use esta habilidade para gerar a descrição do PR e validar os critérios de merge no **FinanceHub**.
+Use esta habilidade para gerar a descrição do PR, rodar as validações prévias e abrir o Pull Request contra a branch de destino informada.
 
 ## 1. Automated Pull Request Template
 
