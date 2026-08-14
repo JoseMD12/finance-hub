@@ -41,17 +41,12 @@ public class DomainExceptionMapper : IExceptionMapper
 
         var errorCode = (string?)(type.GetProperty("ErrorCode")?.GetValue(exception)) ?? "DOMAIN_ERROR";
 
-        var problem = new ProblemDetails
-        {
-            Status = statusCode,
-            Title = "Regra de Domínio Violada",
-            Detail = exception.Message,
-            Instance = context.Request.Path
-        };
-
-        problem.Extensions["errorCode"] = errorCode;
-        problem.Extensions["traceId"] = traceId;
-
-        return problem;
+        return ProblemDetailsFactory.Create(
+            statusCode,
+            "Regra de Domínio Violada",
+            exception.Message,
+            errorCode,
+            traceId,
+            context.Request.Path);
     }
 }

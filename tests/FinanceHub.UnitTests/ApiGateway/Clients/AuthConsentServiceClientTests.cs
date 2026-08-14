@@ -4,6 +4,7 @@ using System.Net.Http.Json;
 using FinanceHub.ApiGateway.Clients;
 using FinanceHub.ApiGateway.DTOs;
 using FinanceHub.ApiGateway.Exceptions;
+using FinanceHub.UnitTests.Helpers;
 
 using FluentAssertions;
 
@@ -18,18 +19,6 @@ namespace FinanceHub.UnitTests.ApiGateway.Clients;
 public class AuthConsentServiceClientTests
 {
     private readonly ILogger<AuthConsentServiceClient> _logger = Substitute.For<ILogger<AuthConsentServiceClient>>();
-
-    private class MockHttpMessageHandler : HttpMessageHandler
-    {
-        public HttpResponseMessage ResponseToReturn { get; set; } = new(HttpStatusCode.OK);
-        public HttpRequestMessage? LastRequest { get; private set; }
-
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
-        {
-            LastRequest = request;
-            return Task.FromResult(ResponseToReturn);
-        }
-    }
 
     [Fact]
     public async Task GetConsentsByUserIdAsync_WhenSuccess_ShouldReturnConsentsList()
