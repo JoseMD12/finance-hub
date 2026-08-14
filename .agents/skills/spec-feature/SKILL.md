@@ -1,11 +1,16 @@
 ---
-name: spec-collaboration
-description: Interactive and collaborative specification drafting skill for FinanceHub. Enforces one-question-at-a-time decision making, progressive spec document updates, and architectural validation gates.
+name: spec-feature
+description: Interactive and collaborative specification drafting skill for FinanceHub in Plan Mode. Enforces one-question-at-a-time decision making, progressive spec document updates, and architectural validation gates.
 ---
 
-# Collaborative Specification Drafting Skill — FinanceHub
+# Feature Specification & Planning Skill — FinanceHub
 
-This skill governs the interactive process of crafting technical specifications, feature roadmaps, and architectural specs collaboratively with the user.
+## ⚡ Trigger / Slash Command
+```bash
+/spec-feature
+```
+
+Use esta habilidade para planejar e criar especificações técnicas detalhadas em `.agents/specs/` em Plan Mode (1 pergunta por vez).
 
 ## Core Principles
 

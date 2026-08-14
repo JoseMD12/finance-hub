@@ -24,8 +24,8 @@ services:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
     ports:
-      - "5672:5672"    # AMQP protocol
-      - "15672:15672"  # Management Web UI
+      - "5672:5672"
+      - "15672:15672"
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "check_running"]
       interval: 5s
@@ -38,9 +38,116 @@ services:
     environment:
       - COLLECTOR_OTLP_ENABLED=true
     ports:
-      - "16686:16686" # Jaeger Web UI
-      - "4317:4317"   # OTLP gRPC receiver
-      - "4318:4318"   # OTLP HTTP receiver
+      - "16686:16686"
+      - "4317:4317"
+      - "4318:4318"
+
+  authconsent-api:
+    build:
+      context: .
+      dockerfile: src/Services/AuthConsent/FinanceHub.AuthConsent.Api/Dockerfile
+    container_name: authconsent-api
+    environment:
+      ConnectionStrings__AuthConsentDb: "Host=financehub-postgres;Port=5432;Database=financehub_authconsent;Username=financehub;Password=financehub_password"
+      RabbitMq__Host: "financehub-rabbitmq"
+      RabbitMq__Port: "5672"
+      RabbitMq__Username: "guest"
+      RabbitMq__Password: "guest"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://financehub-jaeger:4317"
+    ports:
+      - "5001:5001"
+    depends_on:
+      financehub-postgres:
+        condition: service_healthy
+      financehub-rabbitmq:
+        condition: service_healthy
+
+  transactionaggregator-api:
+    build:
+      context: .
+      dockerfile: src/Services/TransactionAggregator/FinanceHub.TransactionAggregator.Api/Dockerfile
+    container_name: transactionaggregator-api
+    environment:
+      ConnectionStrings__TransactionAggregatorDb: "Host=financehub-postgres;Port=5432;Database=financehub_transactionaggregator;Username=financehub;Password=financehub_password"
+      RabbitMq__Host: "financehub-rabbitmq"
+      RabbitMq__Port: "5672"
+      RabbitMq__Username: "guest"
+      RabbitMq__Password: "guest"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://financehub-jaeger:4317"
+    ports:
+      - "5002:5002"
+    depends_on:
+      financehub-postgres:
+        condition: service_healthy
+      financehub-rabbitmq:
+        condition: service_healthy
+
+  apigateway-api:
+    build:
+      context: .
+      dockerfile: src/Services/ApiGateway/FinanceHub.ApiGateway/Dockerfile
+    container_name: apigateway-api
+    environment:
+      AUTH_CONSENT_BASE_URL: "http://authconsent-api:5001"
+      TRANSACTION_AGGREGATOR_BASE_URL: "http://transactionaggregator-api:5002"
+      JWT_SECRET_KEY: "FinanceHubSuperSecretDevKeyWithAtLeast32BytesLength!"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://financehub-jaeger:4317"
+    ports:
+      - "5050:5050"
+    depends_on:
+      - authconsent-api
+      - transactionaggregator-api
+
+  itauintegration-api:
+    build:
+      context: .
+      dockerfile: src/Services/ItauIntegration/FinanceHub.ItauIntegration.Api/Dockerfile
+    container_name: itauintegration-api
+    environment:
+      RabbitMq__Host: "financehub-rabbitmq"
+      RabbitMq__Port: "5672"
+      RabbitMq__Username: "guest"
+      RabbitMq__Password: "guest"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://financehub-jaeger:4317"
+    ports:
+      - "5003:5003"
+    depends_on:
+      financehub-rabbitmq:
+        condition: service_healthy
+
+  mercadopagointegration-api:
+    build:
+      context: .
+      dockerfile: src/Services/MercadoPagoIntegration/FinanceHub.MercadoPagoIntegration.Api/Dockerfile
+    container_name: mercadopagointegration-api
+    environment:
+      RabbitMq__Host: "financehub-rabbitmq"
+      RabbitMq__Port: "5672"
+      RabbitMq__Username: "guest"
+      RabbitMq__Password: "guest"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://financehub-jaeger:4317"
+    ports:
+      - "5004:5004"
+    depends_on:
+      financehub-rabbitmq:
+        condition: service_healthy
+
+  interintegration-api:
+    build:
+      context: .
+      dockerfile: src/Services/InterIntegration/FinanceHub.InterIntegration.Api/Dockerfile
+    container_name: interintegration-api
+    environment:
+      RabbitMq__Host: "financehub-rabbitmq"
+      RabbitMq__Port: "5672"
+      RabbitMq__Username: "guest"
+      RabbitMq__Password: "guest"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://financehub-jaeger:4317"
+    ports:
+      - "5005:5005"
+    depends_on:
+      financehub-rabbitmq:
+        condition: service_healthy
 
 volumes:
   postgres_data:

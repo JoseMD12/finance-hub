@@ -1,6 +1,8 @@
 using DotNetEnv;
+
 using FinanceHub.Shared.Observability;
 using FinanceHub.TransactionAggregator.Api.Endpoints;
+using FinanceHub.TransactionAggregator.Infrastructure.Persistence;
 
 namespace FinanceHub.TransactionAggregator.Api;
 
@@ -22,6 +24,12 @@ public class Program
         });
 
         var app = builder.Build();
+
+        using (var scope = app.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<TransactionAggregatorDbContext>();
+            dbContext.Database.EnsureCreated();
+        }
 
         app.UseExceptionHandler();
         app.UseStatusCodePages();

@@ -5,7 +5,10 @@ description: Automated code review skill focusing on financial security, token l
 
 # FinanceHub Code Review Skill (.NET 10 / C# 13)
 
-Use this skill when auditing, reviewing, or analyzing C# code, pull requests, or diffs in the **FinanceHub** repository. This skill provides an automated multi-layer code review framework specifically designed for high-precision financial microservices.
+## ⚡ Trigger / Slash Command
+- `/code-review` -> Executa a auditoria automatizada de segurança financeira, mTLS, LGPD, EF Core e DDD.
+
+Use esta habilidade para realizar code reviews rigorosos antes de comitar ou abrir Pull Requests.
 
 ---
 

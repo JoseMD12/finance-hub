@@ -1,11 +1,16 @@
 ---
-name: dotnet-testing
-description: Comprehensive .NET 10 testing skill for FinanceHub microservices. Covers unit, integration, and contract testing patterns for all layers (Domain, Application, Infrastructure, API) using xUnit, FluentAssertions, NSubstitute, and Testcontainers. Enforces 80% minimum coverage per service.
+name: run-tdd
+description: Mandatory TDD Red-Green-Refactor testing skill for FinanceHub microservices (.NET 10). Covers unit, integration, and contract testing patterns for all layers using xUnit, FluentAssertions, NSubstitute, and Testcontainers. Enforces 80% minimum coverage per service.
 ---
 
-# .NET 10 Testing Skill — FinanceHub
+# .NET 10 TDD & Testing Skill — FinanceHub
 
-Guia completo para escrever testes em todos os microsserviços e camadas do **FinanceHub**.
+## ⚡ Trigger / Slash Command
+```bash
+/run-tdd
+```
+
+Executa obrigatoriamente o ciclo TDD: **1. Red** (Escrever teste e rodar até falhar) → **2. Green** (Escrever código mínimo de produção) → **3. Refactor** (Ajustar arquitetura sem quebrar testes).
 
 ---
 

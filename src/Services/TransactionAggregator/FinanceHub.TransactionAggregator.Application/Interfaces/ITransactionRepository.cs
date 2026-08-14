@@ -16,10 +16,3 @@ public interface ITransactionRepository
     Task UpdateAsync(CanonicalTransaction transaction, CancellationToken cancellationToken);
     Task<IEnumerable<CanonicalTransaction>> GetByUserIdAsync(string userId, int page, int pageSize, CancellationToken cancellationToken);
 }
-
-public interface IAccountBalanceRepository
-{
-    Task<AccountBalance?> GetByUserAndAccountAsync(string userId, AccountIdentifier accountInfo, CancellationToken cancellationToken);
-    Task<IEnumerable<AccountBalance>> GetByUserIdAsync(string userId, CancellationToken cancellationToken);
-    Task AddOrUpdateAsync(AccountBalance balance, CancellationToken cancellationToken);
-}
