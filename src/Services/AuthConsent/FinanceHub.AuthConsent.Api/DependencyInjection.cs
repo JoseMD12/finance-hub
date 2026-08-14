@@ -4,6 +4,8 @@ using FinanceHub.AuthConsent.Application.Commands.CreateConsent;
 using FinanceHub.AuthConsent.Application.Commands.RenewToken;
 using FinanceHub.AuthConsent.Application.Commands.RevokeConsent;
 using FinanceHub.AuthConsent.Application.Queries.GetConsentByUserId;
+using FinanceHub.Shared.Observability.Exceptions.Mapping;
+
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -17,14 +19,15 @@ public static class DependencyInjection
     {
         services.AddSingleton(TimeProvider.System);
 
-        // Application Command & Query Handlers (Inversao de Dependencia com Interfaces)
+        // Application Command & Query Handlers
         services.AddScoped<ICreateConsentCommandHandler, CreateConsentCommandHandler>();
         services.AddScoped<IAuthorizeConsentCommandHandler, AuthorizeConsentCommandHandler>();
         services.AddScoped<IRenewTokenCommandHandler, RenewTokenCommandHandler>();
         services.AddScoped<IRevokeConsentCommandHandler, RevokeConsentCommandHandler>();
         services.AddScoped<IGetConsentByUserIdQueryHandler, GetConsentByUserIdQueryHandler>();
 
-        // Exception Handling RFC 7807
+        // Exception Handling RFC 7807 with Strategy Mappers
+        services.AddExceptionMappingServices();
         services.AddExceptionHandler<GlobalExceptionHandler>();
         services.AddProblemDetails();
 

@@ -1,7 +1,8 @@
 using DotNetEnv;
+
 using FinanceHub.AuthConsent.Api.Endpoints;
 using FinanceHub.AuthConsent.Infrastructure;
-using FinanceHub.Shared.Messaging.Extensions;
+using FinanceHub.AuthConsent.Infrastructure.Persistence;
 using FinanceHub.Shared.Observability;
 
 namespace FinanceHub.AuthConsent.Api;
@@ -16,12 +17,17 @@ public class Program
 
         builder.Host.UseFinanceHubSerilog();
         builder.Services.AddFinanceHubObservability(builder.Configuration, "FinanceHub.AuthConsent.Api");
-        builder.Services.AddFinanceHubMessaging(builder.Configuration);
 
         builder.Services.AddAuthConsentInfrastructure(builder.Configuration);
         builder.Services.AddAuthConsentApi(builder.Configuration);
 
         var app = builder.Build();
+
+        using (var scope = app.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<AuthConsentDbContext>();
+            dbContext.Database.EnsureCreated();
+        }
 
         app.UseExceptionHandler();
         app.UseHttpsRedirection();

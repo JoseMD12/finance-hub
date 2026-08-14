@@ -1,12 +1,24 @@
 using System.Diagnostics;
-using FinanceHub.AuthConsent.Domain.Exceptions;
+
+using FinanceHub.Shared.Observability.Exceptions.Mapping;
+
 using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FinanceHub.AuthConsent.Api.Middleware;
 
-public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger) : IExceptionHandler
+public sealed class GlobalExceptionHandler : IExceptionHandler
 {
+    private readonly IExceptionMapperRegistry _mapperRegistry;
+    private readonly ILogger<GlobalExceptionHandler> _logger;
+
+    public GlobalExceptionHandler(IExceptionMapperRegistry mapperRegistry, ILogger<GlobalExceptionHandler> logger)
+    {
+        _mapperRegistry = mapperRegistry;
+        _logger = logger;
+    }
+
     public async ValueTask<bool> TryHandleAsync(
         HttpContext httpContext,
         Exception exception,
@@ -14,46 +26,22 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
     {
         var traceId = Activity.Current?.Id ?? httpContext.TraceIdentifier;
 
-        if (exception is DomainException domainException)
+        var problemDetails = _mapperRegistry.MapToProblemDetails(exception, httpContext, traceId);
+        var statusCode = problemDetails.Status ?? StatusCodes.Status500InternalServerError;
+        var errorCode = problemDetails.Extensions["errorCode"]?.ToString() ?? "UNKNOWN_ERROR";
+
+        if (statusCode >= 500)
         {
-            logger.LogWarning(exception, "Exceção de domínio capturada. TraceId: {TraceId}, ErrorCode: {ErrorCode}",
-                traceId, domainException.ErrorCode);
-
-            var problemDetails = new ProblemDetails
-            {
-                Status = domainException.StatusCode,
-                Title = "Regra de Domínio Violada",
-                Detail = domainException.Message,
-                Instance = httpContext.Request.Path,
-                Extensions =
-                {
-                    ["errorCode"] = domainException.ErrorCode,
-                    ["traceId"] = traceId
-                }
-            };
-
-            httpContext.Response.StatusCode = domainException.StatusCode;
-            await httpContext.Response.WriteAsJsonAsync(problemDetails, cancellationToken);
-            return true;
+            _logger.LogError(exception, "Erro de infraestrutura/sistema [TraceId: {TraceId}, ErrorCode: {ErrorCode}]: {Message}", traceId, errorCode, exception.Message);
+        }
+        else
+        {
+            _logger.LogWarning("Regra tratada [TraceId: {TraceId}, ErrorCode: {ErrorCode}]: {Message}", traceId, errorCode, exception.Message);
         }
 
-        logger.LogError(exception, "Exceção não tratada capturada. TraceId: {TraceId}", traceId);
+        httpContext.Response.StatusCode = statusCode;
+        await httpContext.Response.WriteAsJsonAsync(problemDetails, cancellationToken);
 
-        var unhandledProblem = new ProblemDetails
-        {
-            Status = StatusCodes.Status500InternalServerError,
-            Title = "Erro Interno no Servidor",
-            Detail = "Ocorreu um erro inesperado ao processar a requisição.",
-            Instance = httpContext.Request.Path,
-            Extensions =
-            {
-                ["errorCode"] = "INTERNAL_SERVER_ERROR",
-                ["traceId"] = traceId
-            }
-        };
-
-        httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
-        await httpContext.Response.WriteAsJsonAsync(unhandledProblem, cancellationToken);
         return true;
     }
 }

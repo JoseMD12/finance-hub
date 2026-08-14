@@ -5,6 +5,8 @@ using FinanceHub.AuthConsent.Infrastructure.Persistence;
 using FinanceHub.AuthConsent.Infrastructure.Persistence.Repositories;
 using FinanceHub.AuthConsent.Infrastructure.Services;
 using FinanceHub.AuthConsent.Infrastructure.Services.OAuthStrategies;
+using FinanceHub.Shared.Messaging.Extensions;
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,6 +31,15 @@ public static class DependencyInjection
         services.AddDbContext<AuthConsentDbContext>(options =>
         {
             options.UseNpgsql(connectionString);
+        });
+
+        services.AddFinanceHubMessaging(configuration, busConfig =>
+        {
+            busConfig.AddEntityFrameworkOutbox<AuthConsentDbContext>(outbox =>
+            {
+                outbox.UsePostgres();
+                outbox.UseBusOutbox();
+            });
         });
 
         services.AddScoped<IBankConsentRepository, BankConsentRepository>();

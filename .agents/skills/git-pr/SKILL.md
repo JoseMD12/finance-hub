@@ -5,7 +5,13 @@ description: Pull Request creator skill with automated template, testing checkli
 
 # Pull Request Creator & Automation Skill
 
-Use this skill when preparing, drafting, or creating Pull Requests for the **FinanceHub** project (.NET 10). It ensures PR descriptions follow standardized templates, includes rigorous testing & security audit checklists, and automatically generates release notes.
+## ⚡ Trigger / Slash Command
+```bash
+/git-pr <destination-branch>
+```
+*Exemplo:* `/git-pr main` ou `/git-pr develop`. Se não especificado, o padrão é `main`.
+
+Use esta habilidade para gerar a descrição do PR, rodar as validações prévias e abrir o Pull Request contra a branch de destino informada.
 
 ## 1. Automated Pull Request Template
 

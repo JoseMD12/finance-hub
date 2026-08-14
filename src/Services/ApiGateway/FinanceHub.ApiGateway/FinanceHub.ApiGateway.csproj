@@ -2,7 +2,10 @@
 
   <ItemGroup>
     <PackageReference Include="DotNetEnv" Version="3.1.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.0-preview.1.25120.3" />
+    <PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="10.9.0" />
     <ProjectReference Include="..\..\..\Shared\FinanceHub.Shared.Observability\FinanceHub.Shared.Observability.csproj" />
+    <ProjectReference Include="..\..\..\Shared\FinanceHub.Shared.Messaging\FinanceHub.Shared.Messaging.csproj" />
   </ItemGroup>
 
   <PropertyGroup>
