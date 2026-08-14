@@ -126,7 +126,12 @@ public class AuthConsentServiceClient : IAuthConsentServiceClient
             var response = await _httpClient.GetAsync("/health", ct);
             return response.IsSuccessStatusCode;
         }
-        catch
+        catch (HttpRequestException ex)
+        {
+            _logger.LogWarning(ex, "Health check falhou para o serviço AuthConsent");
+            return false;
+        }
+        catch (OperationCanceledException)
         {
             return false;
         }

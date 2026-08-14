@@ -5,7 +5,11 @@ description: Standardized Git commit generator skill with Conventional Commits r
 
 # Git Commit Generator Skill
 
-Use this skill when preparing, drafting, or executing Git commits within the **FinanceHub** project (.NET 10 codebase). It enforces Conventional Commits 1.0.0, microservice-specific scope tagging, strict secret safety, and clear change summaries.
+## ⚡ Trigger / Slash Commands
+- `/git-commit` -> Commit único com todas as alterações no staging.
+- `/git-commit-many-by <layer|feature|service>` -> Para comitagem fracionada por camada ou funcionalidade, ative a skill `git-commit-many`.
+
+Use esta habilidade para gerar ou executar commits no projeto **FinanceHub**. Ela garante o padrão Conventional Commits 1.0.0.
 
 ## 1. Commit Structure Rules
 
