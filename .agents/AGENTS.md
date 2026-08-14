@@ -12,6 +12,22 @@ Subagents operating in this workspace perform autonomous tasks such as scaffoldi
 
 ---
 
+## ⚡ Quick Slash Commands Index
+
+Use these slash commands in chat to instantly trigger specialized harness workflows:
+
+| Slash Command | Target Skill | Primary Purpose |
+| :--- | :--- | :--- |
+| `/spec-feature` | `spec-feature` | Interactive plan mode specification (1 question at a time). |
+| `/scaffold-slice <Service> <UseCase>` | `scaffold-slice` | Scaffold CQRS Command, Query, Handlers (separate `.cs` files) and Endpoints. |
+| `/run-tdd` | `run-tdd` | Execute compulsory Red -> Green -> Refactor TDD cycle. |
+| `/code-review` | `code-review` | Audit FAPI security, mTLS, LGPD (PII), RFC 7807 exceptions, zero magic strings. |
+| `/git-commit` | `git-commit` | Single atomic Conventional Commit of working changes. |
+| `/git-commit-many-by <strategy>` | `git-commit-many-by` | Layered (`layer`), Feature (`feature`), or Service (`service`) fractional commits. |
+| `/git-pr` | `git-pr` | Prepare and open Pull Request with release notes & checklist. |
+
+---
+
 ## 🏛️ System Architecture Matrix
 
 ```
