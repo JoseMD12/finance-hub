@@ -1,11 +1,16 @@
 ---
-name: dotnet-vertical-slice
+name: scaffold-slice
 description: Scaffolding guide for building clean CQRS vertical use-case slices in FinanceHub (.NET 10), covering Application Commands/Queries, Handler Interfaces, Rich Domain Models, and Minimal API endpoints.
 ---
 
-# .NET 10 Clean Architecture & CQRS Use-Case Guide — FinanceHub
+# .NET 10 Vertical Slice Scaffolding Skill — FinanceHub
 
-This guide provides explicit patterns for scaffolding new features (Use Cases) in **FinanceHub** (.NET 10 / C# 13). Features follow Clean Architecture and DDD principles per microservice, structured around CQRS Commands/Queries, Handler interfaces (DIP), Rich Domain Models, and Minimal API endpoints.
+## ⚡ Trigger / Slash Command
+```bash
+/scaffold-slice <Service> <UseCase>
+```
+
+Use esta habilidade para criar novos Vertical Slices CQRS. Lembre-se: Interface (`I<Name>Handler.cs`) e Implementação (`<Name>Handler.cs`) DEVEM residir em **arquivos .cs separados**.
 
 ---
 
