@@ -4,7 +4,7 @@
 - **TDD (Test-Driven Development) é MANDATÓRIO**: Nenhum código de produção deve ser escrito sem antes ter o teste unitário/integração escrito e falhando (**Red**).
 - **Green**: Escrever o código mínimo de produção para passar o teste.
 - **Refactor (Yellow)**: Refatorar o código aplicando DDD (Aggregate Root, Rich Domain Model) e Design Patterns, mantendo 100% dos testes verdes.
-- Veja detalhes em [`.agents/rules/tdd-workflow.md`](file:///mnt/c/Code/FinanceHub/.agents/rules/tdd-workflow.md).
+- Veja detalhes em [`.agents/rules/tdd-workflow.md`](./tdd-workflow.md).
 
 ## 1. Cobertura Mínima Obrigatória
 - **80% de cobertura** é o mínimo aceito por microsserviço, especialmente na camada `Application`.

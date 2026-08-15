@@ -82,5 +82,7 @@ Phase 8: Módulo IRPF & Tax Analytics (Relatórios & Snapshots de Imposto de Ren
 
 ---
 
-### Phase 6: Frontend Dashboard (`src/Web/finance-hub-web`) (`Próximo Passo`)
-- [ ] React + Vite + TailwindCSS + Recharts para saldo consolidado, extrato e conciliação.
+### Phase 6: Frontend Dashboard (`src/Web/finance-hub-web`) (`Especificada - Pronta para Execução`)
+- [ ] Especificação concluída em [`.agents/specs/phase-6-frontend-web-spec.md`](./phase-6-frontend-web-spec.md).
+- [ ] React + Vite + TypeScript + TailwindCSS + TanStack Query + Recharts + Sonner.
+
