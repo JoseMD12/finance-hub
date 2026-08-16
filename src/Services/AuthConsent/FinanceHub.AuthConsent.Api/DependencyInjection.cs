@@ -25,6 +25,7 @@ public static class DependencyInjection
         services.AddScoped<IRenewTokenCommandHandler, RenewTokenCommandHandler>();
         services.AddScoped<IRevokeConsentCommandHandler, RevokeConsentCommandHandler>();
         services.AddScoped<IGetConsentByUserIdQueryHandler, GetConsentByUserIdQueryHandler>();
+        services.AddScoped<FinanceHub.AuthConsent.Application.Queries.GetInternalConsentToken.IGetInternalConsentTokenQueryHandler, FinanceHub.AuthConsent.Application.Queries.GetInternalConsentToken.GetInternalConsentTokenQueryHandler>();
 
         // Exception Handling RFC 7807 with Strategy Mappers
         services.AddExceptionMappingServices();

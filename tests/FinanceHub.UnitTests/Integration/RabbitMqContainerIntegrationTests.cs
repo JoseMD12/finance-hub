@@ -39,6 +39,7 @@ public class RabbitMqContainerIntegrationTests : IntegrationTestBase<FinanceHub.
         {
             var eventToPublish = new TransactionIngested(
                 IngestionId: Guid.NewGuid(),
+                UserId: "user-test-container",
                 Source: "Itau",
                 AccountId: "acc-test-container",
                 BankTransactionId: "tx-test-999",

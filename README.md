@@ -66,7 +66,7 @@ Este repositório inclui um **Harness de IA** estruturado para garantir desenvol
 │   ├── postgres-efcore.md      # Modelagem PostgreSQL, decimal(18,2) e Outbox
 │   └── git-and-code-review.md  # Conventional Commits e PR Checklist
 ├── skills/                     # Workflows e habilidades automatizadas
-│   ├── openfinance-bank-adapter/# Passo a passo para novos conectores bancários
+│   ├── new-bank-service/        # Passo a passo e framework para novos conectores bancários
 │   ├── dotnet-vertical-slice/   # Scaffolding de Use Cases e endpoints
 │   ├── postgres-migration/      # EF Core Migrations seguras e zero-downtime
 │   ├── git-commit/              # Gerador de commits padronizados

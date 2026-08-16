@@ -104,6 +104,10 @@ public static class DependencyInjection
                                     ?? configuration[GatewayConstants.Downstream.TransactionAggregatorBaseUrlEnvVar]
                                     ?? throw new GatewayConfigurationException(GatewayConstants.Downstream.TransactionAggregatorBaseUrlEnvVar);
 
+        var mercadoPagoIntegrationUrl = Environment.GetEnvironmentVariable(GatewayConstants.Downstream.MercadoPagoIntegrationBaseUrlEnvVar)
+                                     ?? configuration[GatewayConstants.Downstream.MercadoPagoIntegrationBaseUrlEnvVar]
+                                     ?? "http://localhost:5004";
+
         services.AddHttpClient<IAuthConsentServiceClient, AuthConsentServiceClient>(client =>
         {
             client.BaseAddress = new Uri(authConsentUrl);
@@ -114,6 +118,13 @@ public static class DependencyInjection
         services.AddHttpClient<ITransactionAggregatorServiceClient, TransactionAggregatorServiceClient>(client =>
         {
             client.BaseAddress = new Uri(transactionAggregatorUrl);
+            client.Timeout = TimeSpan.FromSeconds(GatewayConstants.Downstream.DefaultTimeoutSeconds);
+        })
+        .AddStandardResilienceHandler();
+
+        services.AddHttpClient<IMercadoPagoServiceClient, MercadoPagoServiceClient>(client =>
+        {
+            client.BaseAddress = new Uri(mercadoPagoIntegrationUrl);
             client.Timeout = TimeSpan.FromSeconds(GatewayConstants.Downstream.DefaultTimeoutSeconds);
         })
         .AddStandardResilienceHandler();

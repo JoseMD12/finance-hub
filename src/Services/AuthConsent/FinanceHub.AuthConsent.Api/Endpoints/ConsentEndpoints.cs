@@ -81,6 +81,20 @@ public static class ConsentEndpoints
         .WithName("RevokeConsent")
         .Produces(StatusCodes.Status204NoContent)
         .ProducesProblem(StatusCodes.Status404NotFound);
+
+        group.MapGet("/internal/{userId}/{institutionId}/token", async (
+            string userId,
+            string institutionId,
+            FinanceHub.AuthConsent.Application.Queries.GetInternalConsentToken.IGetInternalConsentTokenQueryHandler handler,
+            CancellationToken ct) =>
+        {
+            var query = new FinanceHub.AuthConsent.Application.Queries.GetInternalConsentToken.GetInternalConsentTokenQuery(userId, institutionId);
+            var result = await handler.Handle(query, ct);
+            return result is not null ? Results.Ok(result) : Results.NotFound();
+        })
+        .WithName("GetInternalConsentToken")
+        .Produces<FinanceHub.AuthConsent.Application.DTOs.InternalConsentTokenDto>(StatusCodes.Status200OK)
+        .ProducesProblem(StatusCodes.Status404NotFound);
     }
 }
 

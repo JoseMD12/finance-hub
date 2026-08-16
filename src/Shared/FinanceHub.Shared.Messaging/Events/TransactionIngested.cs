@@ -5,7 +5,8 @@ namespace FinanceHub.Shared.Messaging.Events;
 /// </summary>
 public record TransactionIngested(
     Guid IngestionId,
-    string Source, // "Itau", "MercadoPago", "Inter"
+    string UserId,
+    string Source, // "itau", "mercadopago", "inter"
     string AccountId,
     string? BankTransactionId,
     decimal Amount,
@@ -14,4 +15,4 @@ public record TransactionIngested(
     string Currency,
     string? RawPayloadJson,
     DateTime OccurredAtUtc
-);
+) : IFinanceHubEvent;

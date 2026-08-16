@@ -41,6 +41,7 @@ public class CustomWebApplicationFactory<TProgram> : WebApplicationFactory<TProg
     {
         builder.UseSetting("ConnectionStrings:AuthConsentDb", PostgresConnectionString);
         builder.UseSetting("ConnectionStrings:TransactionAggregatorDb", PostgresConnectionString);
+        builder.UseSetting("ConnectionStrings:MercadoPagoIntegrationDb", PostgresConnectionString);
         builder.UseSetting("ConnectionStrings:DefaultConnection", PostgresConnectionString);
         builder.UseSetting("RabbitMQ:Host", RabbitMqHost);
         builder.UseSetting("RabbitMQ:Port", RabbitMqPort);
@@ -53,6 +54,7 @@ public class CustomWebApplicationFactory<TProgram> : WebApplicationFactory<TProg
             {
                 { "ConnectionStrings:AuthConsentDb", PostgresConnectionString },
                 { "ConnectionStrings:TransactionAggregatorDb", PostgresConnectionString },
+                { "ConnectionStrings:MercadoPagoIntegrationDb", PostgresConnectionString },
                 { "ConnectionStrings:DefaultConnection", PostgresConnectionString },
                 { "RabbitMQ:Host", RabbitMqHost },
                 { "RabbitMQ:Port", RabbitMqPort },

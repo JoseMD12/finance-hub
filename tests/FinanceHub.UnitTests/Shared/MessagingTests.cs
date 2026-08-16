@@ -21,6 +21,7 @@ public class MessagingTests
         // Act
         var evt = new TransactionIngested(
             IngestionId: id,
+            UserId: "user-100",
             Source: "Itau",
             AccountId: "acc-100",
             BankTransactionId: "tx-555",
@@ -34,6 +35,7 @@ public class MessagingTests
 
         // Assert
         evt.IngestionId.Should().Be(id);
+        evt.UserId.Should().Be("user-100");
         evt.Source.Should().Be("Itau");
         evt.AccountId.Should().Be("acc-100");
         evt.BankTransactionId.Should().Be("tx-555");

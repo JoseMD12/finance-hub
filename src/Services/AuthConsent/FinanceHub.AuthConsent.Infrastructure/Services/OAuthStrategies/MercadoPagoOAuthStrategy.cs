@@ -16,8 +16,13 @@ public sealed class MercadoPagoOAuthStrategy : IOAuthBankClientStrategy
 
     public Task<OAuthTokenExchangeResult> ExchangeCodeForTokensAsync(string authCode, string redirectUri, CancellationToken cancellationToken = default)
     {
+        var realToken = Environment.GetEnvironmentVariable("MERCADO_PAGO_ACCESS_TOKEN");
+        var accessToken = !string.IsNullOrWhiteSpace(realToken)
+            ? realToken
+            : TokenMockGenerator.Generate(BankPrefixes.MercadoPago, TokenActions.Access);
+
         var result = new OAuthTokenExchangeResult(
-            AccessToken: TokenMockGenerator.Generate(BankPrefixes.MercadoPago, TokenActions.Access),
+            AccessToken: accessToken,
             RefreshToken: TokenMockGenerator.Generate(BankPrefixes.MercadoPago, TokenActions.Refresh),
             ExpiresInSeconds: 3600
         );
@@ -27,8 +32,13 @@ public sealed class MercadoPagoOAuthStrategy : IOAuthBankClientStrategy
 
     public Task<OAuthTokenExchangeResult> RefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default)
     {
+        var realToken = Environment.GetEnvironmentVariable("MERCADO_PAGO_ACCESS_TOKEN");
+        var accessToken = !string.IsNullOrWhiteSpace(realToken)
+            ? realToken
+            : TokenMockGenerator.Generate(BankPrefixes.MercadoPago, TokenActions.Access, TokenActions.Renewed);
+
         var result = new OAuthTokenExchangeResult(
-            AccessToken: TokenMockGenerator.Generate(BankPrefixes.MercadoPago, TokenActions.Access, TokenActions.Renewed),
+            AccessToken: accessToken,
             RefreshToken: TokenMockGenerator.Generate(BankPrefixes.MercadoPago, TokenActions.Refresh, TokenActions.Renewed),
             ExpiresInSeconds: 3600
         );

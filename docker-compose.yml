@@ -53,6 +53,7 @@ services:
       RabbitMq__Port: "5672"
       RabbitMq__Username: "guest"
       RabbitMq__Password: "guest"
+      MERCADO_PAGO_ACCESS_TOKEN: "${MERCADO_PAGO_ACCESS_TOKEN}"
       OTEL_EXPORTER_OTLP_ENDPOINT: "http://financehub-jaeger:4317"
     ports:
       - "5001:5001"
@@ -90,13 +91,17 @@ services:
     environment:
       AUTH_CONSENT_BASE_URL: "http://authconsent-api:5001"
       TRANSACTION_AGGREGATOR_BASE_URL: "http://transactionaggregator-api:5002"
+      MERCADO_PAGO_INTEGRATION_BASE_URL: "http://mercadopagointegration-api:5004"
       JWT_SECRET_KEY: "FinanceHubSuperSecretDevKeyWithAtLeast32BytesLength!"
+      JWT_ISSUER: "FinanceHub.ApiGateway"
+      JWT_AUDIENCE: "FinanceHub.Web"
       OTEL_EXPORTER_OTLP_ENDPOINT: "http://financehub-jaeger:4317"
     ports:
       - "5050:5050"
     depends_on:
       - authconsent-api
       - transactionaggregator-api
+      - mercadopagointegration-api
 
   itauintegration-api:
     build:
@@ -121,6 +126,10 @@ services:
       dockerfile: src/Services/MercadoPagoIntegration/FinanceHub.MercadoPagoIntegration.Api/Dockerfile
     container_name: mercadopagointegration-api
     environment:
+      ConnectionStrings__MercadoPagoIntegrationDb: "Host=financehub-postgres;Port=5432;Database=financehub_mercadopagointegration;Username=financehub;Password=financehub_password"
+      AUTH_CONSENT_BASE_URL: "http://authconsent-api:5001"
+      OPENFINANCE_CLIENT_ID: "${OPENFINANCE_CLIENT_ID}"
+      OPENFINANCE_CLIENT_SECRET: "${OPENFINANCE_CLIENT_SECRET}"
       RabbitMq__Host: "financehub-rabbitmq"
       RabbitMq__Port: "5672"
       RabbitMq__Username: "guest"
@@ -129,6 +138,8 @@ services:
     ports:
       - "5004:5004"
     depends_on:
+      financehub-postgres:
+        condition: service_healthy
       financehub-rabbitmq:
         condition: service_healthy
 
@@ -149,5 +160,18 @@ services:
       financehub-rabbitmq:
         condition: service_healthy
 
+  financehub-web:
+    build:
+      context: ./src/Web/finance-hub-web
+      dockerfile: Dockerfile
+    container_name: financehub-web
+    environment:
+      - VITE_API_GATEWAY_URL=http://apigateway-api:5050
+    ports:
+      - "8080:80"
+    depends_on:
+      - apigateway-api
+
 volumes:
   postgres_data:
+
