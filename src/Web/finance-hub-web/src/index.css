@@ -1,0 +1,53 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand: #E05697;
+  --color-brand-dark: #941B5C;
+  --color-brand-light: #FCE7F3;
+  --color-brand-glow: rgba(224, 86, 151, 0.25);
+
+  --color-secondary: #1D555A;
+  --color-secondary-dark: #164347;
+  --color-secondary-light: #E6F4F1;
+
+  --color-tertiary: #FF7338;
+  --color-tertiary-light: #FFF0EA;
+
+  --color-surface-ground: #F4F7F6;
+  --color-surface-card: #FFFFFF;
+  --color-surface-muted: #EAEFF0;
+  --color-border-subtle: #E2E8F0;
+
+  --color-status-success: #2ECC71;
+  --color-status-success-bg: #ECFDF5;
+  --color-status-danger: #FF5964;
+  --color-status-danger-bg: #FEF2F2;
+  --color-status-info: #38BDF8;
+  --color-status-info-bg: #F0F9FF;
+  --color-status-warning: #F59E0B;
+  --color-status-warning-bg: #FFFBEB;
+
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+
+  --shadow-card: 0 10px 25px -5px rgba(29, 85, 90, 0.05), 0 8px 10px -6px rgba(29, 85, 90, 0.03);
+  --shadow-elevated: 0 20px 40px -10px rgba(29, 85, 90, 0.12);
+  --shadow-dropdown: 0 12px 30px -4px rgba(29, 85, 90, 0.15), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+:root {
+  font-family: var(--font-sans);
+  background-color: var(--color-surface-ground);
+  color: #1E293B;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
