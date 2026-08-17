@@ -121,8 +121,9 @@ When generating code or configuring integrations, subagents **must** adhere to:
 16. **Frontend RFC 7807 Exception Parsing & Toast Feedback**:
     - Axios response interceptors parse `application/problem+json` into `ApiError` instances. User notifications are handled via `Sonner` toasts and `showApiError` (see `.agents/rules/frontend-http-and-rfc7807.md`).
 
-17. **Strict Design Tokens, WAI-ARIA & BRL Financial Formatting**:
-    - Styling must use central Tailwind tokens (`brand`, `secondary`, `tertiary`, `surface-card`, `status-*`).
+17. **Strict Design Tokens, Styling Centralization, WAI-ARIA & BRL Financial Formatting**:
+    - All colors, typography, transition timings, shadows (`shadow-card`, `shadow-elevated`, `shadow-brand`), border radiuses, and hover animations MUST be strictly centralized in `src/index.css` (Tailwind `@theme` tokens) or shared component abstractions.
+    - Inline hex colors or arbitrary inline hover states are strictly forbidden.
     - Reusable components use `cn(...)`. Accessible labels (`aria-label`) and Brazilian currency formatting (`formatCurrencyBRL`) are compulsory (see `.agents/rules/frontend-design-system-a11y.md`).
 
 18. **Strict Zero-Emoji Policy & Outline Icons**:

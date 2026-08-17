@@ -6,7 +6,13 @@
 
 ---
 
-## 🎨 1. Paleta de Cores e Tokens Tailwind
+## 🎨 1. Paleta de Cores, Tokens Tailwind & Centralização de Estilos
+
+> **REGRA IMPERATIVA DE ARQUITETURA DE STYLES**: É **ESTRITAMENTE OBRIGATÓRIO** centralizar todas as variáveis de tema, cores, sombras (`shadow-card`, `shadow-elevated`, `shadow-brand`), raios de borda, transições, animações de hover (`translateY`, glowing effects) e estilos base em `src/index.css` / tokens globais ou classes de utilitários reutilizáveis de componentes pai (`src/shared/components/`).
+> 
+> **PROIBIÇÕES**:
+> - Proibido utilizar códigos hexadecimais brutos ou arbitrários inline em arquivos JSX/TSX.
+> - Proibido duplicar regras de transição, hover ou sombras em múltiplos arquivos de feature. Toda elevação e animação deve vir de tokens/utilitários globais.
 
 Todas as classes de cores DEVEM utilizar estritamente os tokens configurados na paleta do projeto (extraída dos designs originais):
 
