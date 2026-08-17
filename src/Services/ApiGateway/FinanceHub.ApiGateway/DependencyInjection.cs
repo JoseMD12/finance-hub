@@ -5,8 +5,8 @@ using System.Threading.RateLimiting;
 
 using FinanceHub.ApiGateway.Clients;
 using FinanceHub.ApiGateway.Exceptions;
-using FinanceHub.ApiGateway.Middleware;
 using FinanceHub.ApiGateway.Services;
+using FinanceHub.Shared.Observability.Exceptions;
 using FinanceHub.Shared.Observability.Exceptions.Mapping;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -114,6 +114,17 @@ public static class DependencyInjection
         services.AddHttpClient<ITransactionAggregatorServiceClient, TransactionAggregatorServiceClient>(client =>
         {
             client.BaseAddress = new Uri(transactionAggregatorUrl);
+            client.Timeout = TimeSpan.FromSeconds(GatewayConstants.Downstream.DefaultTimeoutSeconds);
+        })
+        .AddStandardResilienceHandler();
+
+        var pluggyIntegrationUrl = Environment.GetEnvironmentVariable(GatewayConstants.Downstream.PluggyIntegrationBaseUrlEnvVar)
+                                ?? configuration[GatewayConstants.Downstream.PluggyIntegrationBaseUrlEnvVar]
+                                ?? throw new GatewayConfigurationException(GatewayConstants.Downstream.PluggyIntegrationBaseUrlEnvVar);
+
+        services.AddHttpClient<IPluggyIntegrationServiceClient, PluggyIntegrationServiceClient>(client =>
+        {
+            client.BaseAddress = new Uri(pluggyIntegrationUrl);
             client.Timeout = TimeSpan.FromSeconds(GatewayConstants.Downstream.DefaultTimeoutSeconds);
         })
         .AddStandardResilienceHandler();
