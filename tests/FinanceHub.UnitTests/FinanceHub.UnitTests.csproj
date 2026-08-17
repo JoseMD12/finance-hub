@@ -28,9 +28,7 @@
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
   </ItemGroup>
 
-  <ItemGroup>
-    <None Include="..\..\.env" Condition="Exists('..\..\.env')" CopyToOutputDirectory="PreserveNewest" Link=".env" />
-  </ItemGroup>
+
 
   <ItemGroup>
     <Using Include="Xunit" />

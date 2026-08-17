@@ -50,6 +50,8 @@ public class CustomWebApplicationFactory<TProgram> : WebApplicationFactory<TProg
         builder.UseSetting("TRANSACTION_AGGREGATOR_BASE_URL", "http://localhost:5002");
         builder.UseSetting("PLUGGY_INTEGRATION_BASE_URL", "http://localhost:5056");
         builder.UseSetting("PLUGGY_USER_TOKEN", "mock-pluggy-token");
+        builder.UseSetting("PLUGGY_USER_API_BASE_URL", "http://mock.pluggy.local");
+        builder.UseSetting("Pluggy:ApiBaseUrl", "http://mock.pluggy.local");
 
         builder.ConfigureAppConfiguration((_, config) =>
         {
@@ -65,7 +67,9 @@ public class CustomWebApplicationFactory<TProgram> : WebApplicationFactory<TProg
                 { "AUTH_CONSENT_BASE_URL", "http://localhost:5001" },
                 { "TRANSACTION_AGGREGATOR_BASE_URL", "http://localhost:5002" },
                 { "PLUGGY_INTEGRATION_BASE_URL", "http://localhost:5056" },
-                { "PLUGGY_USER_TOKEN", "mock-pluggy-token" }
+                { "PLUGGY_USER_TOKEN", "mock-pluggy-token" },
+                { "PLUGGY_USER_API_BASE_URL", "http://mock.pluggy.local" },
+                { "Pluggy:ApiBaseUrl", "http://mock.pluggy.local" }
             });
         });
     }
