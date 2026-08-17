@@ -1,8 +1,7 @@
 # Phase 2 — AuthConsent Service (`FinanceHub.AuthConsent`) Execution Specification
 
-> **Status**: `Draft / Ready for Implementation`  
-> **Target Microservice**: `src/Services/AuthConsent/` (`FinanceHub.AuthConsent.*`)  
-> **Database**: PostgreSQL `financehub_authconsent`  
+> **Status**: `Decommissioned / Superseded by FinanceHub.PluggyIntegration`  
+> **Target Microservice**: `src/Services/PluggyIntegration/` (`FinanceHub.PluggyIntegration.*`)  
 > **Architecture**: Clean Architecture + DDD + Design Patterns  
 
 ---

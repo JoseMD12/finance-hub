@@ -32,8 +32,7 @@ O **FinanceHub** é uma plataforma de agregação, controle e inteligência fina
 │   │
 │   └── Shared/
 │       ├── FinanceHub.Shared.Messaging/     <-- MassTransit / RabbitMQ, Outbox e Contratos de Eventos
-│       ├── FinanceHub.Shared.Observability/ <-- OpenTelemetry (Tracing/Metrics) e Serilog
-│       └── FinanceHub.Shared.Certificates/  <-- Gestão de certificados e criptografia mTLS
+│       └── FinanceHub.Shared.Observability/ <-- OpenTelemetry (Tracing/Metrics) e Serilog
 └── tests/
     └── FinanceHub.UnitTests/            <-- Testes unitários e de integração com Testcontainers
 ```

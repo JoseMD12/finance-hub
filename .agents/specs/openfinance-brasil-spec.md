@@ -1,13 +1,13 @@
 # Open Finance Brasil API Specification & Integration Standard
 
-This document details the technical specification for integrating **FinanceHub** with the **Open Finance Brasil** ecosystem in compliance with Central Bank of Brazil (BACEN) standards and FAPI 1.0 Advanced / FAPI 2.0 Security Profiles.
+> **Architecture Transition Note**: Online Open Finance connectivity is centralized in `FinanceHub.PluggyIntegration` using the Meu.Pluggy Open Finance API infrastructure, handling OAuth2 and authentication seamlessly without requiring local ICP-Brasil mTLS certificates or `AuthConsent` service.
 
 ---
 
 ## 1. Security Architecture & Transport Layer
 
 ### 1.1 Mutual TLS (mTLS) Requirements
-- **Certificate Standard**: Must use ICP-Brasil issued X.509 V3 digital certificates (e-CNPJ or Open Finance Specific Software Certificates issued by accredited CAs such as Certisign, Serasa, or Soluti) managed via `FinanceHub.Shared.Certificates`.
+- **Certificate Standard**: ICP-Brasil issued X.509 V3 digital certificates (managed at the Pluggy platform layer).
 - **TLS Protocol**: TLS 1.2 minimum, TLS 1.3 recommended.
 - **Allowed Cipher Suites**:
   - `TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256`

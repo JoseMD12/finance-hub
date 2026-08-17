@@ -43,7 +43,7 @@ Agrupa e realiza commits em sequência respeitando as camadas de Clean Architect
 Identifica os Casos de Uso ou Slices alterados e cria um commit completo (do Domain aos Testes) para cada funcionalidade.
 
 ### C. `/git-commit-many-by service`
-Agrupa alterações por projetos de Microserviços (`AuthConsent`, `ItauIntegration`, `MercadoPagoIntegration`, `TransactionAggregator`, `ApiGateway`, `Shared.*`).
+Agrupa alterações por projetos de Microsserviços (`PluggyIntegration`, `FileImporter`, `TransactionAggregator`, `ApiGateway`, `FinanceHub.Web`, `Shared.*`).
 
 ---
 
