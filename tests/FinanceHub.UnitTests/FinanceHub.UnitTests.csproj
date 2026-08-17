@@ -35,7 +35,6 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Shared\FinanceHub.Shared.Messaging\FinanceHub.Shared.Messaging.csproj" />
     <ProjectReference Include="..\..\src\Services\TransactionAggregator\FinanceHub.TransactionAggregator.Domain\FinanceHub.TransactionAggregator.Domain.csproj" />
-    <ProjectReference Include="..\..\src\Shared\FinanceHub.Shared.Certificates\FinanceHub.Shared.Certificates.csproj" />
     <ProjectReference Include="..\..\src\Shared\FinanceHub.Shared.Observability\FinanceHub.Shared.Observability.csproj" />
     <ProjectReference Include="..\..\src\Services\ApiGateway\FinanceHub.ApiGateway\FinanceHub.ApiGateway.csproj" />
     <ProjectReference Include="..\..\src\Services\TransactionAggregator\FinanceHub.TransactionAggregator.Api\FinanceHub.TransactionAggregator.Api.csproj" />

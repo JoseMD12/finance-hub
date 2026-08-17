@@ -31,23 +31,20 @@ O sistema é dividido em microsserviços especializados e bibliotecas compartilh
      │ - Itau Integration           │
      │ - Mercado Pago Integration   │
      │ - Inter Integration (Fase 2) │
-     └──────────────────────────────┘
+     └──────────────┘
 ```
 
 ### 🧩 Serviços e Responsabilidades (`src/Services/`)
 
-1. **`FinanceHub.AuthConsent`**: Gerenciador de consentimento e tokens OAuth2/OIDC + FAPI. Inicia o consentimento, realiza a troca de autorização por tokens (`access_token`, `refresh_token`) e expõe API interna de tokens válidos por instituição.
-2. **`FinanceHub.ItauIntegration`**: Conector da API Open Finance do Itaú. Consome extratos/faturas, traduz o payload proprietário e publica o evento de integração `TransactionIngested`.
-3. **`FinanceHub.MercadoPagoIntegration`**: Conector isolado da API do Mercado Pago. Traduz pagamentos e movimentações para o evento `TransactionIngested`.
-4. **`FinanceHub.InterIntegration`**: Conector do Banco Inter (a ser implementado na Fase 2 do projeto).
-5. **`FinanceHub.TransactionAggregator`**: Consumidor de eventos `TransactionIngested`. Normaliza transações para o modelo canônico, deduplica lançamentos via SHA-256 e persiste o histórico consolidado. Emite `TransactionNormalized`.
-6. **`FinanceHub.ApiGateway`**: Ponto único de entrada (BFF) para a aplicação frontend. Realiza agregação de dados e autorização do usuário final.
+1. **`FinanceHub.ApiGateway`**: Ponto único de entrada (BFF) para a aplicação frontend. Realiza agregação de dados do dashboard, autenticação JWT, rate limiting e roteamento.
+2. **`FinanceHub.PluggyIntegration`**: Conector unificado de Open Finance Pessoal (via Meu.Pluggy), cobrindo Itaú, Banco Inter e Mercado Pago com publicação de eventos `TransactionIngested` e `InvoiceItemIngested`.
+3. **`FinanceHub.FileImporter`**: Motor de importação offline para arquivos de extratos e faturas históricas (`.ofx`, `.csv`, `.pdf`).
+4. **`FinanceHub.TransactionAggregator`**: Consumidor de eventos contábeis. Normaliza transações para o modelo canônico, deduplica lançamentos via SHA-256 e persiste o histórico consolidado.
 
 ### 📦 Módulos Compartilhados (`src/Shared/`)
 
-- **`FinanceHub.Shared.Certificates`**: Gerenciador de certificados digitais mTLS X.509 (ICP-Brasil) para conexões seguras com os bancos.
-- **`FinanceHub.Shared.Messaging`**: Contratos de eventos (`TransactionIngested`, `TransactionNormalized`) e configuração do MassTransit / RabbitMQ com suporte ao Transactional Outbox Pattern.
-- **`FinanceHub.Shared.Observability`**: Instrumentação centralizada do OpenTelemetry (`traceparent`), métricas e logs estruturados com Serilog.
+- **`FinanceHub.Shared.Messaging`**: Contratos de eventos (`TransactionIngested`, `InvoiceItemIngested`) e configuração do MassTransit / RabbitMQ com suporte ao Transactional Outbox Pattern.
+- **`FinanceHub.Shared.Observability`**: Instrumentação centralizada do OpenTelemetry (`traceparent`), métricas, logs estruturados com Serilog e tratamento global de exceções RFC 7807 (`GlobalExceptionHandler`).
 
 ---
 

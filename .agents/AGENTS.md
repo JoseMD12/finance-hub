@@ -46,7 +46,6 @@ Use these slash commands in chat to instantly trigger specialized harness workfl
 │   │   ├── FileImporter/               <-- Offline Statement & Invoice Parser (OFX, CSV, PDF)
 │   │   └── TransactionAggregator/       <-- Canonical Ledger & Deduplication
 │   └── Shared/                 <-- Reusable Infrastructure Libraries
-│       ├── FinanceHub.Shared.Certificates/ <-- ICP-Brasil mTLS Client Certs
 │       ├── FinanceHub.Shared.Messaging/    <-- MassTransit / RabbitMQ + Outbox
 │       └── FinanceHub.Shared.Observability/  <-- OpenTelemetry & Logging
 └── tests/                      <-- Service Unit & Integration Tests (xUnit)

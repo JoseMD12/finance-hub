@@ -17,7 +17,6 @@
     <Project Path="src/Services/TransactionAggregator/FinanceHub.TransactionAggregator.Infrastructure/FinanceHub.TransactionAggregator.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/src/Shared/">
-    <Project Path="src/Shared/FinanceHub.Shared.Certificates/FinanceHub.Shared.Certificates.csproj" />
     <Project Path="src/Shared/FinanceHub.Shared.Messaging/FinanceHub.Shared.Messaging.csproj" />
     <Project Path="src/Shared/FinanceHub.Shared.Observability/FinanceHub.Shared.Observability.csproj" />
   </Folder>
