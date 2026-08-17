@@ -42,14 +42,14 @@ public class Program
         })).WithName("GetHealth").AllowAnonymous();
 
         app.MapGet("/health/detailed", async (
-            IAuthConsentServiceClient consentClient,
             ITransactionAggregatorServiceClient transactionClient,
+            IPluggyIntegrationServiceClient pluggyClient,
             CancellationToken ct) =>
         {
-            var authConsentHealthy = await consentClient.HealthCheckAsync(ct);
             var aggregatorHealthy = await transactionClient.HealthCheckAsync(ct);
+            var pluggyHealthy = await pluggyClient.HealthCheckAsync(ct);
 
-            var isHealthy = authConsentHealthy && aggregatorHealthy;
+            var isHealthy = aggregatorHealthy && pluggyHealthy;
 
             var result = new
             {
@@ -58,8 +58,8 @@ public class Program
                 Timestamp = DateTime.UtcNow,
                 DownstreamServices = new
                 {
-                    AuthConsent = authConsentHealthy ? GatewayConstants.Status.Healthy : GatewayConstants.Status.Unhealthy,
-                    TransactionAggregator = aggregatorHealthy ? GatewayConstants.Status.Healthy : GatewayConstants.Status.Unhealthy
+                    TransactionAggregator = aggregatorHealthy ? GatewayConstants.Status.Healthy : GatewayConstants.Status.Unhealthy,
+                    PluggyIntegration = pluggyHealthy ? GatewayConstants.Status.Healthy : GatewayConstants.Status.Unhealthy
                 }
             };
 
@@ -70,7 +70,6 @@ public class Program
         app.MapAuthGatewayEndpoints();
         app.MapDashboardEndpoints();
         app.MapTransactionGatewayEndpoints();
-        app.MapConsentGatewayEndpoints();
         app.MapPluggyGatewayEndpoints();
 
         await app.RunAsync();

@@ -4,12 +4,6 @@
   <Folder Name="/src/Services/ApiGateway/">
     <Project Path="src/Services/ApiGateway/FinanceHub.ApiGateway/FinanceHub.ApiGateway.csproj" />
   </Folder>
-  <Folder Name="/src/Services/AuthConsent/">
-    <Project Path="src/Services/AuthConsent/FinanceHub.AuthConsent.Api/FinanceHub.AuthConsent.Api.csproj" />
-    <Project Path="src/Services/AuthConsent/FinanceHub.AuthConsent.Application/FinanceHub.AuthConsent.Application.csproj" />
-    <Project Path="src/Services/AuthConsent/FinanceHub.AuthConsent.Domain/FinanceHub.AuthConsent.Domain.csproj" />
-    <Project Path="src/Services/AuthConsent/FinanceHub.AuthConsent.Infrastructure/FinanceHub.AuthConsent.Infrastructure.csproj" />
-  </Folder>
   <Folder Name="/src/Services/PluggyIntegration/">
     <Project Path="src/Services/PluggyIntegration/FinanceHub.PluggyIntegration.Api/FinanceHub.PluggyIntegration.Api.csproj" />
     <Project Path="src/Services/PluggyIntegration/FinanceHub.PluggyIntegration.Application/FinanceHub.PluggyIntegration.Application.csproj" />
