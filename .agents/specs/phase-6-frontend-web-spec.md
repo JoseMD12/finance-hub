@@ -2,7 +2,7 @@
 
 > **Status**: `Drafting / In Specification`  
 > **Last Updated**: `2026-08-13`  
-> **Target Module**: `src/Web/finance-hub-web`  
+> **Target Module**: `src/Web/FinanceHub.Web`  
 > **Stack**: `React 19 / 18 + Vite + TypeScript + Vanilla CSS / Tailwind (to be defined) + TanStack Query + React Router + Lucide Icons + Recharts`
 
 ---
@@ -199,7 +199,7 @@ O frontend consome exclusivamente o **API Gateway BFF** (`FinanceHub.ApiGateway`
 ## 🚀 5. Plano de Execução & Checklist de Implementação
 
 - [ ] **Passo 1 — Scaffolding do Projeto**:
-  - Criar projeto Vite + React 18/19 + TypeScript em `src/Web/finance-hub-web`.
+  - Criar projeto Vite + React 18/19 + TypeScript em `src/Web/FinanceHub.Web`.
   - Instalar dependências core: `react-router-dom`, `@tanstack/react-query`, `axios`, `lucide-react`, `recharts`, `sonner`, `clsx`, `tailwind-merge`, `tailwindcss`, `date-fns`.
 - [ ] **Passo 2 — Design System & Tokens Tailwind**:
   - Configurar variáveis CSS e cores da paleta no Tailwind (`brand`, `brand-dark`, `secondary`, `tertiary`, `surface`, `status-*`).

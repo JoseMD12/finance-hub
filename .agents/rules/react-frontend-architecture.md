@@ -1,6 +1,6 @@
 # React & Vite Frontend Architecture Rules — FinanceHub
 
-> **Target**: `src/Web/finance-hub-web`  
+> **Target**: `src/Web/FinanceHub.Web`  
 > **Framework**: `React 19 / 18 + Vite + TypeScript`  
 > **Pattern**: `Feature-Driven Vertical Slices + Shared Core`
 

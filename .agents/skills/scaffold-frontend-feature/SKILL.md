@@ -10,7 +10,7 @@ description: Guide for scaffolding complete, modular Feature Slices in React + V
 /scaffold-frontend-feature <FeatureName>
 ```
 
-Use esta habilidade para criar uma nova fatia vertical de funcionalidade (Feature Slice) no frontend React (`src/Web/finance-hub-web`) com suporte a testes automatizados (Vitest + Testing Library + MSW) e TDD.
+Use esta habilidade para criar uma nova fatia vertical de funcionalidade (Feature Slice) no frontend React (`src/Web/FinanceHub.Web`) com suporte a testes automatizados (Vitest + Testing Library + MSW) e TDD.
 
 ---
 

@@ -1,6 +1,6 @@
 # TanStack Query & State Management Rules — FinanceHub
 
-> **Target**: `src/Web/finance-hub-web`  
+> **Target**: `src/Web/FinanceHub.Web`  
 > **Library**: `@tanstack/react-query v5`  
 > **Scope**: `Server State Caching, Mutations, Optimistic Updates & Query Keys Factory`
 

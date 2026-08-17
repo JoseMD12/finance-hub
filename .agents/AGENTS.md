@@ -50,7 +50,7 @@ Use these slash commands in chat to instantly trigger specialized harness workfl
 │   │   ├── FinanceHub.Shared.Messaging/    <-- MassTransit / RabbitMQ + Outbox
 │   │   └── FinanceHub.Shared.Observability/  <-- OpenTelemetry & Logging
 │   └── Web/                    <-- Frontend Web Application (Phase 6)
-│       └── finance-hub-web/             <-- React 19 + Vite + TailwindCSS + TanStack Query
+│       └── FinanceHub.Web/             <-- React 19 + Vite + TailwindCSS + TanStack Query
 └── tests/                      <-- Service Unit & Integration Tests (xUnit)
 ```
 
