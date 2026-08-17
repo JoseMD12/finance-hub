@@ -118,6 +118,17 @@ public static class DependencyInjection
         })
         .AddStandardResilienceHandler();
 
+        var pluggyIntegrationUrl = Environment.GetEnvironmentVariable(GatewayConstants.Downstream.PluggyIntegrationBaseUrlEnvVar)
+                                ?? configuration[GatewayConstants.Downstream.PluggyIntegrationBaseUrlEnvVar]
+                                ?? throw new GatewayConfigurationException(GatewayConstants.Downstream.PluggyIntegrationBaseUrlEnvVar);
+
+        services.AddHttpClient<IPluggyIntegrationServiceClient, PluggyIntegrationServiceClient>(client =>
+        {
+            client.BaseAddress = new Uri(pluggyIntegrationUrl);
+            client.Timeout = TimeSpan.FromSeconds(30);
+        })
+        .AddStandardResilienceHandler();
+
         // 5. Health Checks
         services.AddHealthChecks();
 

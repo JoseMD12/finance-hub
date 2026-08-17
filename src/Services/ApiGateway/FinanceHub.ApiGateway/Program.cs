@@ -69,6 +69,7 @@ public class Program
         app.MapDashboardEndpoints();
         app.MapTransactionGatewayEndpoints();
         app.MapConsentGatewayEndpoints();
+        app.MapPluggyGatewayEndpoints();
 
         app.Run();
     }
