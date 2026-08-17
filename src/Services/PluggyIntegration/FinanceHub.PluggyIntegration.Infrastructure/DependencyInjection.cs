@@ -16,8 +16,8 @@ public static class DependencyInjection
     {
         services.Configure<PluggyOptions>(configuration.GetSection(PluggyOptions.SectionName));
 
-        var baseUrl = configuration["PLUGGY_USER_API_BASE_URL"] 
-                      ?? configuration["Pluggy:ApiBaseUrl"] 
+        var baseUrl = configuration[PluggyConstants.EnvironmentVariables.ApiBaseUrl] 
+                      ?? configuration[PluggyConstants.Configuration.ApiBaseUrlKey] 
                       ?? PluggyConstants.DefaultBaseUrl;
 
         services.AddHttpClient<IMeuPluggyClient, MeuPluggyClient>(client =>

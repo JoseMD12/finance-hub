@@ -125,7 +125,7 @@ public static class DependencyInjection
         services.AddHttpClient<IPluggyIntegrationServiceClient, PluggyIntegrationServiceClient>(client =>
         {
             client.BaseAddress = new Uri(pluggyIntegrationUrl);
-            client.Timeout = TimeSpan.FromSeconds(30);
+            client.Timeout = TimeSpan.FromSeconds(GatewayConstants.Downstream.DefaultTimeoutSeconds);
         })
         .AddStandardResilienceHandler();
 

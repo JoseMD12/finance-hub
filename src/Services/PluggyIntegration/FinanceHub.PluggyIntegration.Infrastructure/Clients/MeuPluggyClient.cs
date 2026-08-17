@@ -11,32 +11,23 @@ using Microsoft.Extensions.Options;
 
 namespace FinanceHub.PluggyIntegration.Infrastructure.Clients;
 
-public class MeuPluggyClient : IMeuPluggyClient
+public sealed class MeuPluggyClient(
+    HttpClient httpClient,
+    IOptions<PluggyOptions> options,
+    ILogger<MeuPluggyClient> logger) : IMeuPluggyClient
 {
-    private readonly HttpClient _httpClient;
-    private readonly PluggyOptions _options;
-    private readonly ILogger<MeuPluggyClient> _logger;
+    private readonly PluggyOptions _options = options.Value;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNameCaseInsensitive = true
     };
 
-    public MeuPluggyClient(
-        HttpClient httpClient,
-        IOptions<PluggyOptions> options,
-        ILogger<MeuPluggyClient> logger)
-    {
-        _httpClient = httpClient;
-        _options = options.Value;
-        _logger = logger;
-    }
-
     private void EnsureAuthorizationHeader(HttpRequestMessage request)
     {
         var token = !string.IsNullOrWhiteSpace(_options.UserToken)
             ? _options.UserToken
-            : Environment.GetEnvironmentVariable("PLUGGY_USER_TOKEN") ?? string.Empty;
+            : Environment.GetEnvironmentVariable(PluggyConstants.EnvironmentVariables.UserToken) ?? string.Empty;
 
         if (string.IsNullOrWhiteSpace(token))
         {
@@ -86,24 +77,24 @@ public class MeuPluggyClient : IMeuPluggyClient
     {
         try
         {
-            var response = await _httpClient.SendAsync(request, cancellationToken);
+            var response = await httpClient.SendAsync(request, cancellationToken);
 
             if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
             {
-                _logger.LogWarning("API da Pluggy retornou {StatusCode}. A sessão expirou.", response.StatusCode);
+                logger.LogWarning("API da Pluggy retornou {StatusCode}. A sessão expirou.", response.StatusCode);
                 throw new PluggySessionExpiredDomainException("Token de sessão inválido ou expirado.");
             }
 
             if (response.StatusCode == HttpStatusCode.TooManyRequests)
             {
-                _logger.LogWarning("Rate limit da API da Pluggy excedido.");
+                logger.LogWarning("Rate limit da API da Pluggy excedido.");
                 throw new PluggyRateLimitDomainException();
             }
 
             if (!response.IsSuccessStatusCode)
             {
                 var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
-                _logger.LogError("Erro na comunicação com Pluggy API: {StatusCode} - {Error}", response.StatusCode, errorBody);
+                logger.LogError("Erro na comunicação com Pluggy API: {StatusCode} - {Error}", response.StatusCode, errorBody);
                 throw new PluggyApiCommunicationDomainException($"Erro HTTP {(int)response.StatusCode} ao comunicar com a API da Pluggy: {errorBody}");
             }
 
@@ -115,7 +106,7 @@ public class MeuPluggyClient : IMeuPluggyClient
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Falha de rede ou conectividade com a API da Pluggy.");
+            logger.LogError(ex, "Falha de rede ou conectividade com a API da Pluggy.");
             throw new PluggyApiCommunicationDomainException("Não foi possível conectar à API da Pluggy.", ex);
         }
     }

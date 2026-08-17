@@ -7,28 +7,17 @@ using Microsoft.Extensions.Logging;
 
 namespace FinanceHub.PluggyIntegration.Application.Commands.SyncAllPluggyAccounts;
 
-public class SyncAllPluggyAccountsCommandHandler : ISyncAllPluggyAccountsCommandHandler
+public sealed class SyncAllPluggyAccountsCommandHandler(
+    IMeuPluggyClient pluggyClient,
+    IPublishEndpoint publishEndpoint,
+    ILogger<SyncAllPluggyAccountsCommandHandler> logger) : ISyncAllPluggyAccountsCommandHandler
 {
-    private readonly IMeuPluggyClient _pluggyClient;
-    private readonly IPublishEndpoint _publishEndpoint;
-    private readonly ILogger<SyncAllPluggyAccountsCommandHandler> _logger;
-
-    public SyncAllPluggyAccountsCommandHandler(
-        IMeuPluggyClient pluggyClient,
-        IPublishEndpoint publishEndpoint,
-        ILogger<SyncAllPluggyAccountsCommandHandler> logger)
-    {
-        _pluggyClient = pluggyClient;
-        _publishEndpoint = publishEndpoint;
-        _logger = logger;
-    }
-
     public async Task<SyncPluggySummaryDto> HandleAsync(SyncAllPluggyAccountsCommand command, CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("Iniciando sincronização unificada de contas via Meu.Pluggy para UserId: {UserId}", command.UserId);
+        logger.LogInformation("Iniciando sincronização unificada de contas via Meu.Pluggy para UserId: {UserId}", command.UserId);
 
-        var items = await _pluggyClient.GetItemsAsync(cancellationToken);
-        _logger.LogInformation("Localizados {Count} bancos/itens conectados no Meu.Pluggy.", items.Count);
+        var items = await pluggyClient.GetItemsAsync(cancellationToken);
+        logger.LogInformation("Localizados {Count} bancos/itens conectados no Meu.Pluggy.", items.Count);
 
         int totalAccounts = 0;
         int totalCheckingTxs = 0;
@@ -36,12 +25,12 @@ public class SyncAllPluggyAccountsCommandHandler : ISyncAllPluggyAccountsCommand
 
         foreach (var item in items)
         {
-            var accounts = await _pluggyClient.GetAccountsByItemIdAsync(item.Id, cancellationToken);
+            var accounts = await pluggyClient.GetAccountsByItemIdAsync(item.Id, cancellationToken);
             totalAccounts += accounts.Count;
 
             foreach (var account in accounts)
             {
-                var transactions = await _pluggyClient.GetTransactionsByAccountIdAsync(account.Id, cancellationToken);
+                var transactions = await pluggyClient.GetTransactionsByAccountIdAsync(account.Id, cancellationToken);
 
                 if (account.Type == PluggyConstants.AccountTypes.Credit || account.Subtype == PluggyConstants.AccountSubtypes.CreditCard)
                 {
@@ -72,12 +61,12 @@ public class SyncAllPluggyAccountsCommandHandler : ISyncAllPluggyAccountsCommand
                             CurrentInstallment: null,
                             TotalInstallments: null,
                             InvoiceDueDate: dueDate,
-                            Currency: account.CurrencyCode ?? "BRL",
+                            Currency: account.CurrencyCode ?? PluggyConstants.DefaultCurrency,
                             RawPayloadJson: null,
                             OccurredAtUtc: DateTime.UtcNow
                         );
 
-                        await _publishEndpoint.Publish(cardEvent, cancellationToken);
+                        await publishEndpoint.Publish(cardEvent, cancellationToken);
                         totalCardTxs++;
                     }
                 }
@@ -97,19 +86,19 @@ public class SyncAllPluggyAccountsCommandHandler : ISyncAllPluggyAccountsCommand
                             Amount: tx.Amount,
                             TransactionDate: txDate,
                             Description: tx.Description,
-                            Currency: account.CurrencyCode ?? "BRL",
+                            Currency: account.CurrencyCode ?? PluggyConstants.DefaultCurrency,
                             RawPayloadJson: null,
                             OccurredAtUtc: DateTime.UtcNow
                         );
 
-                        await _publishEndpoint.Publish(checkingEvent, cancellationToken);
+                        await publishEndpoint.Publish(checkingEvent, cancellationToken);
                         totalCheckingTxs++;
                     }
                 }
             }
         }
 
-        _logger.LogInformation("Sincronização concluída: {Items} items, {Accounts} contas, {CheckingTxs} txs de conta corrente, {CardTxs} txs de cartão de crédito.",
+        logger.LogInformation("Sincronização concluída: {Items} items, {Accounts} contas, {CheckingTxs} txs de conta corrente, {CardTxs} txs de cartão de crédito.",
             items.Count, totalAccounts, totalCheckingTxs, totalCardTxs);
 
         return new SyncPluggySummaryDto(
