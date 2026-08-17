@@ -5,8 +5,8 @@ using System.Threading.RateLimiting;
 
 using FinanceHub.ApiGateway.Clients;
 using FinanceHub.ApiGateway.Exceptions;
-using FinanceHub.ApiGateway.Middleware;
 using FinanceHub.ApiGateway.Services;
+using FinanceHub.Shared.Observability.Exceptions;
 using FinanceHub.Shared.Observability.Exceptions.Mapping;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;

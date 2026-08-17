@@ -1,9 +1,9 @@
-using FinanceHub.AuthConsent.Api.Middleware;
 using FinanceHub.AuthConsent.Application.Commands.AuthorizeConsent;
 using FinanceHub.AuthConsent.Application.Commands.CreateConsent;
 using FinanceHub.AuthConsent.Application.Commands.RenewToken;
 using FinanceHub.AuthConsent.Application.Commands.RevokeConsent;
 using FinanceHub.AuthConsent.Application.Queries.GetConsentByUserId;
+using FinanceHub.Shared.Observability.Exceptions;
 using FinanceHub.Shared.Observability.Exceptions.Mapping;
 
 using Microsoft.Extensions.Configuration;

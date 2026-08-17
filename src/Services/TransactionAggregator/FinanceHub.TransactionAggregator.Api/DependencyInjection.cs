@@ -1,4 +1,5 @@
-using FinanceHub.TransactionAggregator.Api.Middleware;
+using FinanceHub.Shared.Observability.Exceptions;
+using FinanceHub.Shared.Observability.Exceptions.Mapping;
 using FinanceHub.TransactionAggregator.Application;
 using FinanceHub.TransactionAggregator.Infrastructure;
 using Microsoft.Extensions.Configuration;
@@ -17,6 +18,7 @@ public static class DependencyInjection
         services.AddTransactionAggregatorApplicationServices();
         services.AddTransactionAggregatorInfrastructureServices(configuration);
 
+        services.AddExceptionMappingServices();
         services.AddExceptionHandler<GlobalExceptionHandler>();
         services.AddProblemDetails();
 

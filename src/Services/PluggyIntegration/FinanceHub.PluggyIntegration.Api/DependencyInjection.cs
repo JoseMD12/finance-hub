@@ -1,8 +1,8 @@
-using FinanceHub.PluggyIntegration.Api.Middleware;
 using FinanceHub.PluggyIntegration.Application;
 using FinanceHub.PluggyIntegration.Infrastructure;
 using FinanceHub.Shared.Messaging.Extensions;
 using FinanceHub.Shared.Observability;
+using FinanceHub.Shared.Observability.Exceptions;
 using FinanceHub.Shared.Observability.Exceptions.Mapping;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
