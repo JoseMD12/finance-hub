@@ -9,6 +9,8 @@ namespace FinanceHub.AuthConsent.Api;
 
 public class Program
 {
+    protected Program() { }
+
     public static async Task Main(string[] args)
     {
         Env.TraversePath().Load();

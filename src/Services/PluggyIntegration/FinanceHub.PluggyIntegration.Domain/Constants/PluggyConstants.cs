@@ -2,7 +2,6 @@ namespace FinanceHub.PluggyIntegration.Domain.Constants;
 
 public static class PluggyConstants
 {
-    public const string DefaultBaseUrl = "https://my-api.pluggy.ai";
     public const string DefaultCurrency = "BRL";
     public const string ItemsEndpoint = "/items";
     public const string AccountsEndpoint = "/accounts";

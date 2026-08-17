@@ -18,7 +18,7 @@ public static class DependencyInjection
 
         var baseUrl = configuration[PluggyConstants.EnvironmentVariables.ApiBaseUrl] 
                       ?? configuration[PluggyConstants.Configuration.ApiBaseUrlKey] 
-                      ?? PluggyConstants.DefaultBaseUrl;
+                      ?? throw new InvalidOperationException($"A configuração '{PluggyConstants.EnvironmentVariables.ApiBaseUrl}' é obrigatória.");
 
         services.AddHttpClient<IMeuPluggyClient, MeuPluggyClient>(client =>
         {

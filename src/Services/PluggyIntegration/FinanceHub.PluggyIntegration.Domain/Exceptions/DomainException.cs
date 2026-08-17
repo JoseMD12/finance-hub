@@ -12,7 +12,7 @@ public abstract class DomainException : Exception
         StatusCode = statusCode;
     }
 
-    protected DomainException(string message, Exception innerException, string errorCode, int statusCode = 400)
+    protected DomainException(string message, Exception? innerException, string errorCode, int statusCode = 400)
         : base(message, innerException)
     {
         ErrorCode = errorCode;
