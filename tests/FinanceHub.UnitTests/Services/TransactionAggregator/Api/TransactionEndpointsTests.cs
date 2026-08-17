@@ -24,7 +24,7 @@ public class TransactionEndpointsTests
     [Fact]
     public async Task GetHealth_ShouldReturn200OK()
     {
-        using var factory = new CustomWebApplicationFactory<Program>();
+        using var factory = new CustomWebApplicationFactory<FinanceHub.TransactionAggregator.Api.Program>();
         await factory.InitializeAsync();
         var client = factory.CreateClient();
 
@@ -48,7 +48,7 @@ public class TransactionEndpointsTests
         ingestHandler.Handle(Arg.Any<IngestTransactionCommand>(), Arg.Any<CancellationToken>())
             .Returns(generatedId);
 
-        using var factory = new CustomWebApplicationFactory<Program>();
+        using var factory = new CustomWebApplicationFactory<FinanceHub.TransactionAggregator.Api.Program>();
         await factory.InitializeAsync();
 
         var client = factory.WithWebHostBuilder(builder =>
@@ -96,7 +96,7 @@ public class TransactionEndpointsTests
         balanceHandler.Handle(Arg.Any<GetConsolidatedBalanceQuery>(), Arg.Any<CancellationToken>())
             .Returns(expectedDto);
 
-        using var factory = new CustomWebApplicationFactory<Program>();
+        using var factory = new CustomWebApplicationFactory<FinanceHub.TransactionAggregator.Api.Program>();
         await factory.InitializeAsync();
 
         var client = factory.WithWebHostBuilder(builder =>

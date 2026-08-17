@@ -25,6 +25,7 @@ Use these slash commands in chat to instantly trigger specialized harness workfl
 | `/git-commit` | `git-commit` | Single atomic Conventional Commit of working changes. |
 | `/git-commit-many-by <strategy>` | `git-commit-many-by` | Layered (`layer`), Feature (`feature`), or Service (`service`) fractional commits. |
 | `/git-pr <destination-branch>` | `git-pr` | Prepare and open Pull Request to target branch with release notes & checklist. |
+| `/pr-analyzer [pr-number]` | `pr-analyzer` | Audit GitHub Actions CI, SonarCloud Quality Gate, open issues, and code duplication. |
 
 ---
 
@@ -45,7 +46,6 @@ Use these slash commands in chat to instantly trigger specialized harness workfl
 │   │   ├── FileImporter/               <-- Offline Statement & Invoice Parser (OFX, CSV, PDF)
 │   │   └── TransactionAggregator/       <-- Canonical Ledger & Deduplication
 │   └── Shared/                 <-- Reusable Infrastructure Libraries
-│       ├── FinanceHub.Shared.Certificates/ <-- ICP-Brasil mTLS Client Certs
 │       ├── FinanceHub.Shared.Messaging/    <-- MassTransit / RabbitMQ + Outbox
 │       └── FinanceHub.Shared.Observability/  <-- OpenTelemetry & Logging
 └── tests/                      <-- Service Unit & Integration Tests (xUnit)
