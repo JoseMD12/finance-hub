@@ -10,24 +10,6 @@
     <Project Path="src/Services/AuthConsent/FinanceHub.AuthConsent.Domain/FinanceHub.AuthConsent.Domain.csproj" />
     <Project Path="src/Services/AuthConsent/FinanceHub.AuthConsent.Infrastructure/FinanceHub.AuthConsent.Infrastructure.csproj" />
   </Folder>
-  <Folder Name="/src/Services/InterIntegration/">
-    <Project Path="src/Services/InterIntegration/FinanceHub.InterIntegration.Api/FinanceHub.InterIntegration.Api.csproj" />
-    <Project Path="src/Services/InterIntegration/FinanceHub.InterIntegration.Application/FinanceHub.InterIntegration.Application.csproj" />
-    <Project Path="src/Services/InterIntegration/FinanceHub.InterIntegration.Domain/FinanceHub.InterIntegration.Domain.csproj" />
-    <Project Path="src/Services/InterIntegration/FinanceHub.InterIntegration.Infrastructure/FinanceHub.InterIntegration.Infrastructure.csproj" />
-  </Folder>
-  <Folder Name="/src/Services/ItauIntegration/">
-    <Project Path="src/Services/ItauIntegration/FinanceHub.ItauIntegration.Api/FinanceHub.ItauIntegration.Api.csproj" />
-    <Project Path="src/Services/ItauIntegration/FinanceHub.ItauIntegration.Application/FinanceHub.ItauIntegration.Application.csproj" />
-    <Project Path="src/Services/ItauIntegration/FinanceHub.ItauIntegration.Domain/FinanceHub.ItauIntegration.Domain.csproj" />
-    <Project Path="src/Services/ItauIntegration/FinanceHub.ItauIntegration.Infrastructure/FinanceHub.ItauIntegration.Infrastructure.csproj" />
-  </Folder>
-  <Folder Name="/src/Services/MercadoPagoIntegration/">
-    <Project Path="src/Services/MercadoPagoIntegration/FinanceHub.MercadoPagoIntegration.Api/FinanceHub.MercadoPagoIntegration.Api.csproj" />
-    <Project Path="src/Services/MercadoPagoIntegration/FinanceHub.MercadoPagoIntegration.Application/FinanceHub.MercadoPagoIntegration.Application.csproj" />
-    <Project Path="src/Services/MercadoPagoIntegration/FinanceHub.MercadoPagoIntegration.Domain/FinanceHub.MercadoPagoIntegration.Domain.csproj" />
-    <Project Path="src/Services/MercadoPagoIntegration/FinanceHub.MercadoPagoIntegration.Infrastructure/FinanceHub.MercadoPagoIntegration.Infrastructure.csproj" />
-  </Folder>
   <Folder Name="/src/Services/PluggyIntegration/">
     <Project Path="src/Services/PluggyIntegration/FinanceHub.PluggyIntegration.Api/FinanceHub.PluggyIntegration.Api.csproj" />
     <Project Path="src/Services/PluggyIntegration/FinanceHub.PluggyIntegration.Application/FinanceHub.PluggyIntegration.Application.csproj" />

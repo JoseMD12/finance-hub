@@ -43,8 +43,6 @@
     <ProjectReference Include="..\..\src\Shared\FinanceHub.Shared.Observability\FinanceHub.Shared.Observability.csproj" />
     <ProjectReference Include="..\..\src\Services\ApiGateway\FinanceHub.ApiGateway\FinanceHub.ApiGateway.csproj" />
     <ProjectReference Include="..\..\src\Services\AuthConsent\FinanceHub.AuthConsent.Api\FinanceHub.AuthConsent.Api.csproj" />
-    <ProjectReference Include="..\..\src\Services\ItauIntegration\FinanceHub.ItauIntegration.Api\FinanceHub.ItauIntegration.Api.csproj" />
-    <ProjectReference Include="..\..\src\Services\MercadoPagoIntegration\FinanceHub.MercadoPagoIntegration.Api\FinanceHub.MercadoPagoIntegration.Api.csproj" />
     <ProjectReference Include="..\..\src\Services\TransactionAggregator\FinanceHub.TransactionAggregator.Api\FinanceHub.TransactionAggregator.Api.csproj" />
     <ProjectReference Include="..\..\src\Services\TransactionAggregator\FinanceHub.TransactionAggregator.Application\FinanceHub.TransactionAggregator.Application.csproj" />
     <ProjectReference Include="..\..\src\Services\TransactionAggregator\FinanceHub.TransactionAggregator.Infrastructure\FinanceHub.TransactionAggregator.Infrastructure.csproj" />

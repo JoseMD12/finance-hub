@@ -82,71 +82,6 @@ services:
       financehub-rabbitmq:
         condition: service_healthy
 
-  apigateway-api:
-    build:
-      context: .
-      dockerfile: src/Services/ApiGateway/FinanceHub.ApiGateway/Dockerfile
-    container_name: apigateway-api
-    environment:
-      AUTH_CONSENT_BASE_URL: "http://authconsent-api:5001"
-      TRANSACTION_AGGREGATOR_BASE_URL: "http://transactionaggregator-api:5002"
-      PLUGGY_INTEGRATION_BASE_URL: "http://pluggyintegration-api:5056"
-      JWT_SECRET_KEY: "FinanceHubSuperSecretDevKeyWithAtLeast32BytesLength!"
-      OTEL_EXPORTER_OTLP_ENDPOINT: "http://financehub-jaeger:4317"
-    ports:
-      - "5050:5050"
-    depends_on:
-      - authconsent-api
-      - transactionaggregator-api
-      - pluggyintegration-api
-
-  itauintegration-api:
-    build:
-      context: .
-      dockerfile: src/Services/ItauIntegration/FinanceHub.ItauIntegration.Api/Dockerfile
-    container_name: itauintegration-api
-    environment:
-      RabbitMq__Host: "financehub-rabbitmq"
-      RabbitMq__Port: "5672"
-      RabbitMq__Username: "guest"
-      RabbitMq__Password: "guest"
-      OTEL_EXPORTER_OTLP_ENDPOINT: "http://financehub-jaeger:4317"
-    ports:
-      - "5003:5003"
-    depends_on:
-      financehub-rabbitmq:
-        condition: service_healthy
-
-  mercadopagointegration-api:
-    build:
-      context: .
-      dockerfile: src/Services/MercadoPagoIntegration/FinanceHub.MercadoPagoIntegration.Api/Dockerfile
-    container_name: mercadopagointegration-api
-    environment:
-      RabbitMq__Host: "financehub-rabbitmq"
-      RabbitMq__Port: "5672"
-      RabbitMq__Username: "guest"
-      RabbitMq__Password: "guest"
-      OTEL_EXPORTER_OTLP_ENDPOINT: "http://financehub-jaeger:4317"
-    ports:
-      - "5004:5004"
-    depends_on:
-      financehub-rabbitmq:
-        condition: service_healthy
-
-  interintegration-api:
-    build:
-      context: .
-      dockerfile: src/Services/InterIntegration/FinanceHub.InterIntegration.Api/Dockerfile
-    container_name: interintegration-api
-    environment:
-      RabbitMq__Host: "financehub-rabbitmq"
-      RabbitMq__Port: "5672"
-      RabbitMq__Username: "guest"
-      RabbitMq__Password: "guest"
-      OTEL_EXPORTER_OTLP_ENDPOINT: "http://financehub-jaeger:4317"
-    ports:
-      - "5005:5005"
   pluggyintegration-api:
     build:
       context: .
@@ -164,6 +99,24 @@ services:
     depends_on:
       financehub-rabbitmq:
         condition: service_healthy
+
+  apigateway-api:
+    build:
+      context: .
+      dockerfile: src/Services/ApiGateway/FinanceHub.ApiGateway/Dockerfile
+    container_name: apigateway-api
+    environment:
+      AUTH_CONSENT_BASE_URL: "http://authconsent-api:5001"
+      TRANSACTION_AGGREGATOR_BASE_URL: "http://transactionaggregator-api:5002"
+      PLUGGY_INTEGRATION_BASE_URL: "http://pluggyintegration-api:5056"
+      JWT_SECRET_KEY: "FinanceHubSuperSecretDevKeyWithAtLeast32BytesLength!"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://financehub-jaeger:4317"
+    ports:
+      - "5050:5050"
+    depends_on:
+      - authconsent-api
+      - transactionaggregator-api
+      - pluggyintegration-api
 
 volumes:
   postgres_data:
