@@ -1,17 +1,22 @@
 namespace FinanceHub.Shared.Messaging.Events;
 
 /// <summary>
-/// Event emitted when a raw transaction is ingested from an Open Finance connector or File Importer.
+/// Event emitted when a credit card transaction or invoice item is ingested.
 /// </summary>
-public record TransactionIngested(
+public record InvoiceItemIngested(
     Guid IngestionId,
     string? UserId,
     string Source, // "Itau", "MercadoPago", "Inter", "MeuPluggy"
-    string AccountId,
+    string CreditCardAccountId,
+    string? CardLastFourDigits,
     string? BankTransactionId,
     decimal Amount,
     DateTime TransactionDate,
     string Description,
+    string? Category,
+    int? CurrentInstallment,
+    int? TotalInstallments,
+    DateTime? InvoiceDueDate,
     string Currency,
     string? RawPayloadJson,
     DateTime OccurredAtUtc

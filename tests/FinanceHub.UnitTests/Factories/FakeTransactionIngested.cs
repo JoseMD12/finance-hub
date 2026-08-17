@@ -10,8 +10,9 @@ public static class FakeTransactionIngested
 {
     private static readonly Faker _faker = new("pt_BR");
 
-    public static TransactionIngested Build(string source = "Itau") => new(
+    public static TransactionIngested Build(string source = "Itau", string userId = "user-123") => new(
         IngestionId: Guid.NewGuid(),
+        UserId: userId,
         Source: source,
         AccountId: _faker.Random.AlphaNumeric(8),
         BankTransactionId: _faker.Random.AlphaNumeric(16),
@@ -23,6 +24,6 @@ public static class FakeTransactionIngested
         OccurredAtUtc: DateTime.UtcNow
     );
 
-    public static IEnumerable<TransactionIngested> BuildMany(int count = 5, string source = "Itau") =>
-        Enumerable.Range(0, count).Select(_ => Build(source));
+    public static IEnumerable<TransactionIngested> BuildMany(int count = 5, string source = "Itau", string userId = "user-123") =>
+        Enumerable.Range(0, count).Select(_ => Build(source, userId));
 }
