@@ -745,18 +745,19 @@
           
           <!-- CUSTOM SELECT COMPONENT -->
           <div class="form-group">
-            <label for="bank-select-trigger" class="form-label">Instituição Bancária (Select Customizado)</label>
-            <div class="custom-select-wrapper">
-              <button type="button" id="bank-select-trigger" class="custom-select-trigger" aria-haspopup="listbox" aria-expanded="false">
-                <span class="bank-indicator">
-                  <svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                  <strong>Itaú Unibanco</strong>
-                </span>
-                <span style="display: flex; align-items: center; gap: 8px;">
-                  <span class="bank-badge">Open Finance</span>
-                  <svg class="icon icon-sm" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-                </span>
-              </button>
+            <fieldset style="border: none; padding: 0; margin: 0;">
+              <legend class="form-label">Instituição Bancária (Select Customizado)</legend>
+              <div class="custom-select-wrapper">
+                <button type="button" id="bank-select-trigger" class="custom-select-trigger" aria-label="Instituição Bancária" aria-haspopup="listbox" aria-expanded="false">
+                  <span class="bank-indicator">
+                    <svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    <strong>Itaú Unibanco</strong>
+                  </span>
+                  <span style="display: flex; align-items: center; gap: 8px;">
+                    <span class="bank-badge">Open Finance</span>
+                    <svg class="icon icon-sm" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+                  </span>
+                </button>
 
               <!-- DROPDOWN OPTIONS LIST -->
               <div class="custom-select-menu">
@@ -783,6 +784,7 @@
                 </div>
               </div>
             </div>
+            </fieldset>
           </div>
 
           <div class="form-group">
