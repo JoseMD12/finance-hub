@@ -1,6 +1,6 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios';
 import { ApiError, type ProblemDetails } from '../types/api.types';
-import { getAccessToken, setAccessToken, clearSession } from '@/features/auth/utils/authStorage';
+import { getAccessToken, setAccessToken, clearSession } from '@/shared/utils/authStorage';
 
 let isRefreshing = false;
 let failedQueue: Array<{
