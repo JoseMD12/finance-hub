@@ -5,8 +5,8 @@ using System.Threading.RateLimiting;
 
 using FinanceHub.ApiGateway.Clients;
 using FinanceHub.ApiGateway.Exceptions;
-using FinanceHub.ApiGateway.Middleware;
 using FinanceHub.ApiGateway.Services;
+using FinanceHub.Shared.Observability.Exceptions;
 using FinanceHub.Shared.Observability.Exceptions.Mapping;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -96,24 +96,24 @@ public static class DependencyInjection
         });
 
         // 4. Downstream HttpClients
-        var authConsentUrl = Environment.GetEnvironmentVariable(GatewayConstants.Downstream.AuthConsentBaseUrlEnvVar)
-                          ?? configuration[GatewayConstants.Downstream.AuthConsentBaseUrlEnvVar]
-                          ?? throw new GatewayConfigurationException(GatewayConstants.Downstream.AuthConsentBaseUrlEnvVar);
-
         var transactionAggregatorUrl = Environment.GetEnvironmentVariable(GatewayConstants.Downstream.TransactionAggregatorBaseUrlEnvVar)
                                     ?? configuration[GatewayConstants.Downstream.TransactionAggregatorBaseUrlEnvVar]
                                     ?? throw new GatewayConfigurationException(GatewayConstants.Downstream.TransactionAggregatorBaseUrlEnvVar);
 
-        services.AddHttpClient<IAuthConsentServiceClient, AuthConsentServiceClient>(client =>
+        services.AddHttpClient<ITransactionAggregatorServiceClient, TransactionAggregatorServiceClient>(client =>
         {
-            client.BaseAddress = new Uri(authConsentUrl);
+            client.BaseAddress = new Uri(transactionAggregatorUrl);
             client.Timeout = TimeSpan.FromSeconds(GatewayConstants.Downstream.DefaultTimeoutSeconds);
         })
         .AddStandardResilienceHandler();
 
-        services.AddHttpClient<ITransactionAggregatorServiceClient, TransactionAggregatorServiceClient>(client =>
+        var pluggyIntegrationUrl = Environment.GetEnvironmentVariable(GatewayConstants.Downstream.PluggyIntegrationBaseUrlEnvVar)
+                                ?? configuration[GatewayConstants.Downstream.PluggyIntegrationBaseUrlEnvVar]
+                                ?? throw new GatewayConfigurationException(GatewayConstants.Downstream.PluggyIntegrationBaseUrlEnvVar);
+
+        services.AddHttpClient<IPluggyIntegrationServiceClient, PluggyIntegrationServiceClient>(client =>
         {
-            client.BaseAddress = new Uri(transactionAggregatorUrl);
+            client.BaseAddress = new Uri(pluggyIntegrationUrl);
             client.Timeout = TimeSpan.FromSeconds(GatewayConstants.Downstream.DefaultTimeoutSeconds);
         })
         .AddStandardResilienceHandler();

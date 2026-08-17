@@ -26,33 +26,31 @@ Use these slash commands in chat to instantly trigger specialized harness workfl
 | `/git-commit` | `git-commit` | Single atomic Conventional Commit of working changes. |
 | `/git-commit-many-by <strategy>` | `git-commit-many-by` | Layered (`layer`), Feature (`feature`), or Service (`service`) fractional commits. |
 | `/git-pr <destination-branch>` | `git-pr` | Prepare and open Pull Request to target branch with release notes & checklist. |
+| `/pr-analyzer [pr-number]` | `pr-analyzer` | Audit GitHub Actions CI, SonarCloud Quality Gate, open issues, and code duplication. |
 
 ---
 
 ## 🏛️ System Architecture Matrix
 
 ```
-./
+/
 ├── .agents/
 │   ├── AGENTS.md               <-- Subagent entrypoint & operational rules
 │   ├── agents.json             <-- MCP server configurations
-│   ├── knowledge/              <-- Design tokens, contracts & domain specs
+│   ├── knowledge/              <-- Domain models & system architecture ADRs
 │   ├── rules/                  <-- Modular architectural & security rules
 │   └── skills/                 <-- Project skills directory
 ├── src/
 │   ├── Services/               <-- Autonomous Microservices (Clean Arch + DDD)
 │   │   ├── ApiGateway/                  <-- BFF Entrypoint
-│   │   ├── AuthConsent/                 <-- FAPI / OAuth2 Consent Manager
-│   │   ├── ItauIntegration/             <-- Itaú Open Finance Connector
-│   │   ├── MercadoPagoIntegration/      <-- Mercado Pago Connector
-│   │   ├── InterIntegration/            <-- Banco Inter Connector (Phase 2)
+│   │   ├── PluggyIntegration/          <-- Open Finance Connector (Itaú, Inter, MP)
+│   │   ├── FileImporter/               <-- Offline Statement & Invoice Parser (OFX, CSV, PDF)
 │   │   └── TransactionAggregator/       <-- Canonical Ledger & Deduplication
 │   ├── Shared/                 <-- Reusable Infrastructure Libraries
-│   │   ├── FinanceHub.Shared.Certificates/ <-- ICP-Brasil mTLS Client Certs
 │   │   ├── FinanceHub.Shared.Messaging/    <-- MassTransit / RabbitMQ + Outbox
 │   │   └── FinanceHub.Shared.Observability/  <-- OpenTelemetry & Logging
 │   └── Web/                    <-- Frontend Web Application (Phase 6)
-│       └── finance-hub-web/             <-- React 19/18 + Vite + Tailwind + TanStack Query
+│       └── finance-hub-web/             <-- React 19 + Vite + TailwindCSS + TanStack Query
 └── tests/                      <-- Service Unit & Integration Tests (xUnit)
 ```
 
@@ -72,8 +70,8 @@ When generating code or configuring integrations, subagents **must** adhere to:
    - OAuth 2.0 implementation with `private_key_jwt`, Pushed Authorization Requests (PAR), and PKCE.
    - DPoP (Demonstrating Proof-of-Possession) header generation for all protected API calls.
 
-4. **mTLS Handshake Configuration**:
-   - All outgoing bank API integrations (Itaú, Banco Inter, Mercado Pago) must rely on `X509Certificate2` client certificates configured via `FinanceHub.Shared.Certificates`.
+4. **mTLS & Authentication**:
+   - Direct bank API connections use Bearer Token authentication via Meu.Pluggy (OAuth2 HTTPS). `FinanceHub.Shared.Certificates` was decommissioned — mTLS negotiation is handled by the Pluggy platform layer.
 
 5. **Data Encryption (AES-256-GCM / KMS)**:
    - Sensitive user tokens, consent tokens, and PII must be encrypted at rest using AES-256-GCM.

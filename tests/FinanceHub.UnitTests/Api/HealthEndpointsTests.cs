@@ -34,72 +34,6 @@ public class HealthEndpointsTests
     }
 
     [Fact]
-    public async Task AuthConsent_GET_Health_ShouldReturnHealthyStatus()
-    {
-        using var factory = new CustomWebApplicationFactory<FinanceHub.AuthConsent.Api.Program>();
-        await factory.InitializeAsync();
-        var client = factory.CreateClient();
-
-        try
-        {
-            var response = await client.GetAsync("/health");
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
-            var content = await response.Content.ReadFromJsonAsync<HealthResponse>();
-            content.Should().NotBeNull();
-            content!.Status.Should().Be("Healthy");
-            content.Service.Should().Be("FinanceHub.AuthConsent.Api");
-        }
-        finally
-        {
-            await factory.DisposeAsync();
-        }
-    }
-
-    [Fact]
-    public async Task ItauIntegration_GET_Health_ShouldReturnHealthyStatus()
-    {
-        using var factory = new CustomWebApplicationFactory<FinanceHub.ItauIntegration.Api.Program>();
-        await factory.InitializeAsync();
-        var client = factory.CreateClient();
-
-        try
-        {
-            var response = await client.GetAsync("/health");
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
-            var content = await response.Content.ReadFromJsonAsync<HealthResponse>();
-            content.Should().NotBeNull();
-            content!.Status.Should().Be("Healthy");
-            content.Service.Should().Be("FinanceHub.ItauIntegration.Api");
-        }
-        finally
-        {
-            await factory.DisposeAsync();
-        }
-    }
-
-    [Fact]
-    public async Task MercadoPagoIntegration_GET_Health_ShouldReturnHealthyStatus()
-    {
-        using var factory = new CustomWebApplicationFactory<FinanceHub.MercadoPagoIntegration.Api.Program>();
-        await factory.InitializeAsync();
-        var client = factory.CreateClient();
-
-        try
-        {
-            var response = await client.GetAsync("/health");
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
-            var content = await response.Content.ReadFromJsonAsync<HealthResponse>();
-            content.Should().NotBeNull();
-            content!.Status.Should().Be("Healthy");
-            content.Service.Should().Be("FinanceHub.MercadoPagoIntegration.Api");
-        }
-        finally
-        {
-            await factory.DisposeAsync();
-        }
-    }
-
-    [Fact]
     public async Task TransactionAggregator_GET_Health_ShouldReturnHealthyStatus()
     {
         using var factory = new CustomWebApplicationFactory<FinanceHub.TransactionAggregator.Api.Program>();
@@ -114,6 +48,28 @@ public class HealthEndpointsTests
             content.Should().NotBeNull();
             content!.Status.Should().Be("Healthy");
             content.Service.Should().Be("FinanceHub.TransactionAggregator.Api");
+        }
+        finally
+        {
+            await factory.DisposeAsync();
+        }
+    }
+
+    [Fact]
+    public async Task PluggyIntegration_GET_Health_ShouldReturnHealthyStatus()
+    {
+        using var factory = new CustomWebApplicationFactory<FinanceHub.PluggyIntegration.Api.Program>();
+        await factory.InitializeAsync();
+        var client = factory.CreateClient();
+
+        try
+        {
+            var response = await client.GetAsync("/health");
+            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            var content = await response.Content.ReadFromJsonAsync<HealthResponse>();
+            content.Should().NotBeNull();
+            content!.Status.Should().Be("Healthy");
+            content.Service.Should().Be("FinanceHub.PluggyIntegration.Api");
         }
         finally
         {

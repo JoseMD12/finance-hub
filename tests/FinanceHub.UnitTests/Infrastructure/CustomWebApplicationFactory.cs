@@ -39,25 +39,33 @@ public class CustomWebApplicationFactory<TProgram> : WebApplicationFactory<TProg
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        builder.UseSetting("ConnectionStrings:AuthConsentDb", PostgresConnectionString);
         builder.UseSetting("ConnectionStrings:TransactionAggregatorDb", PostgresConnectionString);
         builder.UseSetting("ConnectionStrings:DefaultConnection", PostgresConnectionString);
         builder.UseSetting("RabbitMQ:Host", RabbitMqHost);
         builder.UseSetting("RabbitMQ:Port", RabbitMqPort);
         builder.UseSetting("RabbitMQ:Username", RabbitMqUsername);
         builder.UseSetting("RabbitMQ:Password", RabbitMqPassword);
+        builder.UseSetting("TRANSACTION_AGGREGATOR_BASE_URL", "http://localhost:5002");
+        builder.UseSetting("PLUGGY_INTEGRATION_BASE_URL", "http://localhost:5056");
+        builder.UseSetting("PLUGGY_USER_TOKEN", "mock-pluggy-token");
+        builder.UseSetting("PLUGGY_USER_API_BASE_URL", "http://mock.pluggy.local");
+        builder.UseSetting("Pluggy:ApiBaseUrl", "http://mock.pluggy.local");
 
         builder.ConfigureAppConfiguration((_, config) =>
         {
             config.AddInMemoryCollection(new Dictionary<string, string?>
             {
-                { "ConnectionStrings:AuthConsentDb", PostgresConnectionString },
                 { "ConnectionStrings:TransactionAggregatorDb", PostgresConnectionString },
                 { "ConnectionStrings:DefaultConnection", PostgresConnectionString },
                 { "RabbitMQ:Host", RabbitMqHost },
                 { "RabbitMQ:Port", RabbitMqPort },
                 { "RabbitMQ:Username", RabbitMqUsername },
-                { "RabbitMQ:Password", RabbitMqPassword }
+                { "RabbitMQ:Password", RabbitMqPassword },
+                { "TRANSACTION_AGGREGATOR_BASE_URL", "http://localhost:5002" },
+                { "PLUGGY_INTEGRATION_BASE_URL", "http://localhost:5056" },
+                { "PLUGGY_USER_TOKEN", "mock-pluggy-token" },
+                { "PLUGGY_USER_API_BASE_URL", "http://mock.pluggy.local" },
+                { "Pluggy:ApiBaseUrl", "http://mock.pluggy.local" }
             });
         });
     }

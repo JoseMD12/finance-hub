@@ -25,10 +25,10 @@ public static class GatewayConstants
 
     public static class Downstream
     {
-        public const string AuthConsentBaseUrlEnvVar = "AUTH_CONSENT_BASE_URL";
         public const string TransactionAggregatorBaseUrlEnvVar = "TRANSACTION_AGGREGATOR_BASE_URL";
-        public const string AuthConsentServiceName = "AuthConsent";
+        public const string PluggyIntegrationBaseUrlEnvVar = "PLUGGY_INTEGRATION_BASE_URL";
         public const string TransactionAggregatorServiceName = "TransactionAggregator";
+        public const string PluggyIntegrationServiceName = "PluggyIntegration";
         public const int DefaultTimeoutSeconds = 10;
     }
 

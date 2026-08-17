@@ -1,51 +1,48 @@
+using System.Text.Json.Serialization;
 using DotNetEnv;
-
 using FinanceHub.Shared.Observability;
+using FinanceHub.TransactionAggregator.Api;
 using FinanceHub.TransactionAggregator.Api.Endpoints;
 using FinanceHub.TransactionAggregator.Infrastructure.Persistence;
 
-namespace FinanceHub.TransactionAggregator.Api;
+Env.TraversePath().Load();
 
-public class Program
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseFinanceHubSerilog();
+builder.Services.AddFinanceHubObservability(builder.Configuration, "FinanceHub.TransactionAggregator.Api");
+builder.Services.AddTransactionAggregatorApiServices(builder.Configuration);
+
+builder.Services.ConfigureHttpJsonOptions(options =>
 {
-    public static void Main(string[] args)
-    {
-        Env.TraversePath().Load();
+    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
 
-        var builder = WebApplication.CreateBuilder(args);
+var app = builder.Build();
 
-        builder.Host.UseFinanceHubSerilog();
-        builder.Services.AddFinanceHubObservability(builder.Configuration, "FinanceHub.TransactionAggregator.Api");
-        builder.Services.AddTransactionAggregatorApiServices(builder.Configuration);
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<TransactionAggregatorDbContext>();
+    dbContext.Database.EnsureCreated();
+}
 
-        builder.Services.ConfigureHttpJsonOptions(options =>
-        {
-            options.SerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
-        });
+app.UseExceptionHandler();
+app.UseStatusCodePages();
+app.UseHttpsRedirection();
 
-        var app = builder.Build();
+app.MapGet("/health", () => Results.Ok(new
+{
+    Status = "Healthy",
+    Service = "FinanceHub.TransactionAggregator.Api",
+    Timestamp = DateTime.UtcNow,
+    Version = "1.0.0-net10"
+})).WithName("GetHealth");
 
-        using (var scope = app.Services.CreateScope())
-        {
-            var dbContext = scope.ServiceProvider.GetRequiredService<TransactionAggregatorDbContext>();
-            dbContext.Database.EnsureCreated();
-        }
+app.MapTransactionEndpoints();
 
-        app.UseExceptionHandler();
-        app.UseStatusCodePages();
+await app.RunAsync();
 
-        app.UseHttpsRedirection();
-
-        app.MapGet("/health", () => Results.Ok(new
-        {
-            Status = "Healthy",
-            Service = "FinanceHub.TransactionAggregator.Api",
-            Timestamp = DateTime.UtcNow,
-            Version = "1.0.0-net10"
-        })).WithName("GetHealth");
-
-        app.MapTransactionEndpoints();
-
-        app.Run();
-    }
+namespace FinanceHub.TransactionAggregator.Api
+{
+    public partial class Program { }
 }

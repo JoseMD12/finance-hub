@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <ItemGroup>
+    <PackageReference Include="DotNetEnv" Version="3.1.1" />
+    <ProjectReference Include="..\FinanceHub.PluggyIntegration.Application\FinanceHub.PluggyIntegration.Application.csproj" />
+    <ProjectReference Include="..\FinanceHub.PluggyIntegration.Infrastructure\FinanceHub.PluggyIntegration.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\Shared\FinanceHub.Shared.Observability\FinanceHub.Shared.Observability.csproj" />
+    <ProjectReference Include="..\..\..\Shared\FinanceHub.Shared.Messaging\FinanceHub.Shared.Messaging.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+</Project>
