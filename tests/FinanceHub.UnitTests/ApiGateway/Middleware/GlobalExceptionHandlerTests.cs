@@ -3,7 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using FinanceHub.ApiGateway.Exceptions;
-using FinanceHub.ApiGateway.Middleware;
+using FinanceHub.Shared.Observability.Exceptions;
 using FinanceHub.Shared.Observability.Exceptions.Mapping;
 
 using FluentAssertions;

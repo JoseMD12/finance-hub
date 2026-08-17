@@ -23,13 +23,12 @@
     <PackageReference Include="NSubstitute" Version="5.3.0" />
     <PackageReference Include="Testcontainers.PostgreSql" Version="3.10.0" />
     <PackageReference Include="Testcontainers.RabbitMq" Version="3.10.0" />
+    <PackageReference Include="PdfPig" Version="0.1.9" />
     <PackageReference Include="xunit" Version="2.9.3" />
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
   </ItemGroup>
 
-  <ItemGroup>
-    <None Include="..\..\.env" Condition="Exists('..\..\.env')" CopyToOutputDirectory="PreserveNewest" Link=".env" />
-  </ItemGroup>
+
 
   <ItemGroup>
     <Using Include="Xunit" />
@@ -42,10 +41,14 @@
     <ProjectReference Include="..\..\src\Shared\FinanceHub.Shared.Observability\FinanceHub.Shared.Observability.csproj" />
     <ProjectReference Include="..\..\src\Services\ApiGateway\FinanceHub.ApiGateway\FinanceHub.ApiGateway.csproj" />
     <ProjectReference Include="..\..\src\Services\AuthConsent\FinanceHub.AuthConsent.Api\FinanceHub.AuthConsent.Api.csproj" />
-    <ProjectReference Include="..\..\src\Services\ItauIntegration\FinanceHub.ItauIntegration.Api\FinanceHub.ItauIntegration.Api.csproj" />
-    <ProjectReference Include="..\..\src\Services\MercadoPagoIntegration\FinanceHub.MercadoPagoIntegration.Api\FinanceHub.MercadoPagoIntegration.Api.csproj" />
     <ProjectReference Include="..\..\src\Services\TransactionAggregator\FinanceHub.TransactionAggregator.Api\FinanceHub.TransactionAggregator.Api.csproj" />
+    <ProjectReference Include="..\..\src\Services\TransactionAggregator\FinanceHub.TransactionAggregator.Application\FinanceHub.TransactionAggregator.Application.csproj" />
+    <ProjectReference Include="..\..\src\Services\TransactionAggregator\FinanceHub.TransactionAggregator.Infrastructure\FinanceHub.TransactionAggregator.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\Services\AuthConsent\FinanceHub.AuthConsent.Domain\FinanceHub.AuthConsent.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Services\PluggyIntegration\FinanceHub.PluggyIntegration.Domain\FinanceHub.PluggyIntegration.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Services\PluggyIntegration\FinanceHub.PluggyIntegration.Application\FinanceHub.PluggyIntegration.Application.csproj" />
+    <ProjectReference Include="..\..\src\Services\PluggyIntegration\FinanceHub.PluggyIntegration.Infrastructure\FinanceHub.PluggyIntegration.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Services\PluggyIntegration\FinanceHub.PluggyIntegration.Api\FinanceHub.PluggyIntegration.Api.csproj" />
   </ItemGroup>
 
 </Project>

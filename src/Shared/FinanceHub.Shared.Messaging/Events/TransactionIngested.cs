@@ -1,11 +1,12 @@
 namespace FinanceHub.Shared.Messaging.Events;
 
 /// <summary>
-/// Event emitted by Bank Integration Services (Itaú, Mercado Pago, Inter) when a raw transaction is ingested.
+/// Event emitted when a raw transaction is ingested from an Open Finance connector or File Importer.
 /// </summary>
 public record TransactionIngested(
     Guid IngestionId,
-    string Source, // "Itau", "MercadoPago", "Inter"
+    string? UserId,
+    string Source, // "Itau", "MercadoPago", "Inter", "MeuPluggy"
     string AccountId,
     string? BankTransactionId,
     decimal Amount,
@@ -14,4 +15,4 @@ public record TransactionIngested(
     string Currency,
     string? RawPayloadJson,
     DateTime OccurredAtUtc
-);
+) : IFinanceHubEvent;

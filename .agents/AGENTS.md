@@ -31,19 +31,18 @@ Use these slash commands in chat to instantly trigger specialized harness workfl
 ## 🏛️ System Architecture Matrix
 
 ```
-/mnt/c/Code/FinanceHub/
+/
 ├── .agents/
 │   ├── AGENTS.md               <-- Subagent entrypoint & operational rules
 │   ├── agents.json             <-- MCP server configurations
+│   ├── knowledge/              <-- Domain models & system architecture ADRs
 │   ├── rules/                  <-- Modular architectural & security rules
 │   └── skills/                 <-- Project skills directory
 ├── src/
 │   ├── Services/               <-- Autonomous Microservices (Clean Arch + DDD)
 │   │   ├── ApiGateway/                  <-- BFF Entrypoint
-│   │   ├── AuthConsent/                 <-- FAPI / OAuth2 Consent Manager
-│   │   ├── ItauIntegration/             <-- Itaú Open Finance Connector
-│   │   ├── MercadoPagoIntegration/      <-- Mercado Pago Connector
-│   │   ├── InterIntegration/            <-- Banco Inter Connector (Phase 2)
+│   │   ├── PluggyIntegration/          <-- Open Finance Connector (Itaú, Inter, MP)
+│   │   ├── FileImporter/               <-- Offline Statement & Invoice Parser (OFX, CSV, PDF)
 │   │   └── TransactionAggregator/       <-- Canonical Ledger & Deduplication
 │   └── Shared/                 <-- Reusable Infrastructure Libraries
 │       ├── FinanceHub.Shared.Certificates/ <-- ICP-Brasil mTLS Client Certs

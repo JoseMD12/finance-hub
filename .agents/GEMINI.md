@@ -8,13 +8,11 @@ This document serves as the primary system context and instruction set for Gemin
 
 FinanceHub is an enterprise personal finance aggregator engineered on **.NET 10** and **C# 13**. It connects directly to Brazil's **Open Finance** infrastructure via isolated microservices:
 
-1. **`FinanceHub.AuthConsent`**: OAuth2/OIDC + FAPI consent manager. Handles token lifecycle (`access_token`, `refresh_token`).
-2. **`FinanceHub.ItauIntegration`**: Itaú Open Finance API connector. Translates Itaú payloads to `TransactionIngested` event.
-3. **`FinanceHub.MercadoPagoIntegration`**: Mercado Pago API connector. Translates MP payloads to `TransactionIngested` event.
-4. **`FinanceHub.InterIntegration`**: Banco Inter API connector (to be implemented after Inter Open Finance phase confirmation).
-5. **`FinanceHub.TransactionAggregator`**: Consumes `TransactionIngested` events, normalizes to canonical transaction model, deduplicates, and persists history. Emits `TransactionNormalized`.
-6. **`FinanceHub.ApiGateway`**: Single entrypoint BFF for the frontend application.
-7. **`FinanceHub.Shared.*`**: `Certificates` (mTLS), `Messaging` (MassTransit/Outbox/Events), `Observability` (OpenTelemetry).
+1. **`FinanceHub.ApiGateway`**: Single entrypoint BFF for the frontend application, handling auth, rate limiting and dashboard queries.
+2. **`FinanceHub.PluggyIntegration`**: Unified Open Finance connector for Brazilian banks (Itaú, Inter, Mercado Pago). Emits `TransactionIngested` and `InvoiceItemIngested`.
+3. **`FinanceHub.FileImporter`**: Offline financial file ingestion engine for `.ofx`, `.csv`, and `.pdf` bank/card statements.
+4. **`FinanceHub.TransactionAggregator`**: Consumes ingested events, normalizes to canonical transaction model, deduplicates (SHA-256), auto-categorizes, and persists ledger history.
+5. **`FinanceHub.Shared.*`**: `Messaging` (MassTransit/Outbox/Events), `Observability` (OpenTelemetry/Serilog), `Certificates` (mTLS).
 
 ---
 

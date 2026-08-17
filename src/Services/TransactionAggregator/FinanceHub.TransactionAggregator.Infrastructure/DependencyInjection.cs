@@ -38,6 +38,9 @@ public static class DependencyInjection
         // ── Messaging — MassTransit + Transactional Outbox ──────────────────────
         services.AddFinanceHubMessaging(configuration, busConfig =>
         {
+            busConfig.AddConsumer<Messaging.Consumers.TransactionIngestedConsumer>();
+            busConfig.AddConsumer<Messaging.Consumers.InvoiceItemIngestedConsumer>();
+
             busConfig.AddEntityFrameworkOutbox<TransactionAggregatorDbContext>(outbox =>
             {
                 outbox.UsePostgres();
