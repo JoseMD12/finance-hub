@@ -11,7 +11,7 @@ namespace FinanceHub.ApiGateway;
 
 public class Program
 {
-    public static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
         Env.TraversePath().Load();
 
@@ -71,6 +71,6 @@ public class Program
         app.MapConsentGatewayEndpoints();
         app.MapPluggyGatewayEndpoints();
 
-        app.Run();
+        await app.RunAsync();
     }
 }

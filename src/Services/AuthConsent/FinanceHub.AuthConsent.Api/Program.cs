@@ -9,7 +9,7 @@ namespace FinanceHub.AuthConsent.Api;
 
 public class Program
 {
-    public static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
         Env.TraversePath().Load();
 
@@ -42,6 +42,6 @@ public class Program
 
         app.MapConsentEndpoints();
 
-        app.Run();
+        await app.RunAsync();
     }
 }
