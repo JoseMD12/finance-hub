@@ -43,8 +43,9 @@ export const LoginPage: React.FC = () => {
 
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-bold text-secondary">E-mail</label>
+            <label htmlFor="email" className="text-xs font-bold text-secondary">E-mail</label>
             <input
+              id="email"
               type="email"
               placeholder="seu.email@exemplo.com"
               {...register('email')}
@@ -54,8 +55,9 @@ export const LoginPage: React.FC = () => {
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-bold text-secondary">Senha</label>
+            <label htmlFor="password" className="text-xs font-bold text-secondary">Senha</label>
             <input
+              id="password"
               type="password"
               placeholder="••••••••"
               {...register('password')}

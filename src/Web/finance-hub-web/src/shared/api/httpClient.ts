@@ -49,7 +49,7 @@ httpClient.interceptors.response.use(
     // Tratamento de 401 com fila de espera
     if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
       if (originalRequest.url?.includes('/api/v1/auth/login') || originalRequest.url?.includes('/api/v1/auth/refresh')) {
-        return Promise.reject(normalizeError(error));
+        throw normalizeError(error);
       }
 
       if (isRefreshing) {
@@ -62,7 +62,7 @@ httpClient.interceptors.response.use(
             }
             return httpClient(originalRequest);
           })
-          .catch((err) => Promise.reject(err));
+          .catch((err: unknown) => { throw err; });
       }
 
       originalRequest._retry = true;
@@ -84,13 +84,13 @@ httpClient.interceptors.response.use(
         if (window.location.pathname !== '/login') {
           window.location.href = '/login';
         }
-        return Promise.reject(normalizeError(refreshErr));
+        throw normalizeError(refreshErr);
       } finally {
         isRefreshing = false;
       }
     }
 
-    return Promise.reject(normalizeError(error));
+    throw normalizeError(error);
   }
 );
 

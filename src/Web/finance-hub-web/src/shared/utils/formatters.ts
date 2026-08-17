@@ -11,7 +11,7 @@ const dateFormatter = new Intl.DateTimeFormat('pt-BR');
  * Exemplo: 1234.56 -> "R$ 1.234,56"
  */
 export function formatCurrencyBRL(value: number | string | null | undefined): string {
-  if (value === null || value === undefined || isNaN(Number(value))) {
+  if (value === null || value === undefined || Number.isNaN(Number(value))) {
     return 'R$ 0,00';
   }
   return brlFormatter.format(Number(value));
@@ -23,7 +23,7 @@ export function formatCurrencyBRL(value: number | string | null | undefined): st
 export function formatDateBR(dateString: string | Date | null | undefined): string {
   if (!dateString) return '-';
   const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
-  return isNaN(date.getTime()) ? '-' : dateFormatter.format(date);
+  return Number.isNaN(date.getTime()) ? '-' : dateFormatter.format(date);
 }
 
 /**
