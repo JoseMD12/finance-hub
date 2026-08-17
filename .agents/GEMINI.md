@@ -12,7 +12,7 @@ FinanceHub is an enterprise personal finance aggregator engineered on **.NET 10*
 2. **`FinanceHub.PluggyIntegration`**: Unified Open Finance connector for Brazilian banks (Itaú, Inter, Mercado Pago). Emits `TransactionIngested` and `InvoiceItemIngested`.
 3. **`FinanceHub.FileImporter`**: Offline financial file ingestion engine for `.ofx`, `.csv`, and `.pdf` bank/card statements.
 4. **`FinanceHub.TransactionAggregator`**: Consumes ingested events, normalizes to canonical transaction model, deduplicates (SHA-256), auto-categorizes, and persists ledger history.
-5. **`FinanceHub.Shared.*`**: `Messaging` (MassTransit/Outbox/Events), `Observability` (OpenTelemetry/Serilog), `Certificates` (mTLS).
+5. **`FinanceHub.Shared.*`**: `Messaging` (MassTransit/Outbox/Events), `Observability` (OpenTelemetry/Serilog/Exceptions).
 
 ---
 

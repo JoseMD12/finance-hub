@@ -96,20 +96,9 @@ public static class DependencyInjection
         });
 
         // 4. Downstream HttpClients
-        var authConsentUrl = Environment.GetEnvironmentVariable(GatewayConstants.Downstream.AuthConsentBaseUrlEnvVar)
-                          ?? configuration[GatewayConstants.Downstream.AuthConsentBaseUrlEnvVar]
-                          ?? throw new GatewayConfigurationException(GatewayConstants.Downstream.AuthConsentBaseUrlEnvVar);
-
         var transactionAggregatorUrl = Environment.GetEnvironmentVariable(GatewayConstants.Downstream.TransactionAggregatorBaseUrlEnvVar)
                                     ?? configuration[GatewayConstants.Downstream.TransactionAggregatorBaseUrlEnvVar]
                                     ?? throw new GatewayConfigurationException(GatewayConstants.Downstream.TransactionAggregatorBaseUrlEnvVar);
-
-        services.AddHttpClient<IAuthConsentServiceClient, AuthConsentServiceClient>(client =>
-        {
-            client.BaseAddress = new Uri(authConsentUrl);
-            client.Timeout = TimeSpan.FromSeconds(GatewayConstants.Downstream.DefaultTimeoutSeconds);
-        })
-        .AddStandardResilienceHandler();
 
         services.AddHttpClient<ITransactionAggregatorServiceClient, TransactionAggregatorServiceClient>(client =>
         {

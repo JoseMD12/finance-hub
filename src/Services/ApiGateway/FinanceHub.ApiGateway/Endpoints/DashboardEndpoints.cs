@@ -19,7 +19,6 @@ public static class DashboardEndpoints
 
         group.MapGet("/dashboard", async (
             ClaimsPrincipal user,
-            IAuthConsentServiceClient consentClient,
             ITransactionAggregatorServiceClient transactionClient,
             CancellationToken ct) =>
         {
@@ -31,13 +30,7 @@ public static class DashboardEndpoints
                 return Results.Unauthorized();
             }
 
-            var consentTask = consentClient.GetConsentsByUserIdAsync(userId, ct);
-            var balanceTask = transactionClient.GetConsolidatedBalanceAsync(userId, ct);
-
-            await Task.WhenAll(consentTask, balanceTask);
-
-            var consents = await consentTask;
-            var balance = await balanceTask;
+            var balance = await transactionClient.GetConsolidatedBalanceAsync(userId, ct);
 
             var response = new DashboardResponseDto(
                 UserId: userId,
@@ -48,11 +41,6 @@ public static class DashboardEndpoints
                     b.Amount,
                     b.Currency,
                     b.LastUpdatedAtUtc)),
-                ActiveConsents: consents.Select(c => new ActiveConsentSummaryDto(
-                    c.ConsentId,
-                    c.InstitutionId,
-                    c.Status,
-                    c.ExpiresAtUtc)),
                 GeneratedAtUtc: DateTime.UtcNow
             );
 
