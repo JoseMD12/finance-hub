@@ -90,6 +90,7 @@ services:
     environment:
       AUTH_CONSENT_BASE_URL: "http://authconsent-api:5001"
       TRANSACTION_AGGREGATOR_BASE_URL: "http://transactionaggregator-api:5002"
+      PLUGGY_INTEGRATION_BASE_URL: "http://pluggyintegration-api:5056"
       JWT_SECRET_KEY: "FinanceHubSuperSecretDevKeyWithAtLeast32BytesLength!"
       OTEL_EXPORTER_OTLP_ENDPOINT: "http://financehub-jaeger:4317"
     ports:
@@ -97,6 +98,7 @@ services:
     depends_on:
       - authconsent-api
       - transactionaggregator-api
+      - pluggyintegration-api
 
   itauintegration-api:
     build:
@@ -145,6 +147,20 @@ services:
       OTEL_EXPORTER_OTLP_ENDPOINT: "http://financehub-jaeger:4317"
     ports:
       - "5005:5005"
+  pluggyintegration-api:
+    build:
+      context: .
+      dockerfile: src/Services/PluggyIntegration/FinanceHub.PluggyIntegration.Api/Dockerfile
+    container_name: pluggyintegration-api
+    environment:
+      RabbitMq__Host: "financehub-rabbitmq"
+      RabbitMq__Port: "5672"
+      RabbitMq__Username: "guest"
+      RabbitMq__Password: "guest"
+      PLUGGY_USER_API_BASE_URL: "https://my-api.pluggy.ai"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://financehub-jaeger:4317"
+    ports:
+      - "5056:5056"
     depends_on:
       financehub-rabbitmq:
         condition: service_healthy

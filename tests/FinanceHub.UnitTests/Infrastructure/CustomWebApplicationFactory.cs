@@ -46,6 +46,10 @@ public class CustomWebApplicationFactory<TProgram> : WebApplicationFactory<TProg
         builder.UseSetting("RabbitMQ:Port", RabbitMqPort);
         builder.UseSetting("RabbitMQ:Username", RabbitMqUsername);
         builder.UseSetting("RabbitMQ:Password", RabbitMqPassword);
+        builder.UseSetting("AUTH_CONSENT_BASE_URL", "http://localhost:5001");
+        builder.UseSetting("TRANSACTION_AGGREGATOR_BASE_URL", "http://localhost:5002");
+        builder.UseSetting("PLUGGY_INTEGRATION_BASE_URL", "http://localhost:5056");
+        builder.UseSetting("PLUGGY_USER_TOKEN", "mock-pluggy-token");
 
         builder.ConfigureAppConfiguration((_, config) =>
         {
@@ -57,7 +61,11 @@ public class CustomWebApplicationFactory<TProgram> : WebApplicationFactory<TProg
                 { "RabbitMQ:Host", RabbitMqHost },
                 { "RabbitMQ:Port", RabbitMqPort },
                 { "RabbitMQ:Username", RabbitMqUsername },
-                { "RabbitMQ:Password", RabbitMqPassword }
+                { "RabbitMQ:Password", RabbitMqPassword },
+                { "AUTH_CONSENT_BASE_URL", "http://localhost:5001" },
+                { "TRANSACTION_AGGREGATOR_BASE_URL", "http://localhost:5002" },
+                { "PLUGGY_INTEGRATION_BASE_URL", "http://localhost:5056" },
+                { "PLUGGY_USER_TOKEN", "mock-pluggy-token" }
             });
         });
     }

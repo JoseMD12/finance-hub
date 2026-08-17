@@ -23,6 +23,7 @@
     <PackageReference Include="NSubstitute" Version="5.3.0" />
     <PackageReference Include="Testcontainers.PostgreSql" Version="3.10.0" />
     <PackageReference Include="Testcontainers.RabbitMq" Version="3.10.0" />
+    <PackageReference Include="PdfPig" Version="0.1.9" />
     <PackageReference Include="xunit" Version="2.9.3" />
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
   </ItemGroup>
@@ -45,7 +46,13 @@
     <ProjectReference Include="..\..\src\Services\ItauIntegration\FinanceHub.ItauIntegration.Api\FinanceHub.ItauIntegration.Api.csproj" />
     <ProjectReference Include="..\..\src\Services\MercadoPagoIntegration\FinanceHub.MercadoPagoIntegration.Api\FinanceHub.MercadoPagoIntegration.Api.csproj" />
     <ProjectReference Include="..\..\src\Services\TransactionAggregator\FinanceHub.TransactionAggregator.Api\FinanceHub.TransactionAggregator.Api.csproj" />
+    <ProjectReference Include="..\..\src\Services\TransactionAggregator\FinanceHub.TransactionAggregator.Application\FinanceHub.TransactionAggregator.Application.csproj" />
+    <ProjectReference Include="..\..\src\Services\TransactionAggregator\FinanceHub.TransactionAggregator.Infrastructure\FinanceHub.TransactionAggregator.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\Services\AuthConsent\FinanceHub.AuthConsent.Domain\FinanceHub.AuthConsent.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Services\PluggyIntegration\FinanceHub.PluggyIntegration.Domain\FinanceHub.PluggyIntegration.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Services\PluggyIntegration\FinanceHub.PluggyIntegration.Application\FinanceHub.PluggyIntegration.Application.csproj" />
+    <ProjectReference Include="..\..\src\Services\PluggyIntegration\FinanceHub.PluggyIntegration.Infrastructure\FinanceHub.PluggyIntegration.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Services\PluggyIntegration\FinanceHub.PluggyIntegration.Api\FinanceHub.PluggyIntegration.Api.csproj" />
   </ItemGroup>
 
 </Project>

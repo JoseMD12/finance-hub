@@ -28,6 +28,12 @@
     <Project Path="src/Services/MercadoPagoIntegration/FinanceHub.MercadoPagoIntegration.Domain/FinanceHub.MercadoPagoIntegration.Domain.csproj" />
     <Project Path="src/Services/MercadoPagoIntegration/FinanceHub.MercadoPagoIntegration.Infrastructure/FinanceHub.MercadoPagoIntegration.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/src/Services/PluggyIntegration/">
+    <Project Path="src/Services/PluggyIntegration/FinanceHub.PluggyIntegration.Api/FinanceHub.PluggyIntegration.Api.csproj" />
+    <Project Path="src/Services/PluggyIntegration/FinanceHub.PluggyIntegration.Application/FinanceHub.PluggyIntegration.Application.csproj" />
+    <Project Path="src/Services/PluggyIntegration/FinanceHub.PluggyIntegration.Domain/FinanceHub.PluggyIntegration.Domain.csproj" />
+    <Project Path="src/Services/PluggyIntegration/FinanceHub.PluggyIntegration.Infrastructure/FinanceHub.PluggyIntegration.Infrastructure.csproj" />
+  </Folder>
   <Folder Name="/src/Services/TransactionAggregator/">
     <Project Path="src/Services/TransactionAggregator/FinanceHub.TransactionAggregator.Api/FinanceHub.TransactionAggregator.Api.csproj" />
     <Project Path="src/Services/TransactionAggregator/FinanceHub.TransactionAggregator.Application/FinanceHub.TransactionAggregator.Application.csproj" />

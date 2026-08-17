@@ -1,0 +1,9 @@
+@FinanceHub.PluggyIntegration.Api_HostAddress = http://localhost:5056
+
+### Health Check
+GET {{FinanceHub.PluggyIntegration.Api_HostAddress}}/health
+Accept: application/json
+
+### Sincronização On-Demand Pluggy
+POST {{FinanceHub.PluggyIntegration.Api_HostAddress}}/api/v1/pluggy/sync
+Accept: application/json

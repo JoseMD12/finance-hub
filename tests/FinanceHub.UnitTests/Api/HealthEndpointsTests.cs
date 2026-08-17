@@ -120,4 +120,26 @@ public class HealthEndpointsTests
             await factory.DisposeAsync();
         }
     }
+
+    [Fact]
+    public async Task PluggyIntegration_GET_Health_ShouldReturnHealthyStatus()
+    {
+        using var factory = new CustomWebApplicationFactory<FinanceHub.PluggyIntegration.Api.Program>();
+        await factory.InitializeAsync();
+        var client = factory.CreateClient();
+
+        try
+        {
+            var response = await client.GetAsync("/health");
+            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            var content = await response.Content.ReadFromJsonAsync<HealthResponse>();
+            content.Should().NotBeNull();
+            content!.Status.Should().Be("Healthy");
+            content.Service.Should().Be("FinanceHub.PluggyIntegration.Api");
+        }
+        finally
+        {
+            await factory.DisposeAsync();
+        }
+    }
 }
