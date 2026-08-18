@@ -9,7 +9,7 @@
 
 No **FinanceHub**, o tratamento de erros segue três diretrizes fundamentais integradas:
 1. **Hierarquia de Exceções de Domínio**: Erros de negócio lançam exceções fortemente tipadas derivadas de `DomainException`, contendo `ErrorCode` e `StatusCode` HTTP sugerido.
-2. **Criação Orientada a TDD ([`tdd-workflow.md`](file:///mnt/c/Code/FinanceHub/.agents/rules/tdd-workflow.md))**: Toda exceção de domínio é criada e validada **no passo 🔴 RED do TDD**, garantindo que seus testes unitários asserção exatamente a mensagem (default ou parametrizada) e o tipo da exceção.
+2. **Criação Orientada a TDD ([`tdd-workflow.md`](./tdd-workflow.md))**: Toda exceção de domínio é criada e validada **no passo 🔴 RED do TDD**, garantindo que seus testes unitários asserção exatamente a mensagem (default ou parametrizada) e o tipo da exceção.
 3. **Tratamento Global com RFC 7807**: NENHUM endpoint Minimal API ou Handler deve usar blocos `try/catch` para gerar respostas HTTP de erro. O middleware nativo `IExceptionHandler` do .NET 10 intercepta a exceção e devolve uma resposta estruturada **RFC 7807 (`ProblemDetails`)**.
 
 

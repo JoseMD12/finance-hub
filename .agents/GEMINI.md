@@ -21,3 +21,4 @@ FinanceHub is an enterprise personal finance aggregator engineered on **.NET 10*
 2. **Outbox Pattern**: Never publish messages directly inside `DbContext.SaveChanges()` without Outbox protection.
 3. **OpenTelemetry Context**: Propagate `traceparent` context across all HTTP and RabbitMQ calls.
 4. **Zero Secrets in Code**: Encryption keys, mTLS certificates, and API secrets must be loaded dynamically.
+5. **Centralized Endpoints**: Minimal API routes in .NET 10 must be mapped exclusively via `<Domain>Endpoints.cs` classes. React API requests must be centralized in `src/features/<feature>/api/<feature>Api.ts`.

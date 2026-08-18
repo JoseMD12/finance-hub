@@ -1,8 +1,7 @@
 # Phase 2 — AuthConsent Service (`FinanceHub.AuthConsent`) Execution Specification
 
-> **Status**: `Draft / Ready for Implementation`  
-> **Target Microservice**: `src/Services/AuthConsent/` (`FinanceHub.AuthConsent.*`)  
-> **Database**: PostgreSQL `financehub_authconsent`  
+> **Status**: `Decommissioned / Superseded by FinanceHub.PluggyIntegration`  
+> **Target Microservice**: `src/Services/PluggyIntegration/` (`FinanceHub.PluggyIntegration.*`)  
 > **Architecture**: Clean Architecture + DDD + Design Patterns  
 
 ---
@@ -108,21 +107,22 @@ CREATE INDEX idx_bank_consents_status_expires ON bank_consents(status, expires_a
 
 ## ⚠️ Mapeamento de Exceções de Domínio (RFC 7807 ProblemDetails)
 
-Seguindo a regra de tratamento global ([`.agents/rules/exception-handling-rfc7807.md`](file:///mnt/c/Code/FinanceHub/.agents/rules/exception-handling-rfc7807.md)), todas as falhas de negócio do `FinanceHub.AuthConsent` serão tratadas sem `try/catch` pelo `GlobalExceptionHandler`:
+Seguindo a regra de tratamento global ([`.agents/rules/exception-handling-rfc7807.md`](../rules/exception-handling-rfc7807.md)), todas as falhas de negócio do `FinanceHub.AuthConsent` serão tratadas sem `try/catch` pelo `GlobalExceptionHandler`:
 
-| Exceção de Domínio | Condição de Disparo | Status HTTP | ErrorCode |
-|--------------------|---------------------|-------------|-----------|
-| `ConsentDomainException` | Dados inválidos ou invariante violada ao criar consentimento | 400 Bad Request | `INVALID_CONSENT_DATA` |
-| `ConsentNotFoundException` | Consentimento não localizado no PostgreSQL pelo ID | 404 Not Found | `CONSENT_NOT_FOUND` |
-| `ConsentInvalidStateException` | Tentativa de autorizar ou rotacionar consentimento revogado | 409 Conflict | `CONSENT_INVALID_STATE` |
-| `UnauthorizedBankException` | Falha na troca de tokens OAuth2 com a API do banco | 401 Unauthorized | `UNAUTHORIZED_BANK_ACCESS` |
-
+| Exceção de Domínio | Status HTTP | Error Code | Exemplo de Mensagem |
+| :--- | :--- | :--- | :--- |
+| `InvalidUserIdDomainException` | `400 Bad Request` | `AUTH_001_INVALID_USER_ID` | "O identificador do usuário é inválido." |
+| `InvalidBankDomainException` | `400 Bad Request` | `AUTH_002_INVALID_BANK` | "O banco informado ('xpto') não é suportado pelo Open Finance." |
+| `ConsentNotFoundDomainException` | `404 Not Found` | `AUTH_003_CONSENT_NOT_FOUND` | "Consentimento com ID '...' não foi localizado." |
+| `ConsentInvalidStateException` | `422 Unprocessable` | `AUTH_004_INVALID_STATE` | "Não é possível autorizar um consentimento com status 'Revoked'." |
+| `ConsentExpiredDomainException` | `422 Unprocessable` | `AUTH_005_CONSENT_EXPIRED` | "O consentimento expirou em 2026-08-10 e não pode ser renovado." |
+| `TokenEncryptionDomainException` | `500 Internal` | `AUTH_006_ENCRYPTION_FAILED` | "Falha na criptografia do token de acesso." |
 
 ---
 
-## 🧪 Plano de Testes & Ciclo TDD (Upfront Test Cases)
+## 🧪 8. Testes & TDD Workflow (Red -> Green -> Refactor)
 
-Seguindo a regra de **TDD Obrigatório ([`.agents/rules/tdd-workflow.md`](file:///mnt/c/Code/FinanceHub/.agents/rules/tdd-workflow.md))**, toda a codificação da Fase 2 será puxada pela escrita prévia dos testes falhando (**🔴 RED**).
+Seguindo a regra de **TDD Obrigatório ([`.agents/rules/tdd-workflow.md`](../rules/tdd-workflow.md))**, toda a codificação da Fase 2 será puxada pela escrita prévia dos testes falhando (**🔴 RED**).
 
 ### Bateria 1: Domínio Rico & Agregado (`BankConsent.cs`) — TDD Step 1
 - [ ] 🔴 `RequestConsent_ComDadosValidos_DeveCriarConsentimentoEmStatusPending`
