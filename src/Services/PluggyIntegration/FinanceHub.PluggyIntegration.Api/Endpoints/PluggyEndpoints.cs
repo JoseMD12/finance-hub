@@ -1,9 +1,12 @@
 using FinanceHub.PluggyIntegration.Application.Commands.SyncAllPluggyAccounts;
+using FinanceHub.PluggyIntegration.Application.Interfaces;
+using FinanceHub.PluggyIntegration.Application.Queries.GetPluggyItems;
 using FinanceHub.PluggyIntegration.Domain.Constants;
 using FinanceHub.PluggyIntegration.Domain.Exceptions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using System.Security.Claims;
 
 namespace FinanceHub.PluggyIntegration.Api.Endpoints;
 
@@ -13,6 +16,49 @@ public static class PluggyEndpoints
     {
         var group = app.MapGroup("/api/v1/pluggy")
             .WithTags("PluggyIntegration");
+
+        group.MapGet("/items", async (
+            HttpContext httpContext,
+            IGetPluggyItemsQueryHandler handler,
+            CancellationToken cancellationToken) =>
+        {
+            var pluggyToken = httpContext.Request.Headers[PluggyConstants.HeaderNames.PluggyAccessToken].ToString();
+            if (string.IsNullOrWhiteSpace(pluggyToken))
+            {
+                throw new NullOrEmptyPluggyAccessTokenDomainException();
+            }
+
+            var query = new GetPluggyItemsQuery(pluggyToken);
+            var items = await handler.HandleAsync(query, cancellationToken);
+            return Results.Ok(items);
+        })
+        .WithName("GetPluggyItems")
+        .WithSummary("Lista todas as conexões e instituições bancárias vinculadas no Meu.Pluggy.");
+
+        group.MapPost("/items/{itemId}/sync", async (
+            string itemId,
+            string? userId,
+            HttpContext httpContext,
+            ClaimsPrincipal user,
+            ISyncAllPluggyAccountsCommandHandler handler,
+            CancellationToken cancellationToken) =>
+        {
+            var pluggyToken = httpContext.Request.Headers[PluggyConstants.HeaderNames.PluggyAccessToken].ToString();
+            if (string.IsNullOrWhiteSpace(pluggyToken))
+            {
+                throw new NullOrEmptyPluggyAccessTokenDomainException();
+            }
+
+            var resolvedUserId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                              ?? user.FindFirst("sub")?.Value
+                              ?? userId;
+            var summary = await handler.HandleItemAsync(
+                new SyncSinglePluggyItemCommand(itemId, resolvedUserId, pluggyToken),
+                cancellationToken);
+            return Results.Ok(summary);
+        })
+        .WithName("SyncPluggyItem")
+        .WithSummary("Solicita uma nova sincronização para uma instituição específica via Meu.Pluggy.");
 
         group.MapPost("/sync", async (
             string? userId,

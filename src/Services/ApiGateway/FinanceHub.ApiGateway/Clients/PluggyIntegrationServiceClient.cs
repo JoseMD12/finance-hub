@@ -9,6 +9,22 @@ public sealed class PluggyIntegrationServiceClient(
     HttpClient httpClient,
     ILogger<PluggyIntegrationServiceClient> logger) : IPluggyIntegrationServiceClient
 {
+    public async Task<IReadOnlyList<GatewayPluggyItemDto>> GetItemsAsync(string pluggyAccessToken, CancellationToken ct = default)
+    {
+        logger.LogInformation("Buscando itens conectados via downstream PluggyIntegration...");
+
+        var request = new HttpRequestMessage(HttpMethod.Get, "/api/v1/pluggy/items");
+        if (!string.IsNullOrWhiteSpace(pluggyAccessToken))
+        {
+            request.Headers.Add(FinanceHubHeaderNames.PluggyAccessToken, pluggyAccessToken);
+        }
+
+        var response = await httpClient.SendAsync(request, ct);
+        await EnsureSuccessOrThrowAsync(response, ct);
+
+        var items = await response.Content.ReadFromJsonAsync<IReadOnlyList<GatewayPluggyItemDto>>(cancellationToken: ct);
+        return items ?? [];
+    }
     public async Task<GatewayPluggySyncSummaryDto?> TriggerSyncAsync(string? userId, string pluggyAccessToken, CancellationToken ct = default)
     {
         logger.LogInformation("Disparando sincronização via downstream PluggyIntegration para UserId: {UserId}...", userId);
@@ -24,9 +40,44 @@ public sealed class PluggyIntegrationServiceClient(
         }
 
         var response = await httpClient.SendAsync(request, ct);
-        response.EnsureSuccessStatusCode();
+        await EnsureSuccessOrThrowAsync(response, ct);
 
         return await response.Content.ReadFromJsonAsync<GatewayPluggySyncSummaryDto>(cancellationToken: ct);
+    }
+
+    public async Task<GatewayPluggySyncSummaryDto?> ResyncItemAsync(string itemId, string? userId, string pluggyAccessToken, CancellationToken ct = default)
+    {
+        logger.LogInformation("Solicitando ressincronização da instituição {ItemId} via downstream PluggyIntegration...", itemId);
+
+        var endpoint = $"/api/v1/pluggy/items/{Uri.EscapeDataString(itemId)}/sync";
+        if (!string.IsNullOrWhiteSpace(userId))
+        {
+            endpoint += $"?userId={Uri.EscapeDataString(userId)}";
+        }
+
+        var request = new HttpRequestMessage(HttpMethod.Post, endpoint);
+        if (!string.IsNullOrWhiteSpace(pluggyAccessToken))
+        {
+            request.Headers.Add(FinanceHub.Shared.Messaging.Constants.FinanceHubHeaderNames.PluggyAccessToken, pluggyAccessToken);
+        }
+
+        var response = await httpClient.SendAsync(request, ct);
+        await EnsureSuccessOrThrowAsync(response, ct);
+        return await response.Content.ReadFromJsonAsync<GatewayPluggySyncSummaryDto>(cancellationToken: ct);
+    }
+
+    private static async Task EnsureSuccessOrThrowAsync(HttpResponseMessage response, CancellationToken ct)
+    {
+        if (response.IsSuccessStatusCode)
+        {
+            return;
+        }
+
+        var detail = await response.Content.ReadAsStringAsync(ct);
+        throw new HttpRequestException(
+            $"PluggyIntegration returned {(int)response.StatusCode} ({response.ReasonPhrase}). Detail: {detail}",
+            inner: null,
+            statusCode: response.StatusCode);
     }
 
     public async Task<bool> HealthCheckAsync(CancellationToken ct = default)
