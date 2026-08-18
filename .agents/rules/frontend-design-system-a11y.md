@@ -23,7 +23,7 @@ Todas as classes de cores DEVEM utilizar estritamente os tokens configurados na 
 | `bg-secondary`, `text-secondary` | `#1D555A` | Fundo da Sidebar, cabeçalhos de tabela, ícones institucionais |
 | `bg-tertiary`, `text-tertiary` | `#FF7338` | Badges de atenção moderada, acentos visuais |
 | `bg-surface-ground` | `#F4F7F6` | Fundo geral da aplicação (clean, alto contraste) |
-| `bg-surface-card` | `#FFFFFF` | Cards elevados, modais, containers de dados |
+| `bg-surface-card` | `#FAFCFB` | Cards elevados, modais, containers de dados (Off-white, nunca branco puro #FFFFFF) |
 | `text-status-success` | `#2ECC71` | Receitas, entradas de dinheiro, status de sincronização OK |
 | `text-status-danger` | `#FF5964` | Despesas, saídas financeiras, alertas de erro |
 | `text-status-info` | `#38BDF8` | Informações de transações, dicas, registros |
@@ -47,13 +47,19 @@ export function cn(...inputs: ClassValue[]) {
 
 ---
 
-## 🚫 3. Proibição Estrita de Emojis & Padrão de Ícones Outline
+## 🚫 3. Proibição Estrita de Emojis, Ícones Outline & Proibição de Barras Verticais em Títulos
 
 1. **Zero Emojis**:
    - É **estritamente proibido** o uso de emojis em qualquer parte da interface (títulos, botões, modais, toasts, badges, tooltips ou tabelas).
 2. **Ícones Outline**:
    - Toda indicação visual deve utilizar ícones vetoriais outline limpos (`lucide-react` ou SVG puro com `fill: none` e `stroke: currentColor`).
    - Preferência por layout clean: se um ícone não agregar clareza semântica, utilize apenas tipografia limpa.
+3. **Proibição de Barras Verticais em Títulos**:
+   - É **estritamente proibido** utilizar marcadores ou destaques de barra vertical (`::before` vertical bar, `|` ou retângulos verticais) antes de títulos ou cabeçalhos. Títulos devem ser renderizados puramente com tipografia limpa, peso e hierarquia visual.
+4. **Proibição de Branco Puro (`#FFFFFF`)**:
+   - É **estritamente proibido** utilizar branco puro (`#FFFFFF`) em superfícies de cartões, modais, campos de formulário e containers de fundo. Toda superfície que seria branca DEVE utilizar obrigatoriamente um tom **off-white** suave (ex: `#FAFCFB` / `bg-surface-card`).
+5. **Proibição do Caractere '&' em Títulos e Menus**:
+   - É **estritamente proibido** utilizar o caractere '&' em títulos de seção, cabeçalhos, modais ou itens de menu da aplicação. Utilize sempre apenas nomes diretos (ex: 'Conexões' em vez de 'Conexões & Ingestão').
 
 ---
 
