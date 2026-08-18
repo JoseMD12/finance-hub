@@ -50,4 +50,11 @@ describe('ConnectionCard Component', () => {
     expect(balanceEl).toBeInTheDocument();
     expect(balanceEl).toHaveClass('text-status-danger');
   });
+
+  it('hides the update button when application credentials are unavailable', () => {
+    render(<ConnectionCard item={mockPositiveItem} />);
+
+    expect(screen.queryByRole('button', { name: 'Ressincronizar Itaú Unibanco' })).not.toBeInTheDocument();
+  });
+
 });

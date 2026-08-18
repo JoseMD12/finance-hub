@@ -3,7 +3,7 @@ import { Card } from '@/shared/components/Card/Card';
 import { Button } from '@/shared/components/Button/Button';
 import { KeyRound, ExternalLink, RefreshCw, CheckCircle2, AlertCircle, XCircle, Puzzle } from 'lucide-react';
 import { CONNECTIONS_DEFAULTS } from '../constants/connectionsConstants';
-import { formatDateBR } from '@/shared/utils/formatters';
+import { formatDateTimeBR } from '@/shared/utils/formatters';
 import type { PluggySyncSummaryDto } from '../types/connections.types';
 
 interface PluggySyncPanelProps {
@@ -67,28 +67,35 @@ export const PluggySyncPanel: React.FC<PluggySyncPanelProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 self-end sm:self-auto">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => window.open(CONNECTIONS_DEFAULTS.EXTENSION_DOCS_URL, '_blank', 'noopener,noreferrer')}
-            className="text-[11px] h-7 px-2.5"
-            aria-label="Download da extensão Chrome FinanceHub Sync"
-          >
-            <Puzzle className="w-3 h-3" />
-            Extensão Chrome
-          </Button>
+        <div className="flex flex-col items-end gap-1.5 self-end sm:self-auto">
+          {lastSync && (
+            <span className="text-[11px] text-slate-400 font-medium whitespace-nowrap">
+              Atualizado: {formatDateTimeBR(lastSync.syncedAtUtc)}
+            </span>
+          )}
+          <div className="flex items-center gap-1.5">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => window.open(CONNECTIONS_DEFAULTS.EXTENSION_DOCS_URL, '_blank', 'noopener,noreferrer')}
+              className="text-[11px] h-7 px-2.5"
+              aria-label="Download da extensão Chrome FinanceHub Sync"
+            >
+              <Puzzle className="w-3 h-3" />
+              Extensão Chrome
+            </Button>
 
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => window.open(CONNECTIONS_DEFAULTS.PLUGGY_PORTAL_URL, '_blank', 'noopener,noreferrer')}
-            className="text-[11px] h-7 px-2.5"
-            aria-label="Abrir portal Meu.Pluggy em nova aba"
-          >
-            <ExternalLink className="w-3 h-3" />
-            Abrir Meu.Pluggy
-          </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => window.open(CONNECTIONS_DEFAULTS.PLUGGY_PORTAL_URL, '_blank', 'noopener,noreferrer')}
+              className="text-[11px] h-7 px-2.5"
+              aria-label="Abrir portal Meu.Pluggy em nova aba"
+            >
+              <ExternalLink className="w-3 h-3" />
+              Abrir Meu.Pluggy
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -124,16 +131,9 @@ export const PluggySyncPanel: React.FC<PluggySyncPanelProps> = ({
           className="btn-primary-glow text-xs h-8 whitespace-nowrap self-end sm:self-auto"
         >
           {!isSyncing && <RefreshCw className="w-3.5 h-3.5" />}
-          Sincronizar Contas
+          Importar Dados Meu.Pluggy
         </Button>
       </div>
-
-      {lastSync && (
-        <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-400">
-          <span>Última sincronização: <strong className="text-slate-600 font-semibold">{formatDateBR(lastSync.syncedAtUtc)}</strong></span>
-          <span>Status: Ativo</span>
-        </div>
-      )}
     </Card>
   );
 };

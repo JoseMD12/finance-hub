@@ -2,7 +2,6 @@ import React from 'react';
 import { usePluggyToken } from '../hooks/usePluggyToken';
 import { useSyncPluggyMutation } from '../hooks/useSyncPluggyMutation';
 import { useConnectedInstitutionsQuery } from '../hooks/useConnectedInstitutionsQuery';
-import { useResyncPluggyItemMutation } from '../hooks/useResyncPluggyItemMutation';
 import { PluggySyncPanel } from '../components/PluggySyncPanel';
 import { SyncSummaryBanner } from '../components/SyncSummaryBanner';
 import { ConnectionCard } from '../components/ConnectionCard';
@@ -19,17 +18,12 @@ export const ConnectionsPage: React.FC = () => {
       saveLastSync(summary);
     },
   });
-  const resyncItemMutation = useResyncPluggyItemMutation();
 
   const handleSync = (targetToken: string) => {
     saveToken(targetToken);
     syncMutation.mutate(targetToken);
   };
 
-  const handleItemResync = (itemId: string) => {
-    if (!token.trim()) return;
-    resyncItemMutation.mutate({ itemId, token });
-  };
 
   const connectedItems = items ?? [];
   const hasInstitutions = connectedItems.length > 0;
@@ -75,8 +69,6 @@ export const ConnectionsPage: React.FC = () => {
               <ConnectionCard
                 key={item.id}
                 item={item}
-                onResync={handleItemResync}
-                isResyncing={resyncItemMutation.isPending && resyncItemMutation.variables?.itemId === item.id}
               />
             ))}
           </div>

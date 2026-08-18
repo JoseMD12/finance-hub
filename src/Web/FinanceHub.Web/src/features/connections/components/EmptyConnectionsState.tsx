@@ -17,7 +17,7 @@ export const EmptyConnectionsState: React.FC<EmptyConnectionsStateProps> = ({ ha
       </h3>
       <p className="text-xs text-slate-500 max-w-md">
         {hasToken
-          ? 'Clique em "Sincronizar Contas" no painel acima para carregar suas instituições bancárias do Meu.Pluggy.'
+          ? 'Clique em "Importar Dados Meu.Pluggy" no painel acima para carregar suas instituições bancárias.'
           : 'Insira o token de sessão da extensão FinanceHub Sync no campo acima e sincronize suas contas Open Finance.'}
       </p>
     </Card>

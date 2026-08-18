@@ -36,22 +36,3 @@ export const syncPluggyAccountsApi = async (
 
   return response.data;
 };
-
-export const resyncPluggyItemApi = async (
-  itemId: string,
-  pluggyAccessToken: string,
-  signal?: AbortSignal
-): Promise<PluggySyncSummaryDto> => {
-  const response = await httpClient.post<PluggySyncSummaryDto>(
-    API_ENDPOINTS.PLUGGY.ITEM_SYNC(itemId),
-    {},
-    {
-      signal,
-      headers: {
-        [API_HEADERS.PLUGGY_ACCESS_TOKEN]: pluggyAccessToken.trim(),
-      },
-    }
-  );
-
-  return response.data;
-};

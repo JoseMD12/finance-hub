@@ -1,17 +1,14 @@
-import { Button } from '@/shared/components/Button/Button';
 import { Card } from '@/shared/components/Card/Card';
 import { formatCurrencyBRL, formatDateTimeBR } from '@/shared/utils/formatters';
-import { CreditCard, Landmark, RefreshCw, Wallet } from 'lucide-react';
+import { CreditCard, Landmark, Wallet } from 'lucide-react';
 import React from 'react';
 import type { PluggyItemDto } from '../types/connections.types';
 
 interface ConnectionCardProps {
   item: PluggyItemDto;
-  isResyncing?: boolean;
-  onResync?: (itemId: string) => void;
 }
 
-export const ConnectionCard: React.FC<ConnectionCardProps> = ({ item, isResyncing = false, onResync }) => {
+export const ConnectionCard: React.FC<ConnectionCardProps> = ({ item }) => {
   return (
     <Card className="flex flex-col justify-between gap-4 hoverable border-slate-200/80">
       <div className="flex flex-col gap-3">
@@ -28,21 +25,6 @@ export const ConnectionCard: React.FC<ConnectionCardProps> = ({ item, isResyncin
             <span className="text-[11px] text-slate-400 font-medium whitespace-nowrap">
               Atualizado: {formatDateTimeBR(item.lastUpdatedAt)}
             </span>
-            {onResync && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onResync(item.id)}
-                isLoading={isResyncing}
-                disabled={isResyncing}
-                className="h-7 px-2 text-[11px]"
-                title="Ressincronizar instituição"
-                aria-label={`Ressincronizar ${item.connector.name}`}
-              >
-                {!isResyncing && <RefreshCw className="w-3 h-3" />}
-                Atualizar
-              </Button>
-            )}
           </div>
         </div>
       </div>
