@@ -1,21 +1,22 @@
 import { httpClient } from '@/shared/api/httpClient';
 import { API_ENDPOINTS, API_HEADERS } from '@/shared/api/apiEndpoints';
+import type { PluggySyncSummaryDto } from '../types/connections.types';
 
-export interface PluggySyncSummaryDto {
-  totalItemsSynced: number;
-  totalAccountsSynced: number;
-  totalCheckingTransactionsIngested: number;
-  totalCardTransactionsIngested: number;
-  syncedAtUtc: string;
-}
-
-export const syncPluggyAccountsApi = async (pluggyAccessToken: string): Promise<PluggySyncSummaryDto> => {
+/**
+ * Triggers synchronization of all Open Finance bank accounts and transactions via Meu.Pluggy.
+ * Sends the session token securely in the X-Pluggy-Access-Token header.
+ */
+export const syncPluggyAccountsApi = async (
+  pluggyAccessToken: string,
+  signal?: AbortSignal
+): Promise<PluggySyncSummaryDto> => {
   const response = await httpClient.post<PluggySyncSummaryDto>(
     API_ENDPOINTS.PLUGGY.SYNC,
     {},
     {
+      signal,
       headers: {
-        [API_HEADERS.PLUGGY_ACCESS_TOKEN]: pluggyAccessToken,
+        [API_HEADERS.PLUGGY_ACCESS_TOKEN]: pluggyAccessToken.trim(),
       },
     }
   );
