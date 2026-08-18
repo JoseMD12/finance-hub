@@ -15,6 +15,7 @@ builder.Services.AddApiGatewayServices(builder.Configuration);
 var app = builder.Build();
 
 app.UseExceptionHandler();
+app.UseCors(GatewayConstants.Cors.PolicyName);
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseRateLimiter();

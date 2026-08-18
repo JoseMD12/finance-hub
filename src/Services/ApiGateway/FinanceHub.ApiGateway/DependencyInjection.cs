@@ -121,6 +121,25 @@ public static class DependencyInjection
         // 5. Health Checks
         services.AddHealthChecks();
 
+        // 6. CORS Configuration
+        var configuredOrigins = Environment.GetEnvironmentVariable(GatewayConstants.Cors.AllowedOriginsEnvVar)
+                             ?? configuration[GatewayConstants.Cors.AllowedOriginsEnvVar];
+
+        var allowedOrigins = !string.IsNullOrWhiteSpace(configuredOrigins)
+            ? configuredOrigins.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            : GatewayConstants.Cors.DefaultOrigins;
+
+        services.AddCors(options =>
+        {
+            options.AddPolicy(GatewayConstants.Cors.PolicyName, policy =>
+            {
+                policy.WithOrigins(allowedOrigins)
+                      .AllowAnyHeader()
+                      .AllowAnyMethod()
+                      .AllowCredentials();
+            });
+        });
+
         return services;
     }
 
