@@ -14,7 +14,7 @@
   --color-tertiary-light: #FFF0EA;
 
   --color-surface-ground: #F4F7F6;
-  --color-surface-card: #FFFFFF;
+  --color-surface-card: #FAFCFB; /* Off-white em vez de branco puro */
   --color-surface-muted: #EAEFF0;
   --color-border-subtle: #E2E8F0;
 
@@ -35,9 +35,13 @@
   --radius-xl: 24px;
   --radius-full: 9999px;
 
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
   --shadow-card: 0 10px 25px -5px rgba(29, 85, 90, 0.05), 0 8px 10px -6px rgba(29, 85, 90, 0.03);
   --shadow-elevated: 0 20px 40px -10px rgba(29, 85, 90, 0.12);
   --shadow-dropdown: 0 12px 30px -4px rgba(29, 85, 90, 0.15), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-brand: 0 8px 20px -4px rgba(224, 86, 151, 0.25);
+
+  --transition-default: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 :root {
@@ -50,4 +54,61 @@
 body {
   margin: 0;
   min-height: 100vh;
+}
+
+/* ==========================================================================
+   Centralized Global Design Utilities & Hover Animations
+   ========================================================================== */
+
+/* Section Title Indicator */
+.section-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-secondary);
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+/* Centralized Card Hover & Elevation */
+.fh-card {
+  background-color: var(--color-surface-card);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-card);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  transition: var(--transition-default);
+}
+
+.fh-card-hover:hover {
+  box-shadow: var(--shadow-elevated);
+  transform: translateY(-2px);
+}
+
+/* Centralized Brand Pill Badge */
+.badge-brand {
+  background-color: var(--color-brand);
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.25rem 0.875rem;
+  border-radius: 9999px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Centralized Input & Select Focus Glow */
+.form-input-focus:focus {
+  border-color: var(--color-brand);
+  background-color: #FAFCFB;
+  box-shadow: 0 0 0 3px var(--color-brand-glow);
+}
+
+/* Centralized Primary Button Glow & Lift */
+.btn-primary-glow {
+  box-shadow: var(--shadow-brand);
+}
+
+.btn-primary-glow:hover {
+  transform: translateY(-1px);
 }

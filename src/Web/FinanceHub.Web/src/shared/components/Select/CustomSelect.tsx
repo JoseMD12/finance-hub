@@ -29,6 +29,7 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
   disabled = false,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [focusedIndex, setFocusedIndex] = useState(-1);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const selectedOption = options.find((opt) => opt.value === value);
@@ -45,17 +46,49 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (disabled) return;
+
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      setIsOpen((prev) => !prev);
+      if (isOpen && focusedIndex >= 0 && focusedIndex < options.length) {
+        onChange(options[focusedIndex].value);
+        setIsOpen(false);
+      } else {
+        setIsOpen((prev) => !prev);
+      }
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (!isOpen) {
+        setIsOpen(true);
+        setFocusedIndex(0);
+      } else {
+        setFocusedIndex((prev) => (prev + 1) % options.length);
+      }
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (!isOpen) {
+        setIsOpen(true);
+        setFocusedIndex(options.length - 1);
+      } else {
+        setFocusedIndex((prev) => (prev - 1 + options.length) % options.length);
+      }
     } else if (e.key === 'Escape') {
       setIsOpen(false);
     }
   };
 
+  const getOptionStyle = (isSelected: boolean, isFocused: boolean) => {
+    if (isSelected) {
+      return 'bg-brand-light text-brand-dark font-bold';
+    }
+    if (isFocused) {
+      return 'bg-secondary-light text-secondary-dark font-semibold';
+    }
+    return 'text-slate-700 hover:bg-secondary-light hover:text-secondary-dark';
+  };
+
   return (
     <div className={cn('flex flex-col gap-1.5 w-full', className)} ref={containerRef}>
-      {label && <label className="text-xs font-semibold text-text-secondary">{label}</label>}
+      {label && <label className="text-xs font-semibold text-slate-700">{label}</label>}
       <div className="relative w-full">
         <button
           type="button"
@@ -65,13 +98,13 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
           aria-haspopup="listbox"
           aria-expanded={isOpen}
           className={cn(
-            'flex items-center justify-between w-full px-4 py-2.5 text-sm font-medium bg-[#FAFAFA] border border-border-subtle rounded-xl cursor-pointer transition-all duration-200 outline-none select-none disabled:opacity-50 disabled:cursor-not-allowed',
+            'flex items-center justify-between w-full px-4 py-2.5 text-sm font-medium bg-surface-ground border border-border-subtle rounded-xl cursor-pointer transition-all duration-200 outline-none select-none disabled:opacity-50 disabled:cursor-not-allowed form-input-focus',
             isOpen ? 'border-brand bg-white ring-2 ring-brand/20 shadow-sm' : 'hover:border-slate-300'
           )}
         >
           <span className="flex items-center gap-2.5 truncate">
             {selectedOption?.icon}
-            <span className={selectedOption ? 'text-slate-800' : 'text-slate-400'}>
+            <span className={selectedOption ? 'text-slate-800 font-semibold' : 'text-slate-400'}>
               {selectedOption ? selectedOption.label : placeholder}
             </span>
           </span>
@@ -88,10 +121,12 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
         {isOpen && (
           <div
             role="listbox"
-            className="absolute top-[calc(100%+6px)] left-0 right-0 z-50 p-1.5 bg-white border border-border-subtle rounded-xl shadow-dropdown flex flex-col gap-1 max-h-60 overflow-y-auto animate-in fade-in zoom-in-95 duration-100"
+            tabIndex={-1}
+            className="absolute top-[calc(100%+6px)] left-0 right-0 z-50 p-1.5 bg-surface-card border border-border-subtle rounded-xl shadow-dropdown flex flex-col gap-1 max-h-60 overflow-y-auto"
           >
-            {options.map((option) => {
+            {options.map((option, idx) => {
               const isSelected = option.value === value;
+              const isFocused = idx === focusedIndex;
               return (
                 <div
                   key={option.value}
@@ -103,16 +138,16 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
                     setIsOpen(false);
                   }}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
                       onChange(option.value);
                       setIsOpen(false);
                     }
                   }}
+                  onMouseEnter={() => setFocusedIndex(idx)}
                   className={cn(
                     'flex items-center justify-between px-3.5 py-2 text-xs font-medium rounded-lg cursor-pointer transition-colors duration-150 outline-none',
-                    isSelected
-                      ? 'bg-brand-light text-brand-dark font-bold'
-                      : 'text-slate-700 hover:bg-secondary-light hover:text-secondary-dark'
+                    getOptionStyle(isSelected, isFocused)
                   )}
                 >
                   <span className="flex items-center gap-2.5">

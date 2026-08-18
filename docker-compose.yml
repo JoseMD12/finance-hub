@@ -2,17 +2,19 @@ services:
   financehub-postgres:
     image: postgres:16-alpine
     container_name: financehub-postgres
+    env_file:
+      - .env
     environment:
-      POSTGRES_USER: financehub
-      POSTGRES_PASSWORD: financehub_password
-      POSTGRES_DB: financehub_db
+      POSTGRES_USER: ${POSTGRES_USER:-financehub}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-financehub_password}
+      POSTGRES_DB: ${POSTGRES_DB:-financehub_db}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./docker/postgres/init-databases.sh:/docker-entrypoint-initdb.d/init-databases.sh
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U financehub"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-financehub}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -20,11 +22,13 @@ services:
   financehub-rabbitmq:
     image: rabbitmq:3.12-management-alpine
     container_name: financehub-rabbitmq
+    env_file:
+      - .env
     environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS:-guest}
     ports:
-      - "5672:5672"
+      - "${RabbitMQ__Port:-5672}:5672"
       - "15672:15672"
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "check_running"]
@@ -35,6 +39,8 @@ services:
   financehub-jaeger:
     image: jaegertracing/all-in-one:1.55
     container_name: financehub-jaeger
+    env_file:
+      - .env
     environment:
       - COLLECTOR_OTLP_ENABLED=true
     ports:
@@ -47,12 +53,14 @@ services:
       context: .
       dockerfile: src/Services/TransactionAggregator/FinanceHub.TransactionAggregator.Api/Dockerfile
     container_name: transactionaggregator-api
+    env_file:
+      - .env
     environment:
-      ConnectionStrings__TransactionAggregatorDb: "Host=financehub-postgres;Port=5432;Database=financehub_transactionaggregator;Username=financehub;Password=financehub_password"
+      ConnectionStrings__TransactionAggregatorDb: "Host=financehub-postgres;Port=5432;Database=${POSTGRES_DB:-financehub_db};Username=${POSTGRES_USER:-financehub};Password=${POSTGRES_PASSWORD:-financehub_password}"
       RabbitMq__Host: "financehub-rabbitmq"
-      RabbitMq__Port: "5672"
-      RabbitMq__Username: "guest"
-      RabbitMq__Password: "guest"
+      RabbitMq__Port: "${RabbitMQ__Port:-5672}"
+      RabbitMq__Username: "${RabbitMQ__Username:-guest}"
+      RabbitMq__Password: "${RabbitMQ__Password:-guest}"
       OTEL_EXPORTER_OTLP_ENDPOINT: "http://financehub-jaeger:4317"
     ports:
       - "5002:5002"
@@ -67,12 +75,15 @@ services:
       context: .
       dockerfile: src/Services/PluggyIntegration/FinanceHub.PluggyIntegration.Api/Dockerfile
     container_name: pluggyintegration-api
+    env_file:
+      - .env
     environment:
       RabbitMq__Host: "financehub-rabbitmq"
-      RabbitMq__Port: "5672"
-      RabbitMq__Username: "guest"
-      RabbitMq__Password: "guest"
-      PLUGGY_USER_API_BASE_URL: "https://my-api.pluggy.ai"
+      RabbitMq__Port: "${RabbitMQ__Port:-5672}"
+      RabbitMq__Username: "${RabbitMQ__Username:-guest}"
+      RabbitMq__Password: "${RabbitMQ__Password:-guest}"
+      PLUGGY_USER_API_BASE_URL: "${PLUGGY_USER_API_BASE_URL}"
+      PLUGGY_USER_TOKEN: "${PLUGGY_USER_TOKEN}"
       OTEL_EXPORTER_OTLP_ENDPOINT: "http://financehub-jaeger:4317"
     ports:
       - "5056:5056"
@@ -85,16 +96,32 @@ services:
       context: .
       dockerfile: src/Services/ApiGateway/FinanceHub.ApiGateway/Dockerfile
     container_name: apigateway-api
+    env_file:
+      - .env
     environment:
       TRANSACTION_AGGREGATOR_BASE_URL: "http://transactionaggregator-api:5002"
       PLUGGY_INTEGRATION_BASE_URL: "http://pluggyintegration-api:5056"
-      JWT_SECRET_KEY: "FinanceHubSuperSecretDevKeyWithAtLeast32BytesLength!"
+      JWT_SECRET_KEY: "${JWT_SECRET_KEY}"
+      JWT_ISSUER: "${JWT_ISSUER}"
+      JWT_AUDIENCE: "${JWT_AUDIENCE}"
       OTEL_EXPORTER_OTLP_ENDPOINT: "http://financehub-jaeger:4317"
     ports:
       - "5050:5050"
     depends_on:
       - transactionaggregator-api
       - pluggyintegration-api
+
+  financehub-web:
+    build:
+      context: ./src/Web/FinanceHub.Web
+      dockerfile: Dockerfile
+    container_name: financehub-web
+    env_file:
+      - .env
+    ports:
+      - "${WEB_PORT:-3000}:80"
+    depends_on:
+      - apigateway-api
 
 volumes:
   postgres_data:

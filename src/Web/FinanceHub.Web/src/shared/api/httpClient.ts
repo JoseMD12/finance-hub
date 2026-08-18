@@ -1,6 +1,7 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios';
 import { ApiError, type ProblemDetails } from '../types/api.types';
-import { getAccessToken, setAccessToken, clearSession } from '@/features/auth/utils/authStorage';
+import { getAccessToken, setAccessToken, clearSession } from '@/shared/utils/authStorage';
+import { API_ENDPOINTS, API_HEADERS } from './apiEndpoints';
 
 let isRefreshing = false;
 let failedQueue: Array<{
@@ -34,8 +35,8 @@ httpClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   if (token && config.headers) {
     config.headers.Authorization = `Bearer ${token}`;
   }
-  if (config.headers && !config.headers['X-Correlation-Id']) {
-    config.headers['X-Correlation-Id'] = crypto.randomUUID();
+  if (config.headers && !config.headers[API_HEADERS.CORRELATION_ID]) {
+    config.headers[API_HEADERS.CORRELATION_ID] = crypto.randomUUID();
   }
   return config;
 });
@@ -48,7 +49,7 @@ httpClient.interceptors.response.use(
 
     // Tratamento de 401 com fila de espera
     if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
-      if (originalRequest.url?.includes('/api/v1/auth/login') || originalRequest.url?.includes('/api/v1/auth/refresh')) {
+      if (originalRequest.url?.includes(API_ENDPOINTS.AUTH.LOGIN) || originalRequest.url?.includes(API_ENDPOINTS.AUTH.REFRESH)) {
         throw normalizeError(error);
       }
 
@@ -69,7 +70,7 @@ httpClient.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const refreshResponse = await httpClient.post<{ accessToken: string }>('/api/v1/auth/refresh');
+        const refreshResponse = await httpClient.post<{ accessToken: string }>(API_ENDPOINTS.AUTH.REFRESH);
         const newToken = refreshResponse.data.accessToken;
         setAccessToken(newToken);
         processQueue(null, newToken);
