@@ -21,7 +21,7 @@ const processQueue = (error: unknown, token: string | null = null) => {
 };
 
 export const httpClient = axios.create({
-  baseURL: import.meta.env.VITE_API_GATEWAY_URL || 'http://localhost:5000',
+  baseURL: import.meta.env.VITE_API_GATEWAY_URL || 'http://localhost:5050',
   timeout: 15000,
   headers: {
     'Content-Type': 'application/json',

@@ -6,6 +6,8 @@ import { Button } from '@/shared/components/Button/Button';
 import { Card } from '@/shared/components/Card/Card';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { setAccessToken } from '@/shared/utils/authStorage';
+import { requestDevTokenApi } from '../api/authApi';
 
 const loginSchema = z.object({
   email: z.string().email('Informe um e-mail válido'),
@@ -24,10 +26,18 @@ export const LoginPage: React.FC = () => {
     resolver: zodResolver(loginSchema),
   });
 
-  const onSubmit = async (_data: LoginFormValues) => {
-    // Simula autenticação / obtenção de Bearer Token
-    toast.success('Login efetuado com sucesso!');
-    navigate('/');
+  const onSubmit = async (data: LoginFormValues) => {
+    try {
+      const tokenResponse = await requestDevTokenApi(data.email);
+      setAccessToken(tokenResponse.accessToken);
+      toast.success('Login efetuado com sucesso!');
+    } catch {
+      // Fallback em desenvolvimento para permitir navegação se backend offline
+      setAccessToken(`mock_dev_jwt_${btoa(data.email)}`);
+      toast.info('Login efetuado em modo desenvolvimento.');
+    } finally {
+      navigate('/');
+    }
   };
 
   return (
