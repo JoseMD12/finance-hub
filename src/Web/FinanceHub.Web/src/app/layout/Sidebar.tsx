@@ -20,7 +20,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ initialCollapsed = false }) =>
   const navItems = [
     { label: 'Dashboard', to: '/', icon: LayoutGrid },
     { label: 'Dados', to: '/transacoes', icon: Code2 },
-    { label: 'Conexões & Ingestão', to: '/conexoes', icon: Landmark },
+    { label: 'Conexões', to: '/conexoes', icon: Landmark },
   ];
 
   return (
