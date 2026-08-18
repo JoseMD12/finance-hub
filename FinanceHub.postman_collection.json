@@ -2,9 +2,49 @@
   "info": {
     "_postman_id": "a9103c8f-2f88-4a57-b129-37e4c27f6e01",
     "name": "FinanceHub Enterprise API Suite",
-    "description": "Coleção oficial completa de testes para todos os microsserviços, BFF ApiGateway, Open Finance Meu.Pluggy e TransactionAggregator (.NET 10).",
+    "description": "Coleção oficial completa de testes para todos os microsserviços, BFF ApiGateway, Open Finance Meu.Pluggy e TransactionAggregator (.NET 10). Possui pre-request scripts, auto-captura de JWT token e suíte de testes integrada.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Pre-request script global da coleção FinanceHub",
+          "if (!pm.collectionVariables.get('devUserId')) {",
+          "    pm.collectionVariables.set('devUserId', 'usr_dev_001');",
+          "}",
+          "if (!pm.collectionVariables.get('baseUrl_gateway')) {",
+          "    pm.collectionVariables.set('baseUrl_gateway', 'http://localhost:5050');",
+          "}",
+          "if (!pm.collectionVariables.get('baseUrl_pluggy')) {",
+          "    pm.collectionVariables.set('baseUrl_pluggy', 'http://localhost:5056');",
+          "}",
+          "if (!pm.collectionVariables.get('baseUrl_aggregator')) {",
+          "    pm.collectionVariables.set('baseUrl_aggregator', 'http://localhost:5002');",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Test Script global - Validação de RFC 7807 em caso de erro 4xx/5xx",
+          "if (pm.response.code >= 400) {",
+          "    pm.test('Resposta de erro em conformidade com RFC 7807 (ProblemDetails)', function () {",
+          "        var jsonData = pm.response.json();",
+          "        pm.expect(jsonData).to.have.property('title');",
+          "        pm.expect(jsonData).to.have.property('status');",
+          "        pm.expect(jsonData).to.have.property('detail');",
+          "    });",
+          "}"
+        ]
+      }
+    }
+  ],
   "variable": [
     {
       "key": "baseUrl_gateway",
@@ -19,6 +59,11 @@
     {
       "key": "baseUrl_aggregator",
       "value": "http://localhost:5002",
+      "type": "string"
+    },
+    {
+      "key": "pluggyAccessToken",
+      "value": "",
       "type": "string"
     },
     {
@@ -43,10 +88,19 @@
               "listen": "test",
               "script": {
                 "exec": [
+                  "pm.test('Status code é 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
                   "var jsonData = pm.response.json();",
+                  "pm.test('Retornou token de acesso válido', function () {",
+                  "    pm.expect(jsonData.accessToken).to.be.a('string').and.not.be.empty;",
+                  "    pm.expect(jsonData.tokenType).to.eql('Bearer');",
+                  "});",
+                  "",
                   "if (jsonData.accessToken) {",
                   "    pm.collectionVariables.set('bearerToken', jsonData.accessToken);",
-                  "    console.log('Bearer Token capturado automaticamente:', jsonData.accessToken);",
+                  "    console.log('✅ Bearer Token capturado automaticamente para a coleção:', jsonData.accessToken);",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -70,12 +124,43 @@
               "host": ["{{baseUrl_gateway}}"],
               "path": ["api", "v1", "gateway", "auth", "dev-token"]
             },
-            "description": "Gera um token JWT com claim sub=usr_dev_001 válido por 24 horas e salva automaticamente na variável {{bearerToken}}."
+            "description": "Gera um token JWT com claim sub=usr_dev_001 válido por 24 horas e salva automaticamente na variável {{bearerToken}} para uso em todas as requisições."
           },
           "response": []
         },
         {
           "name": "Dashboard Consolidado",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (!pm.collectionVariables.get('bearerToken')) {",
+                  "    console.warn('⚠️ Token de acesso não localizado na variável {{bearerToken}}. Execute a requisição de Autenticação primeiro.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code é 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Estrutura do Dashboard de saldos validada', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('userId');",
+                  "    pm.expect(jsonData).to.have.property('totalBalanceBrl');",
+                  "    pm.expect(jsonData).to.have.property('accountBalances');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "auth": {
               "type": "bearer",
@@ -100,6 +185,19 @@
         },
         {
           "name": "Saldos Consolidados por Conta",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code é 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "auth": {
               "type": "bearer",
@@ -124,6 +222,19 @@
         },
         {
           "name": "Extrato de Transações Paginado",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code é 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "auth": {
               "type": "bearer",
@@ -158,6 +269,19 @@
         },
         {
           "name": "Categorizar Transação",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Operação de categorização concluída', function () {",
+                  "    pm.expect([200, 204]).to.include(pm.response.code);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "auth": {
               "type": "bearer",
@@ -191,6 +315,19 @@
         },
         {
           "name": "Disparar Sync Open Finance via Gateway",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Sincronização iniciada com sucesso (200 OK)', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "auth": {
               "type": "bearer",
@@ -203,7 +340,13 @@
               ]
             },
             "method": "POST",
-            "header": [],
+            "header": [
+              {
+                "key": "X-Pluggy-Access-Token",
+                "value": "{{pluggyAccessToken}}",
+                "type": "text"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl_gateway}}/api/v1/gateway/pluggy/sync?userId={{devUserId}}",
               "host": ["{{baseUrl_gateway}}"],
@@ -226,9 +369,28 @@
       "item": [
         {
           "name": "Disparar Sincronização Direta Meu.Pluggy",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Sincronização executada com sucesso', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "POST",
-            "header": [],
+            "header": [
+              {
+                "key": "X-Pluggy-Access-Token",
+                "value": "{{pluggyAccessToken}}",
+                "type": "text"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl_pluggy}}/api/v1/pluggy/sync?userId={{devUserId}}",
               "host": ["{{baseUrl_pluggy}}"],
@@ -240,7 +402,7 @@
                 }
               ]
             },
-            "description": "Executa diretamente no microsserviço PluggyIntegration o ciclo de ingestão de contas e extratos."
+            "description": "Executa diretamente no microsserviço PluggyIntegration o ciclo de ingestão de contas e extratos com fallback automático de dados em ambiente dev."
           },
           "response": []
         }
@@ -251,6 +413,19 @@
       "item": [
         {
           "name": "Ingestar Nova Transação (Ledger Ingest)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Transação criada ou deduplicada (201 Created ou 200 OK)', function () {",
+                  "    pm.expect([200, 201]).to.include(pm.response.code);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -261,7 +436,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"userId\": \"{{devUserId}}\",\n  \"externalId\": \"tx_itau_998877\",\n  \"institutionId\": \"itau\",\n  \"accountNumber\": \"12345-6\",\n  \"description\": \"iFood - Almoço de Trabalho\",\n  \"amount\": 89.90,\n  \"type\": \"Expense\",\n  \"transactionDateUtc\": \"2026-08-17T12:30:00Z\",\n  \"rawCategory\": \"Alimentação\"\n}"
+              "raw": "{\n  \"userId\": \"{{devUserId}}\",\n  \"institutionId\": \"itau\",\n  \"accountNumber\": \"12345-6\",\n  \"bankTransactionId\": \"tx_itau_998877\",\n  \"amount\": 89.90,\n  \"currency\": \"BRL\",\n  \"type\": 1,\n  \"rawDescription\": \"iFood - Almoço de Trabalho\",\n  \"transactionDateUtc\": \"2026-08-17T12:30:00Z\",\n  \"channel\": 1,\n  \"merchantName\": \"iFood\"\n}"
             },
             "url": {
               "raw": "{{baseUrl_aggregator}}/api/v1/transactions/ingest",
@@ -274,6 +449,19 @@
         },
         {
           "name": "Obter Transações Ingestadas",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code é 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "GET",
             "header": [],
@@ -302,6 +490,19 @@
         },
         {
           "name": "Obter Saldos Consolidados por Usuário",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code é 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "GET",
             "header": [],
@@ -316,6 +517,19 @@
         },
         {
           "name": "Categorizar Transação Direta",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code é 204 No Content', function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "PATCH",
             "header": [
@@ -334,6 +548,148 @@
               "path": ["api", "v1", "transactions", "a1b2c3d4-e5f6-7890-abcd-ef1234567890", "categorize"]
             },
             "description": "Altera a categoria de uma transação diretamente no microsserviço TransactionAggregator."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4. Testes Diretos Meu.Pluggy API (Com token da Extensão)",
+      "item": [
+        {
+          "name": "Listar Meus Bancos Conectados (GET /items)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code é 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData && jsonData.length > 0) {",
+                  "    pm.collectionVariables.set('lastItemId', jsonData[0].id);",
+                  "    console.log('✅ ItemId capturado para teste:', jsonData[0].id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{pluggyAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://my-api.pluggy.ai/items",
+              "protocol": "https",
+              "host": ["my-api", "pluggy", "ai"],
+              "path": ["items"]
+            },
+            "description": "Lista todas as instituições financeiras conectadas usando o token obtido via Extensão do Chrome."
+          },
+          "response": []
+        },
+        {
+          "name": "Listar Contas do Item (GET /accounts)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code é 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{pluggyAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://my-api.pluggy.ai/accounts?itemId={{lastItemId}}",
+              "protocol": "https",
+              "host": ["my-api", "pluggy", "ai"],
+              "path": ["accounts"],
+              "query": [
+                {
+                  "key": "itemId",
+                  "value": "{{lastItemId}}"
+                }
+              ]
+            },
+            "description": "Obtém a lista de contas bancárias e cartões vinculados a um itemId."
+          },
+          "response": []
+        },
+        {
+          "name": "Listar Transações da Conta (GET /transactions)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code é 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData && jsonData.results && jsonData.results.length > 0) {",
+                  "    pm.collectionVariables.set('lastAccountId', jsonData.results[0].accountId);",
+                  "} else if (jsonData && jsonData.length > 0) {",
+                  "    pm.collectionVariables.set('lastAccountId', jsonData[0].accountId);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{pluggyAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://my-api.pluggy.ai/transactions?accountId={{lastAccountId}}",
+              "protocol": "https",
+              "host": ["my-api", "pluggy", "ai"],
+              "path": ["transactions"],
+              "query": [
+                {
+                  "key": "accountId",
+                  "value": "{{lastAccountId}}"
+                }
+              ]
+            },
+            "description": "Lista transações para uma conta específica usando token Pluggy."
           },
           "response": []
         }

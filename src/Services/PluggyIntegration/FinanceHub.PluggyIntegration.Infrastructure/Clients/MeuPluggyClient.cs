@@ -23,24 +23,20 @@ public sealed class MeuPluggyClient(
         PropertyNameCaseInsensitive = true
     };
 
-    private void EnsureAuthorizationHeader(HttpRequestMessage request)
+    private static void EnsureAuthorizationHeader(HttpRequestMessage request, string pluggyAccessToken)
     {
-        var token = !string.IsNullOrWhiteSpace(_options.UserToken)
-            ? _options.UserToken
-            : Environment.GetEnvironmentVariable(PluggyConstants.EnvironmentVariables.UserToken) ?? string.Empty;
-
-        if (string.IsNullOrWhiteSpace(token))
+        if (string.IsNullOrWhiteSpace(pluggyAccessToken))
         {
-            throw new PluggySessionExpiredDomainException("A variável de ambiente PLUGGY_USER_TOKEN não foi informada.");
+            throw new NullOrEmptyPluggyAccessTokenDomainException();
         }
 
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", pluggyAccessToken);
     }
 
-    public async Task<IReadOnlyList<PluggyItemDto>> GetItemsAsync(CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<PluggyItemDto>> GetItemsAsync(string pluggyAccessToken, CancellationToken cancellationToken = default)
     {
         var request = new HttpRequestMessage(HttpMethod.Get, PluggyConstants.ItemsEndpoint);
-        EnsureAuthorizationHeader(request);
+        EnsureAuthorizationHeader(request, pluggyAccessToken);
 
         var response = await SendWithResilienceAsync(request, cancellationToken);
         var content = await response.Content.ReadAsStringAsync(cancellationToken);
@@ -49,10 +45,10 @@ public sealed class MeuPluggyClient(
         return items ?? [];
     }
 
-    public async Task<IReadOnlyList<PluggyAccountDto>> GetAccountsByItemIdAsync(string itemId, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<PluggyAccountDto>> GetAccountsByItemIdAsync(string itemId, string pluggyAccessToken, CancellationToken cancellationToken = default)
     {
         var request = new HttpRequestMessage(HttpMethod.Get, $"{PluggyConstants.AccountsEndpoint}?itemId={Uri.EscapeDataString(itemId)}");
-        EnsureAuthorizationHeader(request);
+        EnsureAuthorizationHeader(request, pluggyAccessToken);
 
         var response = await SendWithResilienceAsync(request, cancellationToken);
         var content = await response.Content.ReadAsStringAsync(cancellationToken);
@@ -61,10 +57,10 @@ public sealed class MeuPluggyClient(
         return accounts ?? [];
     }
 
-    public async Task<IReadOnlyList<PluggyTransactionDto>> GetTransactionsByAccountIdAsync(string accountId, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<PluggyTransactionDto>> GetTransactionsByAccountIdAsync(string accountId, string pluggyAccessToken, CancellationToken cancellationToken = default)
     {
         var request = new HttpRequestMessage(HttpMethod.Get, $"{PluggyConstants.TransactionsEndpoint}?accountId={Uri.EscapeDataString(accountId)}");
-        EnsureAuthorizationHeader(request);
+        EnsureAuthorizationHeader(request, pluggyAccessToken);
 
         var response = await SendWithResilienceAsync(request, cancellationToken);
         var content = await response.Content.ReadAsStringAsync(cancellationToken);

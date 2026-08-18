@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '@/shared/components/Card/Card';
 import { Button } from '@/shared/components/Button/Button';
 import { Modal } from '@/shared/components/Modal/Modal';
@@ -6,13 +6,45 @@ import { CustomSelect } from '@/shared/components/Select/CustomSelect';
 import { Landmark, ShieldCheck, Plus, RefreshCw, UploadCloud, FileText, CheckCircle2, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDateBR } from '@/shared/utils/formatters';
+import { syncPluggyAccountsApi } from '../api/connectionsApi';
 
-export const ConsentsPage: React.FC = () => {
+export const ConnectionsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'openfinance' | 'importer'>('openfinance');
   const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
   const [selectedBank, setSelectedBank] = useState('itau');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [pastedToken, setPastedToken] = useState('');
+  const [isSyncingToken, setIsSyncingToken] = useState(false);
+
+  useEffect(() => {
+    const savedToken = sessionStorage.getItem('pluggy_access_token');
+    if (savedToken) {
+      setPastedToken(savedToken);
+    }
+  }, []);
+
+  const handleSyncToken = async () => {
+    const token = pastedToken.trim();
+    if (!token) {
+      toast.error('Cole um token de sessão (accessToken) válido do Meu.Pluggy.');
+      return;
+    }
+
+    setIsSyncingToken(true);
+    try {
+      sessionStorage.setItem('pluggy_access_token', token);
+      const summary = await syncPluggyAccountsApi(token);
+      toast.success(
+        `Sincronização concluída! ${summary.totalItemsSynced} banco(s) e ${summary.totalAccountsSynced} conta(s) atualizadas.`
+      );
+    } catch (err: any) {
+      const message = err?.response?.data?.detail || 'Não foi possível sincronizar as contas no momento.';
+      toast.error(message);
+    } finally {
+      setIsSyncingToken(false);
+    }
+  };
 
   const consents = [
     {
@@ -56,7 +88,7 @@ export const ConsentsPage: React.FC = () => {
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
+    if (e.target.files?.[0]) {
       setSelectedFile(e.target.files[0]);
     }
   };
@@ -80,8 +112,8 @@ export const ConsentsPage: React.FC = () => {
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="section-title text-xl font-extrabold text-secondary">
-            Conexões & Ingestão Financeira
+          <h1 className="text-xl font-extrabold text-secondary">
+            Conexões
           </h1>
           <p className="text-xs text-slate-500 font-medium mt-1">
             Gerenciamento de conectores Open Finance (Meu.Pluggy) e importação off-line de extratos bancários (OFX, CSV, PDF)
@@ -103,7 +135,7 @@ export const ConsentsPage: React.FC = () => {
             onClick={() => setActiveTab('importer')}
           >
             <UploadCloud className="w-4 h-4" />
-            Importador (OFX/CSV)
+            Importador Off-line
           </Button>
         </div>
       </div>
@@ -111,6 +143,49 @@ export const ConsentsPage: React.FC = () => {
       {/* Tab 1: Open Finance Connectors */}
       {activeTab === 'openfinance' && (
         <div className="flex flex-col gap-6">
+          {/* Card de Inserção do Token e Acesso ao Meu.Pluggy */}
+          <Card className="flex flex-col gap-4 bg-slate-50/80 border-slate-200">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200/80 pb-3">
+              <div>
+                <h3 className="text-sm font-bold text-slate-800">Extensão FinanceHub Sync</h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Obtenha o token de sessão do <code>meu.pluggy.ai</code> usando a Extensão do Chrome e cole abaixo para sincronizar.
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => window.open('https://meu.pluggy.ai', '_blank', 'noopener,noreferrer')}
+                >
+                  Abrir Meu.Pluggy
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+              <span className="text-xs font-semibold text-slate-700">Atualizar Token de Sessão:</span>
+              <div className="flex items-center gap-2 w-full md:w-auto">
+                <input
+                  type="text"
+                  value={pastedToken}
+                  onChange={(e) => setPastedToken(e.target.value)}
+                  placeholder="Cole o accessToken copiado da extensão..."
+                  className="flex-1 md:w-96 px-3.5 py-2 border rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-brand bg-white"
+                />
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={handleSyncToken}
+                  isLoading={isSyncingToken}
+                  disabled={!pastedToken.trim()}
+                >
+                  Sincronizar
+                </Button>
+              </div>
+            </div>
+          </Card>
+
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
               Instituições Conectadas ({consents.length})
@@ -172,7 +247,7 @@ export const ConsentsPage: React.FC = () => {
           <div>
             <h2 className="text-base font-bold text-secondary flex items-center gap-2">
               <UploadCloud className="w-5 h-5 text-brand" />
-              Importação de Extratos & Faturas Off-line
+              Importação de Extratos Off-line
             </h2>
             <p className="text-xs text-slate-500 font-medium mt-1">
               Envie arquivos extrato no padrão OFX, CSV ou PDF de qualquer banco brasileiro para processamento assíncrono no microsserviço <code className="text-brand font-mono">FinanceHub.FileImporter</code>.
@@ -264,4 +339,4 @@ export const ConsentsPage: React.FC = () => {
   );
 };
 
-export default ConsentsPage;
+export default ConnectionsPage;

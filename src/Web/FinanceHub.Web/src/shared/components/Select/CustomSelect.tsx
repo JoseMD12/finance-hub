@@ -76,6 +76,16 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
     }
   };
 
+  const getOptionStyle = (isSelected: boolean, isFocused: boolean) => {
+    if (isSelected) {
+      return 'bg-brand-light text-brand-dark font-bold';
+    }
+    if (isFocused) {
+      return 'bg-secondary-light text-secondary-dark font-semibold';
+    }
+    return 'text-slate-700 hover:bg-secondary-light hover:text-secondary-dark';
+  };
+
   return (
     <div className={cn('flex flex-col gap-1.5 w-full', className)} ref={containerRef}>
       {label && <label className="text-xs font-semibold text-slate-700">{label}</label>}
@@ -127,14 +137,17 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
                     onChange(option.value);
                     setIsOpen(false);
                   }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      onChange(option.value);
+                      setIsOpen(false);
+                    }
+                  }}
                   onMouseEnter={() => setFocusedIndex(idx)}
                   className={cn(
                     'flex items-center justify-between px-3.5 py-2 text-xs font-medium rounded-lg cursor-pointer transition-colors duration-150 outline-none',
-                    isSelected
-                      ? 'bg-brand-light text-brand-dark font-bold'
-                      : isFocused
-                      ? 'bg-secondary-light text-secondary-dark font-semibold'
-                      : 'text-slate-700 hover:bg-secondary-light hover:text-secondary-dark'
+                    getOptionStyle(isSelected, isFocused)
                   )}
                 >
                   <span className="flex items-center gap-2.5">

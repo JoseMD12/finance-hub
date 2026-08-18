@@ -14,7 +14,7 @@
   --color-tertiary-light: #FFF0EA;
 
   --color-surface-ground: #F4F7F6;
-  --color-surface-card: #FFFFFF;
+  --color-surface-card: #FAFCFB; /* Off-white em vez de branco puro */
   --color-surface-muted: #EAEFF0;
   --color-border-subtle: #E2E8F0;
 
@@ -60,7 +60,7 @@ body {
    Centralized Global Design Utilities & Hover Animations
    ========================================================================== */
 
-/* Section Title Indicator (Barra Magenta no Título) */
+/* Section Title Indicator */
 .section-title {
   font-size: 1.25rem;
   font-weight: 700;
@@ -68,15 +68,6 @@ body {
   display: flex;
   align-items: center;
   gap: 0.625rem;
-}
-
-.section-title::before {
-  content: "";
-  width: 4px;
-  height: 20px;
-  background-color: var(--color-brand);
-  border-radius: 9999px;
-  display: inline-block;
 }
 
 /* Centralized Card Hover & Elevation */
@@ -109,7 +100,7 @@ body {
 /* Centralized Input & Select Focus Glow */
 .form-input-focus:focus {
   border-color: var(--color-brand);
-  background-color: #ffffff;
+  background-color: #FAFCFB;
   box-shadow: 0 0 0 3px var(--color-brand-glow);
 }
 
