@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using System.Text.Json;
 using FinanceHub.PluggyIntegration.Application.DTOs;
 using FinanceHub.PluggyIntegration.Application.Interfaces;
@@ -55,6 +56,20 @@ public sealed class MeuPluggyClient(
 
         var accounts = JsonSerializer.Deserialize<List<PluggyAccountDto>>(content, JsonOptions);
         return accounts ?? [];
+    }
+
+    public async Task<PluggyItemDto> UpdateItemAsync(string itemId, string pluggyAccessToken, CancellationToken cancellationToken = default)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Patch, $"{PluggyConstants.ItemsEndpoint}/{Uri.EscapeDataString(itemId)}")
+        {
+            Content = JsonContent.Create(new { })
+        };
+        EnsureAuthorizationHeader(request, pluggyAccessToken);
+
+        var response = await SendWithResilienceAsync(request, cancellationToken);
+        var content = await response.Content.ReadAsStringAsync(cancellationToken);
+        return JsonSerializer.Deserialize<PluggyItemDto>(content, JsonOptions)
+            ?? throw new PluggyApiCommunicationDomainException("A API da Pluggy retornou uma resposta vazia ao solicitar a sincronização da instituição.");
     }
 
     public async Task<IReadOnlyList<PluggyTransactionDto>> GetTransactionsByAccountIdAsync(string accountId, string pluggyAccessToken, CancellationToken cancellationToken = default)
