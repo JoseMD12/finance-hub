@@ -1,6 +1,17 @@
-/**
- * DTOs and types for Open Finance Connections and Meu.Pluggy synchronization.
- */
+export interface PluggyConnectorDto {
+  id: number;
+  name: string;
+}
+
+export interface PluggyItemDto {
+  id: string;
+  status: string;
+  connector: PluggyConnectorDto;
+  totalBalance: number;
+  accountsCount: number;
+  totalCredit: number;
+  lastUpdatedAt?: string | null;
+}
 
 export interface PluggySyncSummaryDto {
   totalItemsSynced: number;

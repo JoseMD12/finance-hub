@@ -8,4 +8,5 @@ export const CONNECTIONS_DEFAULTS = {
   DEFAULT_BADGE: 'Meu.Pluggy Open Finance',
   OFFLINE_ACCEPTED_FORMATS: '.ofx, .csv, .pdf',
   PLUGGY_PORTAL_URL: 'https://meu.pluggy.ai',
+  EXTENSION_DOCS_URL: 'https://chromewebstore.google.com',
 } as const;

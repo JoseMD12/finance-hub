@@ -1,43 +1,75 @@
-import React from 'react';
+import { Button } from '@/shared/components/Button/Button';
 import { Card } from '@/shared/components/Card/Card';
-import { Landmark, ShieldCheck, Wallet } from 'lucide-react';
-import { formatCurrencyBRL } from '@/shared/utils/formatters';
-import type { AccountBalanceDto } from '@/features/dashboard/types/dashboard.types';
+import { formatCurrencyBRL, formatDateTimeBR } from '@/shared/utils/formatters';
+import { CreditCard, Landmark, RefreshCw, Wallet } from 'lucide-react';
+import React from 'react';
+import type { PluggyItemDto } from '../types/connections.types';
 
 interface ConnectionCardProps {
-  account: AccountBalanceDto;
+  item: PluggyItemDto;
+  isResyncing?: boolean;
+  onResync?: (itemId: string) => void;
 }
 
-export const ConnectionCard: React.FC<ConnectionCardProps> = ({ account }) => {
+export const ConnectionCard: React.FC<ConnectionCardProps> = ({ item, isResyncing = false, onResync }) => {
   return (
-    <Card className="flex flex-col justify-between gap-5 hoverable border-slate-200/80">
+    <Card className="flex flex-col justify-between gap-4 hoverable border-slate-200/80">
       <div className="flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <div className="w-10 h-10 rounded-xl bg-secondary-light text-secondary flex items-center justify-center font-bold text-sm shadow-sm">
-            <Landmark className="w-5 h-5" />
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex flex-col items-center gap-1.5 min-w-0 text-center">
+            <div className="w-10 h-10 rounded-xl bg-secondary-light text-secondary flex items-center justify-center font-bold text-sm shadow-sm flex-shrink-0">
+              <Landmark className="w-5 h-5" />
+            </div>
+            <h3 className="text-xs font-bold leading-tight text-slate-800 break-words text-center">
+              {item.connector.name}
+            </h3>
           </div>
-          <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-status-success-bg text-status-success">
-            <ShieldCheck className="w-3.5 h-3.5" />
-            Conectado
-          </span>
-        </div>
-
-        <div>
-          <h3 className="text-sm font-bold text-slate-800">{account.institutionName}</h3>
-          <span className="text-[11px] text-slate-400 font-medium">
-            {account.badge || 'Meu.Pluggy Open Finance'} • Conta {account.accountNumber}
-          </span>
+          <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+            <span className="text-[11px] text-slate-400 font-medium whitespace-nowrap">
+              Atualizado: {formatDateTimeBR(item.lastUpdatedAt)}
+            </span>
+            {onResync && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onResync(item.id)}
+                isLoading={isResyncing}
+                disabled={isResyncing}
+                className="h-7 px-2 text-[11px]"
+                title="Ressincronizar instituição"
+                aria-label={`Ressincronizar ${item.connector.name}`}
+              >
+                {!isResyncing && <RefreshCw className="w-3 h-3" />}
+                Atualizar
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
-      <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
-        <div className="flex items-center gap-1.5 text-slate-500">
-          <Wallet className="w-3.5 h-3.5 text-secondary" />
-          <span className="text-[11px] font-medium">Saldo Atual</span>
+      <div className="pt-3 border-t border-slate-100 flex flex-col gap-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
+            <Wallet className="w-3.5 h-3.5 text-slate-400" />
+            <span>Saldo Total</span>
+          </div>
+          <span
+            className={`text-sm font-bold ${
+              item.totalBalance < 0 ? 'text-status-danger' : 'text-slate-800'
+            }`}
+          >
+            {formatCurrencyBRL(item.totalBalance)}
+          </span>
         </div>
-        <span className="text-xs font-bold text-slate-800">
-          {formatCurrencyBRL(account.balanceBrl)}
-        </span>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
+            <CreditCard className="w-3.5 h-3.5 text-slate-400" />
+            <span>Crédito Total</span>
+          </div>
+          <span className="text-sm font-bold text-slate-800">
+            {formatCurrencyBRL(item.totalCredit)}
+          </span>
+        </div>
       </div>
     </Card>
   );
