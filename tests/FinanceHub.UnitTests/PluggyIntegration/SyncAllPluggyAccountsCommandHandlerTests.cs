@@ -1,6 +1,7 @@
 using FinanceHub.PluggyIntegration.Application.Commands.SyncAllPluggyAccounts;
 using FinanceHub.PluggyIntegration.Application.DTOs;
 using FinanceHub.PluggyIntegration.Application.Interfaces;
+using FinanceHub.PluggyIntegration.Domain.Exceptions;
 using FinanceHub.Shared.Messaging.Events;
 using FluentAssertions;
 using MassTransit;
@@ -25,10 +26,28 @@ public class SyncAllPluggyAccountsCommandHandlerTests
         );
     }
 
-    [Fact]
-    public async Task HandleAsync_WhenItemsAndAccountsExist_ShouldPublishCorrectEventsAndReturnSummary()
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task HandleAsync_WhenPluggyAccessTokenNullOrEmpty_ShouldThrowNullOrEmptyPluggyAccessTokenDomainException(string invalidToken)
     {
         // Arrange
+        var command = new SyncAllPluggyAccountsCommand("user-01", invalidToken);
+
+        // Act
+        Func<Task> act = async () => await _handler.HandleAsync(command, CancellationToken.None);
+
+        // Assert
+        await act.Should().ThrowAsync<NullOrEmptyPluggyAccessTokenDomainException>()
+            .WithMessage("*X-Pluggy-Access-Token*");
+    }
+
+    [Fact]
+    public async Task HandleAsync_WhenItemsAndAccountsExist_ShouldPassTokenToClientAndReturnSummary()
+    {
+        // Arrange
+        const string validToken = "mock-pluggy-valid-token-123";
         var items = new List<PluggyItemDto>
         {
             new("item-inter-1", "UPDATED", new(77, "Banco Inter")),
@@ -56,15 +75,15 @@ public class SyncAllPluggyAccountsCommandHandlerTests
             new("tx-2", "MCDONALDS", 40.00m, "2026-08-15T00:00:00Z", "DEBIT", "Eating out")
         };
 
-        _pluggyClient.GetItemsAsync(Arg.Any<CancellationToken>()).Returns(items);
-        _pluggyClient.GetAccountsByItemIdAsync("item-inter-1", Arg.Any<CancellationToken>()).Returns(interAccounts);
-        _pluggyClient.GetAccountsByItemIdAsync("item-itau-2", Arg.Any<CancellationToken>()).Returns(itauAccounts);
-        _pluggyClient.GetTransactionsByAccountIdAsync("acc-inter-checking", Arg.Any<CancellationToken>()).Returns(checkingTxs);
-        _pluggyClient.GetTransactionsByAccountIdAsync("acc-inter-card", Arg.Any<CancellationToken>()).Returns(cardTxs);
-        _pluggyClient.GetTransactionsByAccountIdAsync("acc-itau-checking", Arg.Any<CancellationToken>()).Returns(new List<PluggyTransactionDto>());
+        _pluggyClient.GetItemsAsync(validToken, Arg.Any<CancellationToken>()).Returns(items);
+        _pluggyClient.GetAccountsByItemIdAsync("item-inter-1", validToken, Arg.Any<CancellationToken>()).Returns(interAccounts);
+        _pluggyClient.GetAccountsByItemIdAsync("item-itau-2", validToken, Arg.Any<CancellationToken>()).Returns(itauAccounts);
+        _pluggyClient.GetTransactionsByAccountIdAsync("acc-inter-checking", validToken, Arg.Any<CancellationToken>()).Returns(checkingTxs);
+        _pluggyClient.GetTransactionsByAccountIdAsync("acc-inter-card", validToken, Arg.Any<CancellationToken>()).Returns(cardTxs);
+        _pluggyClient.GetTransactionsByAccountIdAsync("acc-itau-checking", validToken, Arg.Any<CancellationToken>()).Returns(new List<PluggyTransactionDto>());
 
         // Act
-        var result = await _handler.HandleAsync(new SyncAllPluggyAccountsCommand("user-01"), CancellationToken.None);
+        var result = await _handler.HandleAsync(new SyncAllPluggyAccountsCommand("user-01", validToken), CancellationToken.None);
 
         // Assert
         result.Should().NotBeNull();

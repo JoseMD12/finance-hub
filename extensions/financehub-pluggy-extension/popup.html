@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>FinanceHub Sync</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
+
+    :root {
+      --color-brand: #E05697;
+      --color-brand-dark: #941B5C;
+      --color-brand-soft-bg: #FFF5F9;
+      --color-brand-soft-border: #FCE7F3;
+
+      --color-secondary: #1D555A;
+      --color-secondary-light: #E6F4F1;
+
+      --color-surface-ground: #F4F7F6;
+      --color-surface-card: #FAFCFB;
+      --color-border-subtle: #E2E8F0;
+
+      --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --shadow-card: 0 10px 25px -5px rgba(29, 85, 90, 0.05), 0 8px 10px -6px rgba(29, 85, 90, 0.03);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 310px;
+      background-color: var(--color-surface-ground);
+      font-family: var(--font-sans);
+      color: #1E293B;
+      border-radius: 16px;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container {
+      padding: 16px;
+      background-color: var(--color-surface-ground);
+      border-radius: 16px;
+    }
+
+    .header {
+      border-bottom: 1px solid var(--color-border-subtle);
+      padding-bottom: 10px;
+      margin-bottom: 14px;
+    }
+
+    .brand-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--color-secondary);
+      letter-spacing: -0.01em;
+    }
+
+    .card {
+      background-color: var(--color-surface-card);
+      border: 1px solid var(--color-border-subtle);
+      border-radius: 14px;
+      padding: 14px;
+      box-shadow: var(--shadow-card);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .card.found {
+      background-color: var(--color-brand-soft-bg);
+      border-color: var(--color-brand-soft-border);
+    }
+
+    .card-content {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .token-title-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .check-icon {
+      width: 16px;
+      height: 16px;
+      color: var(--color-brand);
+      display: none;
+    }
+
+    .card.found .check-icon {
+      display: inline-block;
+    }
+
+    /* Manter textos em tom neutro slate (#1E293B) */
+    .token-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #1E293B;
+    }
+
+    .token-subtext {
+      font-size: 11px;
+      color: #64748B;
+      margin-top: 3px;
+      line-height: 1.3;
+    }
+
+    .icon-btn {
+      background-color: var(--color-secondary-light);
+      color: var(--color-secondary);
+      border: none;
+      border-radius: 10px;
+      padding: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+    }
+
+    .card.found .icon-btn {
+      background-color: #FAFCFB; /* Off-white */
+      color: var(--color-brand);
+      border: 1px solid var(--color-brand-soft-border);
+    }
+
+    .icon-btn:hover, .card.found .icon-btn:hover {
+      background-color: var(--color-brand);
+      color: #FAFCFB;
+    }
+
+    .icon-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      background-color: #E2E8F0;
+      color: #475569;
+    }
+
+    .icon-btn svg {
+      width: 18px;
+      height: 18px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="brand-title">FinanceHub Sync</div>
+    </div>
+
+    <div id="cardContainer" class="card">
+      <div class="card-content">
+        <div>
+          <div class="token-title-wrapper">
+            <!-- Brand Magenta Checkmark SVG Icon -->
+            <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 6 9 17l-5-5"/>
+            </svg>
+            <div id="tokenTitle" class="token-title">Verificando...</div>
+          </div>
+          <div id="tokenSubtext" class="token-subtext">Aguarde...</div>
+        </div>
+        <button id="copyBtn" class="icon-btn" title="Copiar Token" disabled>
+          <!-- Lucide Copy Outline Icon -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>
+            <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -124,7 +124,7 @@ public interface ICategorizeTransactionCommandHandler
 ```
 
 > [!IMPORTANT]
-> Interface and implementation MUST ALWAYS be in **separate files**. Never co-locate a `public interface I<Name>` and `public class <Name>` in the same `.cs` file. This rule applies to all handlers, repositories, and services. Follow the pattern established in `FinanceHub.AuthConsent.Application` (e.g., `IAuthorizeConsentCommandHandler.cs` and `AuthorizeConsentCommandHandler.cs` as separate files).
+> Interface and implementation MUST ALWAYS be in **separate files**. Never co-locate a `public interface I<Name>` and `public class <Name>` in the same `.cs` file. This rule applies to all handlers, repositories, and services. Follow the pattern established in `FinanceHub.PluggyIntegration.Application` (e.g., `ISyncAllPluggyAccountsCommandHandler.cs` and `SyncAllPluggyAccountsCommandHandler.cs` as separate files).
 
 ### Step 3: Implement Handler Class (Application Layer)
 

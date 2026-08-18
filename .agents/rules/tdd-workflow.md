@@ -38,7 +38,7 @@ Todo desenvolvimento de feature deve seguir rigorosamente os três passos abaixo
 2. Escreva o teste cobrindo a regra de negócio desejada seguindo o padrão `Metodo_Cenario_ResultadoEsperado`.
 3. Execute `dotnet test`. O teste **DEVE FALHAR** (seja por não compilar pela ausência da classe ou por asserção de teste falha).
 
-### 🔗 2.1 Integração TDD + Exceções de Domínio ([`exception-handling-rfc7807.md`](file:///mnt/c/Code/FinanceHub/.agents/rules/exception-handling-rfc7807.md))
+### 🔗 2.1 Integração TDD + Exceções de Domínio ([`exception-handling-rfc7807.md`](./exception-handling-rfc7807.md))
 - Ao testar invalidades ou violações de regras de negócio no passo **RED**, o teste **deve obrigatoriamente validar a exceção de domínio fortemente tipada específica** (ex: `act.Should().Throw<InvalidUserIdDomainException>()`).
 - Se a classe da exceção de domínio reutilizável (ex: `InvalidUserIdDomainException`, `ConsentInvalidStateException`) ainda não existir, crie o arquivo da exceção na camada `Domain` junto com o teste **RED**.
 - O teste TDD deve validar tanto o tipo exato da `DomainException` quanto a mensagem amigável (default ou parametrizada) e seu `ErrorCode`.

@@ -225,8 +225,14 @@ public ValueTask<AccountCacheEntry?> GetAccountFromCacheAsync(string accountId, 
     ├── I<UseCase>CommandHandler.cs      ← interface de contrato (arquivo separado)
     └── <UseCase>CommandHandler.cs       ← implementação concreta (arquivo separado)
   ```
-- **Referência Canônica**: `FinanceHub.AuthConsent.Application` — todos os handlers e interfaces estão em arquivos `.cs` distintos (`IAuthorizeConsentCommandHandler.cs`, `AuthorizeConsentCommandHandler.cs`, etc.).
+- **Referência Canônica**: `FinanceHub.PluggyIntegration.Application` — todos os handlers e interfaces estão em arquivos `.cs` distintos (`ISyncAllPluggyAccountsCommandHandler.cs`, `SyncAllPluggyAccountsCommandHandler.cs`, etc.).
 - **Violação**: Co-localizar interface e implementação no mesmo arquivo é uma violação de DIP-001 e falha na auditoria de arquitetura.
+
+### 7.11 Mapeamento e Registro Centralizado de Endpoints Minimal API
+- **Regra de Ouro**: Todos os endpoints Minimal API de cada microsserviço DEVEM ser estritamente centralizados em classes estáticas de extensão por domínio (`<Domain>Endpoints.cs` / `Map<Domain>Endpoints()`).
+- **PROIBIDO**: Mapear rotas diretamente inline no `Program.cs` (`app.MapGet(...)` ou `app.MapPost(...)` inline).
+- **Orquestração**: O `Program.cs` deve apenas orquestrar chamando o método de extensão de registro centralizado da API.
+
 
 
 

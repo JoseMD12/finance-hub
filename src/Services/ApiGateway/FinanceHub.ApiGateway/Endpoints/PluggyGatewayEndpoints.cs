@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using FinanceHub.ApiGateway.Clients;
+using FinanceHub.Shared.Messaging.Constants;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -16,14 +17,26 @@ public static class PluggyGatewayEndpoints
         group.MapPost("/sync", async (
             ClaimsPrincipal user,
             string? userId,
+            HttpContext httpContext,
             IPluggyIntegrationServiceClient pluggyClient,
             CancellationToken ct) =>
         {
+            var pluggyToken = httpContext.Request.Headers[FinanceHubHeaderNames.PluggyAccessToken].ToString();
+            if (string.IsNullOrWhiteSpace(pluggyToken))
+            {
+                return Results.Problem(
+                    title: "Erro de Negócio",
+                    detail: $"O token de acesso do Meu.Pluggy (pluggyAccessToken / {FinanceHubHeaderNames.PluggyAccessToken}) é obrigatório para realizar a sincronização.",
+                    statusCode: 400,
+                    extensions: new Dictionary<string, object?> { { "errorCode", "NULL_OR_EMPTY_PLUGGY_ACCESS_TOKEN" } }
+                );
+            }
+
             var resolvedUserId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value
                               ?? user.FindFirst("sub")?.Value
                               ?? userId;
 
-            var summary = await pluggyClient.TriggerSyncAsync(resolvedUserId, ct);
+            var summary = await pluggyClient.TriggerSyncAsync(resolvedUserId, pluggyToken, ct);
             return Results.Ok(summary);
         })
         .WithName("TriggerPluggySync")

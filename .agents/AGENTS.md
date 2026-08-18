@@ -20,6 +20,7 @@ Use these slash commands in chat to instantly trigger specialized harness workfl
 | :--- | :--- | :--- |
 | `/spec-feature` | `spec-feature` | Interactive plan mode specification (1 question at a time). |
 | `/scaffold-slice <Service> <UseCase>` | `scaffold-slice` | Scaffold CQRS Command, Query, Handlers (separate `.cs` files) and Endpoints. |
+| `/scaffold-frontend-feature <Feature>` | `scaffold-frontend-feature` | Scaffold React + Vite Feature Slice (api, hooks, components, types, pages). |
 | `/run-tdd` | `run-tdd` | Execute compulsory Red -> Green -> Refactor TDD cycle. |
 | `/code-review` | `code-review` | Audit FAPI security, mTLS, LGPD (PII), RFC 7807 exceptions, zero magic strings. |
 | `/git-commit` | `git-commit` | Single atomic Conventional Commit of working changes. |
@@ -45,15 +46,17 @@ Use these slash commands in chat to instantly trigger specialized harness workfl
 │   │   ├── PluggyIntegration/          <-- Open Finance Connector (Itaú, Inter, MP)
 │   │   ├── FileImporter/               <-- Offline Statement & Invoice Parser (OFX, CSV, PDF)
 │   │   └── TransactionAggregator/       <-- Canonical Ledger & Deduplication
-│   └── Shared/                 <-- Reusable Infrastructure Libraries
-│       ├── FinanceHub.Shared.Messaging/    <-- MassTransit / RabbitMQ + Outbox
-│       └── FinanceHub.Shared.Observability/  <-- OpenTelemetry & Logging
+│   ├── Shared/                 <-- Reusable Infrastructure Libraries
+│   │   ├── FinanceHub.Shared.Messaging/    <-- MassTransit / RabbitMQ + Outbox
+│   │   └── FinanceHub.Shared.Observability/  <-- OpenTelemetry & Logging
+│   └── Web/                    <-- Frontend Web Application (Phase 6)
+│       └── FinanceHub.Web/             <-- React 19 + Vite + TailwindCSS + TanStack Query
 └── tests/                      <-- Service Unit & Integration Tests (xUnit)
 ```
 
 ---
 
-## 🔐 Banking & Security Protocol Rules
+## 🔐 Banking, Security & Frontend Architectural Protocol Rules
 
 When generating code or configuring integrations, subagents **must** adhere to:
 
@@ -67,8 +70,8 @@ When generating code or configuring integrations, subagents **must** adhere to:
    - OAuth 2.0 implementation with `private_key_jwt`, Pushed Authorization Requests (PAR), and PKCE.
    - DPoP (Demonstrating Proof-of-Possession) header generation for all protected API calls.
 
-4. **mTLS Handshake Configuration**:
-   - All outgoing bank API integrations (Itaú, Banco Inter, Mercado Pago) must rely on `X509Certificate2` client certificates configured via `FinanceHub.Shared.Certificates`.
+4. **mTLS & Authentication**:
+   - Direct bank API connections use Bearer Token authentication via Meu.Pluggy (OAuth2 HTTPS). `FinanceHub.Shared.Certificates` was decommissioned — mTLS negotiation is handled by the Pluggy platform layer.
 
 5. **Data Encryption (AES-256-GCM / KMS)**:
    - Sensitive user tokens, consent tokens, and PII must be encrypted at rest using AES-256-GCM.
@@ -104,26 +107,57 @@ When generating code or configuring integrations, subagents **must** adhere to:
     - Zero inline fallback defaults allowed in code. Fail-fast on startup if a required variable is missing.
 
 13. **Mandatory Dependency Inversion for Handlers and Services**:
-    - All Command and Query Handlers MUST define and implement an explicit interface (e.g. `ICreateConsentCommandHandler`, `IAuthorizeConsentCommandHandler`, `IRenewTokenCommandHandler`, `IRevokeConsentCommandHandler`, `IGetConsentByUserIdQueryHandler`).
-    - API endpoints MUST depend exclusively on these interfaces instead of concrete classes. Only static extension/utility classes are exempt from interfaces.
-    - **MANDATORY SEPARATE FILES**: The interface (`I<Name>.cs`) and its implementation (`<Name>.cs`) MUST ALWAYS reside in separate, dedicated `.cs` files. It is strictly forbidden to declare a `public interface` and its implementing `public class` in the same file. Reference pattern: `FinanceHub.AuthConsent.Application` (e.g., `IAuthorizeConsentCommandHandler.cs` + `AuthorizeConsentCommandHandler.cs` as distinct files in the same folder).
+    - All Command and Query Handlers MUST define and implement an explicit interface.
+    - API endpoints MUST depend exclusively on these interfaces instead of concrete classes.
+    - **MANDATORY SEPARATE FILES**: The interface (`I<Name>.cs`) and its implementation (`<Name>.cs`) MUST ALWAYS reside in separate, dedicated `.cs` files.
 
+14. **Frontend Feature-Driven Vertical Slices**:
+    - React code is structured strictly into autonomous domain slices under `src/features/<feature>/` (`api/`, `components/`, `hooks/`, `types/`, `pages/`).
+    - Cross-feature direct imports are strictly forbidden; reusable elements belong in `src/shared/` (see `.agents/rules/react-frontend-architecture.md`).
 
+15. **TanStack Query Caching & Query Keys Factory**:
+    - Server State is managed exclusively via TanStack Query v5 with strongly-typed Query Key Factories (`<feature>Keys.ts`). Zero API state duplication in local state (see `.agents/rules/react-query-and-state.md`).
 
+16. **Frontend RFC 7807 Exception Parsing & Toast Feedback**:
+    - Axios response interceptors parse `application/problem+json` into `ApiError` instances. User notifications are handled via `Sonner` toasts and `showApiError` (see `.agents/rules/frontend-http-and-rfc7807.md`).
 
+17. **Strict Design Tokens, Styling Centralization, WAI-ARIA & BRL Financial Formatting**:
+    - All colors, typography, transition timings, shadows (`shadow-card`, `shadow-elevated`, `shadow-brand`), border radiuses, and hover animations MUST be strictly centralized in `src/index.css` (Tailwind `@theme` tokens) or shared component abstractions.
+    - Inline hex colors or arbitrary inline hover states are strictly forbidden.
+    - Reusable components use `cn(...)`. Accessible labels (`aria-label`) and Brazilian currency formatting (`formatCurrencyBRL`) are compulsory (see `.agents/rules/frontend-design-system-a11y.md`).
+
+18. **Strict Zero-Emoji Policy & Outline Icons**:
+    - Emojis are strictly prohibited anywhere in the interface (toasts, buttons, headers, tables). Use clean typography or vector outline icons (`lucide-react` / SVG).
+
+19. **Componentized Form Controls (Custom Select & Dropdowns)**:
+    - Never use unstyled native `<select>`. Form controls and dropdowns must be componentized (`shared/components/Select/`), sharing triggers, elevated floating option menus, keyboard navigation, and theme tokens.
+
+20. **Prohibition of Pure White (`#FFFFFF`) & Off-White Standard**:
+    - Pure white (`#FFFFFF`) is strictly forbidden on cards, modals, backgrounds, and form inputs. All surfaces must use the off-white token (`#FAFCFB` / `bg-surface-card`).
+
+21. **Prohibition of Vertical Title Accents**:
+    - Never place vertical bar pseudo-elements (`::before` vertical bars, `|`) before section titles or headers. Titles must use clean typography, weight, and spacing.
+
+22. **Prohibition of '&' Character in Titles & Menus**:
+    - Never use the '&' character in section titles, headers, modals, or menu items. Always use direct, clean names (e.g. 'Conexões' instead of 'Conexões & Ingestão').
+
+23. **Mandatory Centralized Endpoint Registration**:
+    - Backend (.NET 10): All Minimal API endpoints MUST be strictly centralized in dedicated endpoint extension classes (`<Domain>Endpoints.cs` / `Map<Domain>Endpoints()`). Inlining route definitions directly in `Program.cs` is strictly forbidden.
+    - Frontend (React): All HTTP API requests and endpoints MUST be strictly centralized in dedicated feature API files (`src/features/<feature>/api/<feature>Api.ts`) or central API constants (`src/shared/api/apiEndpoints.ts`). Hardcoding raw URL endpoint strings inside React components or custom hooks is strictly forbidden.
 
 ---
+
 
 ## 🛠️ Developer & AI Conventions
 
 ### Commit Messages
 All automated or agent-generated commits must adhere to Conventional Commits:
 `<type>(<scope>): <summary>`
-- Scopes: `auth`, `itau`, `mercadopago`, `inter`, `aggregator`, `gateway`, `shared`, `harness`.
+- Scopes: `auth`, `itau`, `mercadopago`, `inter`, `aggregator`, `gateway`, `web`, `shared`, `harness`.
 
 ### Testing Standard
-- Frameworks: xUnit, FluentAssertions, NSubstitute.
-- Code Coverage: **80% minimum coverage** required per microservice.
+- Backend: xUnit, FluentAssertions, NSubstitute (80% minimum coverage).
+- Frontend: Vitest, React Testing Library, MSW.
 
 ---
 
@@ -136,3 +170,4 @@ All automated or agent-generated commits must adhere to Conventional Commits:
 - **MCP Test Command**: `agents mcp test --runtime`
 
 When modifying or creating new skills or MCP tool integrations, always run `agents sync --check` to ensure repository integrity.
+

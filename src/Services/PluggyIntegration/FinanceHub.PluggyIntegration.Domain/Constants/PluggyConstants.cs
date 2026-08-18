@@ -7,6 +7,11 @@ public static class PluggyConstants
     public const string AccountsEndpoint = "/accounts";
     public const string TransactionsEndpoint = "/transactions";
 
+    public static class HeaderNames
+    {
+        public const string PluggyAccessToken = "X-Pluggy-Access-Token";
+    }
+
     public static class EnvironmentVariables
     {
         public const string UserToken = "PLUGGY_USER_TOKEN";

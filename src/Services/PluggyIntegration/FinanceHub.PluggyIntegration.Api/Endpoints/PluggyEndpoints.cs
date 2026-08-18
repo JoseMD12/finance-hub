@@ -1,4 +1,6 @@
 using FinanceHub.PluggyIntegration.Application.Commands.SyncAllPluggyAccounts;
+using FinanceHub.PluggyIntegration.Domain.Constants;
+using FinanceHub.PluggyIntegration.Domain.Exceptions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -14,6 +16,7 @@ public static class PluggyEndpoints
 
         group.MapPost("/sync", async (
             string? userId,
+            HttpContext httpContext,
             ISyncAllPluggyAccountsCommandHandler handler,
             CancellationToken cancellationToken) =>
         {
@@ -22,7 +25,13 @@ public static class PluggyEndpoints
                 return Results.BadRequest(new { error = "UserId é obrigatório para sincronização." });
             }
 
-            var command = new SyncAllPluggyAccountsCommand(userId);
+            var pluggyToken = httpContext.Request.Headers[PluggyConstants.HeaderNames.PluggyAccessToken].ToString();
+            if (string.IsNullOrWhiteSpace(pluggyToken))
+            {
+                throw new NullOrEmptyPluggyAccessTokenDomainException();
+            }
+
+            var command = new SyncAllPluggyAccountsCommand(userId, pluggyToken);
             var summary = await handler.HandleAsync(command, cancellationToken);
             return Results.Ok(summary);
         })

@@ -7,7 +7,7 @@
 
 ## 2. Identified Duplication Targets
 1. **Target A**: Test Mock HTTP Handlers (`MockHttpMessageHandler` duplicated across test classes in `FinanceHub.UnitTests`).
-2. **Target B**: Downstream HTTP Client Error Handling & Payload Deserialization in `ApiGateway` (`AuthConsentServiceClient` & `TransactionAggregatorServiceClient`).
+2. **Target B**: Downstream HTTP Client Error Handling & Payload Deserialization in `ApiGateway` (`PluggyIntegrationServiceClient` & `TransactionAggregatorServiceClient`).
 3. **Target C**: RFC 7807 `ProblemDetails` Builder Logic in `Shared.Observability` Exception Mappers.
 
 ## 3. Architectural Decisions
@@ -41,11 +41,11 @@
   - [x] Refatorar `DomainExceptionMapper.cs`, `InfrastructureExceptionMapper.cs` e `DefaultExceptionMapper.cs` para utilizar a factory
 - [x] **Fase 2: ApiGateway Downstream Helper (Target B)**
   - [x] Criar `HttpClientDownstreamExtensions.cs` em `FinanceHub.ApiGateway/Clients/Extensions/`
-  - [x] Refatorar `AuthConsentServiceClient.cs` para usar as extensões centralizadas
+  - [x] Refatorar `PluggyIntegrationServiceClient.cs` para usar as extensões centralizadas
   - [x] Refatorar `TransactionAggregatorServiceClient.cs` para usar as extensões centralizadas
 - [x] **Fase 3: Unit Tests Mock Centralization (Target A)**
   - [x] Criar `MockHttpMessageHandler.cs` em `tests/FinanceHub.UnitTests/Helpers/`
-  - [x] Refatorar `AuthConsentServiceClientTests.cs` e `TransactionAggregatorServiceClientTests.cs`
+  - [x] Refatorar `PluggyIntegrationServiceClientTests.cs` e `TransactionAggregatorServiceClientTests.cs`
 - [x] **Fase 4: Validação & Testes**
   - [x] Executar `dotnet build FinanceHub.slnx`
   - [x] Executar `dotnet test FinanceHub.slnx`

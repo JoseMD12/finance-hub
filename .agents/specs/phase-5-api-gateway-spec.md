@@ -3,8 +3,8 @@
 > **Status**: `Completed ✅`
 > **Last Updated**: `2026-08-13`
 > **Author**: `FinanceHub Architecture Team & User`
-> **Depends On**: Phase 2 (AuthConsent ✅), Phase 4 (TransactionAggregator ✅)
-> **Phase 3 Note**: Fase 3 (Bank Connectors — lógica de negócio real) está deliberadamente pulada neste momento. O Gateway opera com os serviços internos existentes sem depender dos conectores FAPI reais.
+> **Depends On**: Phase 2 (PluggyIntegration ✅), Phase 4 (TransactionAggregator ✅)
+> **Phase 3 Note**: O Gateway opera conectando `PluggyIntegration` e `TransactionAggregator` via clientes HTTP tipados com resiliência.
 
 ---
 
@@ -13,9 +13,9 @@
 O **`FinanceHub.ApiGateway`** é o **único ponto de entrada externo (BFF — Backend for Frontend)** da plataforma FinanceHub. Ele **não possui banco de dados próprio**, não executa regras de negócio complexas e não acessa DBs de outros serviços diretamente.
 
 ### Responsabilidades Primárias:
-1. **Proxy & Agregação HTTP**: Rotear e agregar chamadas HTTP para `AuthConsent` e `TransactionAggregator` usando `HttpClient` tipado.
+1. **Proxy & Agregação HTTP**: Rotear e agregar chamadas HTTP para `PluggyIntegration` e `TransactionAggregator` usando `HttpClient` tipado.
 2. **Autenticação JWT Bearer**: Validar tokens JWT emitidos internamente para proteger todos os endpoints públicos do BFF.
-3. **Agregação de Dados (Dashboard)**: Endpoint de dashboard que agrega saldo consolidado + consentimentos ativos em uma única resposta, reduzindo round-trips do frontend.
+3. **Agregação de Dados (Dashboard)**: Endpoint de dashboard que agrega saldo consolidado + movimentações ativas em uma única resposta, reduzindo round-trips do frontend.
 4. **Rate Limiting**: Proteção por IP e por usuário autenticado contra abuso.
 5. **Correlação & Observabilidade**: Propagar `traceparent` (OpenTelemetry) em todas as chamadas downstream.
 6. **Health Check Agregado**: Verificar saúde dos serviços downstream e retornar status consolidado.
@@ -30,7 +30,7 @@ O **`FinanceHub.ApiGateway`** é o **único ponto de entrada externo (BFF — Ba
   - Motivo: O Gateway precisa de lógica de agregação customizada (ex: `DashboardAggregation`). Um simples proxy reverso (YARP) não permitiria combinar respostas de múltiplos serviços.
   - Cada serviço downstream tem seu próprio `HttpClient` tipado com configuração de `BaseAddress`, timeout e resiliência via **Polly** (`Retry` + `CircuitBreaker`).
 - **Clientes HTTP Tipados**:
-  - `IAuthConsentServiceClient` / `AuthConsentServiceClient`
+  - `IPluggyIntegrationServiceClient` / `PluggyIntegrationServiceClient`
   - `ITransactionAggregatorServiceClient` / `TransactionAggregatorServiceClient`
 
 ---
@@ -48,13 +48,13 @@ O **`FinanceHub.ApiGateway`** é o **único ponto de entrada externo (BFF — Ba
 
 | Escopo | Permissão |
 |---|---|
-| `openfinance:read` | Leitura de saldo, transações e consentimentos |
-| `openfinance:write` | Criação e revogação de consentimentos, categorização |
+| `openfinance:read` | Leitura de saldo, transações e extratos |
+| `openfinance:write` | Sincronização de contas e categorização |
 | `openfinance:admin` | Operações administrativas (ingestão interna) |
 
 ---
 
-### 3. Endpoints REST do BFF (Contrato Público)
+## 3. Endpoints REST do BFF (Contrato Público)
 
 O Gateway **não duplica endpoints internos**. Ele **agrega e protege** o acesso externo. Todos os endpoints são prefixados com `/api/v1/gateway`.
 
@@ -62,7 +62,7 @@ O Gateway **não duplica endpoints internos**. Ele **agrega e protege** o acesso
 
 | Método | Endpoint | Auth | Serviços Downstream | Descrição |
 |---|---|---|---|---|
-| `GET` | `/api/v1/gateway/dashboard` | JWT (`openfinance:read`) | AuthConsent + TransactionAggregator | Agrega consentimentos ativos + saldo consolidado |
+| `GET` | `/api/v1/gateway/dashboard` | JWT (`openfinance:read`) | PluggyIntegration + TransactionAggregator | Agrega contas conectadas + saldo consolidado |
 | `GET` | `/api/v1/gateway/balances/consolidated` | JWT (`openfinance:read`) | TransactionAggregator | Saldo consolidado + quebra por instituição |
 
 #### Grupo: Transações
@@ -72,14 +72,11 @@ O Gateway **não duplica endpoints internos**. Ele **agrega e protege** o acesso
 | `GET` | `/api/v1/gateway/transactions` | JWT (`openfinance:read`) | TransactionAggregator | Extrato paginado com filtros |
 | `PATCH` | `/api/v1/gateway/transactions/{id}/category` | JWT (`openfinance:write`) | TransactionAggregator | Categorizar manualmente uma transação |
 
-#### Grupo: Consentimentos
+#### Grupo: Sincronização Pluggy Open Finance
 
 | Método | Endpoint | Auth | Serviços Downstream | Descrição |
 |---|---|---|---|---|
-| `GET` | `/api/v1/gateway/consents` | JWT (`openfinance:read`) | AuthConsent | Listar consentimentos ativos do usuário autenticado |
-| `POST` | `/api/v1/gateway/consents` | JWT (`openfinance:write`) | AuthConsent | Criar novo consentimento bancário |
-| `POST` | `/api/v1/gateway/consents/{id}/authorize` | JWT (`openfinance:write`) | AuthConsent | Autorizar consentimento com código OAuth |
-| `DELETE` | `/api/v1/gateway/consents/{id}` | JWT (`openfinance:write`) | AuthConsent | Revogar consentimento |
+| `POST` | `/api/v1/gateway/sync/pluggy` | JWT (`openfinance:write`) | PluggyIntegration | Sincroniza extratos e faturas das contas conectadas |
 
 #### Grupo: Saúde & Status
 
@@ -96,9 +93,9 @@ O endpoint `GET /api/v1/gateway/dashboard` combina duas chamadas paralelas com `
 
 ```csharp
 // Chamadas paralelas para reduzir latência
-var consentTask = _authConsentClient.GetConsentsByUserIdAsync(userId, ct);
+var pluggyTask = _pluggyClient.GetPluggyAccountsAsync(userId, ct);
 var balanceTask = _transactionAggregatorClient.GetConsolidatedBalanceAsync(userId, ct);
-await Task.WhenAll(consentTask, balanceTask);
+await Task.WhenAll(pluggyTask, balanceTask);
 ```
 
 ---

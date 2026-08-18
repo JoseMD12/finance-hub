@@ -151,9 +151,10 @@ Manages Open Finance consent tokens, mTLS parameters, and sync status for a spec
 ```
 
 ### 4.2 Account Sync & Transaction Ingestion Lifecycle
-1. `AuthConsent` verifies active `Authorised` status for `ConexaoOpenFinance`.
-2. If `ExpiresAt` < `DateTimeOffset.UtcNow`, `AuthConsent` triggers token refresh using `RefreshTokenEncrypted`.
-3. Bank Integration Service (`ItauIntegration`, `MercadoPagoIntegration`, etc.) fetches bank statement items using mTLS client certificates (`FinanceHub.Shared.Certificates`).
-4. Bank Integration publishes `TransactionIngested` integration event via MassTransit/RabbitMQ using the Transactional Outbox Pattern.
-5. `TransactionAggregator` consumes `TransactionIngested`, calculates `HashUnico` for deduplication, persists canonical `Transacao`, and emits `TransactionNormalized`.
+1. `PluggyIntegration` verifies active connection status with Meu.Pluggy API.
+2. If session token expires or requires renewal, `PluggyIntegration` triggers proactive token authentication.
+3. `PluggyIntegration` fetches checking account movements and credit card invoice items from Brazilian banks (Itaú, Inter, Mercado Pago).
+4. `PluggyIntegration` publishes `TransactionIngested` or `InvoiceItemIngested` integration events via MassTransit/RabbitMQ using the Transactional Outbox Pattern.
+5. `TransactionAggregator` consumes `TransactionIngested` / `InvoiceItemIngested`, calculates `HashUnico` (SHA-256) for deduplication, persists canonical `Transacao`, and emits `TransactionNormalized`.
+
 

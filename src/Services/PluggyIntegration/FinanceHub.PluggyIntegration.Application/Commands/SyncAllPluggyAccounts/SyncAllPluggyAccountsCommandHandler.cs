@@ -2,6 +2,7 @@ using System.Globalization;
 using FinanceHub.PluggyIntegration.Application.DTOs;
 using FinanceHub.PluggyIntegration.Application.Interfaces;
 using FinanceHub.PluggyIntegration.Domain.Constants;
+using FinanceHub.PluggyIntegration.Domain.Exceptions;
 using FinanceHub.Shared.Messaging.Events;
 using MassTransit;
 using Microsoft.Extensions.Logging;
@@ -15,9 +16,14 @@ public sealed class SyncAllPluggyAccountsCommandHandler(
 {
     public async Task<SyncPluggySummaryDto> HandleAsync(SyncAllPluggyAccountsCommand command, CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrWhiteSpace(command.PluggyAccessToken))
+        {
+            throw new NullOrEmptyPluggyAccessTokenDomainException();
+        }
+
         logger.LogInformation("Iniciando sincronização unificada de contas via Meu.Pluggy para UserId: {UserId}", command.UserId);
 
-        var items = await pluggyClient.GetItemsAsync(cancellationToken);
+        var items = await pluggyClient.GetItemsAsync(command.PluggyAccessToken, cancellationToken);
 
         int totalAccounts = 0;
         int totalCheckingTxs = 0;
@@ -25,12 +31,12 @@ public sealed class SyncAllPluggyAccountsCommandHandler(
 
         foreach (var item in items)
         {
-            var accounts = await pluggyClient.GetAccountsByItemIdAsync(item.Id, cancellationToken);
+            var accounts = await pluggyClient.GetAccountsByItemIdAsync(item.Id, command.PluggyAccessToken, cancellationToken);
             totalAccounts += accounts.Count;
 
             foreach (var account in accounts)
             {
-                var (checkingCount, cardCount) = await ProcessAccountAsync(item, account, command.UserId, cancellationToken);
+                var (checkingCount, cardCount) = await ProcessAccountAsync(item, account, command.UserId, command.PluggyAccessToken, cancellationToken);
                 totalCheckingTxs += checkingCount;
                 totalCardTxs += cardCount;
             }
@@ -52,9 +58,10 @@ public sealed class SyncAllPluggyAccountsCommandHandler(
         PluggyItemDto item,
         PluggyAccountDto account,
         string? userId,
+        string pluggyAccessToken,
         CancellationToken cancellationToken)
     {
-        var transactions = await pluggyClient.GetTransactionsByAccountIdAsync(account.Id, cancellationToken);
+        var transactions = await pluggyClient.GetTransactionsByAccountIdAsync(account.Id, pluggyAccessToken, cancellationToken);
 
         if (IsCreditCardAccount(account))
         {

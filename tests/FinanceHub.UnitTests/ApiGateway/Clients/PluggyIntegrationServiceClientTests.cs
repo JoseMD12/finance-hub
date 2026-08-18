@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using FinanceHub.ApiGateway.Clients;
 using FinanceHub.ApiGateway.DTOs;
+using FinanceHub.Shared.Messaging.Constants;
 using FinanceHub.UnitTests.Helpers;
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -11,8 +12,10 @@ namespace FinanceHub.UnitTests.ApiGateway.Clients;
 
 public class PluggyIntegrationServiceClientTests
 {
+    private const string ValidToken = "pluggy-token-123";
+
     [Fact]
-    public async Task TriggerSyncAsync_WhenDownstreamReturns200_ShouldReturnSummary()
+    public async Task TriggerSyncAsync_WhenDownstreamReturns200_ShouldReturnSummaryAndPropagateHeader()
     {
         // Arrange
         var mockHandler = new MockHttpMessageHandler
@@ -33,7 +36,7 @@ public class PluggyIntegrationServiceClientTests
         var client = new PluggyIntegrationServiceClient(httpClient, NullLogger<PluggyIntegrationServiceClient>.Instance);
 
         // Act
-        var result = await client.TriggerSyncAsync();
+        var result = await client.TriggerSyncAsync("usr-001", ValidToken);
 
         // Assert
         result.Should().NotBeNull();
@@ -41,6 +44,10 @@ public class PluggyIntegrationServiceClientTests
         result.TotalAccountsSynced.Should().Be(6);
         result.TotalCheckingTransactionsIngested.Should().Be(827);
         result.TotalCardTransactionsIngested.Should().Be(599);
+
+        mockHandler.LastRequest.Should().NotBeNull();
+        mockHandler.LastRequest!.Headers.Contains(FinanceHubHeaderNames.PluggyAccessToken).Should().BeTrue();
+        mockHandler.LastRequest.Headers.GetValues(FinanceHubHeaderNames.PluggyAccessToken).First().Should().Be(ValidToken);
     }
 
     [Fact]
@@ -56,7 +63,7 @@ public class PluggyIntegrationServiceClientTests
         var client = new PluggyIntegrationServiceClient(httpClient, NullLogger<PluggyIntegrationServiceClient>.Instance);
 
         // Act
-        var act = async () => await client.TriggerSyncAsync();
+        var act = async () => await client.TriggerSyncAsync("usr-001", ValidToken);
 
         // Assert
         await act.Should().ThrowAsync<HttpRequestException>();

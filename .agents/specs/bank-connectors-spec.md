@@ -1,6 +1,7 @@
 # Technical Specification: Direct Bank Connectors (Itaú, Banco Inter, Mercado Pago)
 
-This specification details direct API integrations for banks and payment gateways in **FinanceHub** that provide native developer APIs outside or alongside standard Open Finance channels. Each bank connector operates within its isolated microservice boundary.
+> **Status**: `Superseded by Unified FinanceHub.PluggyIntegration Engine`  
+> **Note**: Direct individual connectors (Itaú, Inter, Mercado Pago) have been unified into `FinanceHub.PluggyIntegration` for seamless Open Finance account sync.
 
 ---
 
