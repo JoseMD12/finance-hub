@@ -31,15 +31,10 @@ public sealed class SyncAllPluggyAccountsCommandHandler(
 
         foreach (var item in items)
         {
-            var accounts = await pluggyClient.GetAccountsByItemIdAsync(item.Id, command.PluggyAccessToken, cancellationToken);
-            totalAccounts += accounts.Count;
-
-            foreach (var account in accounts)
-            {
-                var (checkingCount, cardCount) = await ProcessAccountAsync(item, account, command.UserId, command.PluggyAccessToken, cancellationToken);
-                totalCheckingTxs += checkingCount;
-                totalCardTxs += cardCount;
-            }
+            var result = await ProcessItemAsync(item, command.UserId, command.PluggyAccessToken, cancellationToken);
+            totalAccounts += result.accounts;
+            totalCheckingTxs += result.checkingCount;
+            totalCardTxs += result.cardCount;
         }
 
         logger.LogInformation("Sincronização concluída: {Items} items, {Accounts} contas, {CheckingTxs} txs de conta corrente, {CardTxs} txs de cartão de crédito.",
@@ -52,6 +47,44 @@ public sealed class SyncAllPluggyAccountsCommandHandler(
             TotalCardTransactionsIngested: totalCardTxs,
             SyncedAtUtc: DateTime.UtcNow
         );
+    }
+
+    public async Task<SyncPluggySummaryDto> HandleItemAsync(SyncSinglePluggyItemCommand command, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(command.PluggyAccessToken))
+        {
+            throw new NullOrEmptyPluggyAccessTokenDomainException();
+        }
+
+        var items = await pluggyClient.GetItemsAsync(command.PluggyAccessToken, cancellationToken);
+        var item = items.FirstOrDefault(candidate => string.Equals(candidate.Id, command.ItemId, StringComparison.Ordinal));
+        if (item is null)
+        {
+            throw new PluggyApiCommunicationDomainException($"A instituição '{command.ItemId}' não foi encontrada na sessão atual da Pluggy.");
+        }
+
+        var result = await ProcessItemAsync(item, command.UserId, command.PluggyAccessToken, cancellationToken);
+        return new SyncPluggySummaryDto(1, result.accounts, result.checkingCount, result.cardCount, DateTime.UtcNow);
+    }
+
+    private async Task<(int accounts, int checkingCount, int cardCount)> ProcessItemAsync(
+        PluggyItemDto item,
+        string? userId,
+        string pluggyAccessToken,
+        CancellationToken cancellationToken)
+    {
+        var accounts = await pluggyClient.GetAccountsByItemIdAsync(item.Id, pluggyAccessToken, cancellationToken);
+        var checkingCount = 0;
+        var cardCount = 0;
+
+        foreach (var account in accounts)
+        {
+            var result = await ProcessAccountAsync(item, account, userId, pluggyAccessToken, cancellationToken);
+            checkingCount += result.checkingCount;
+            cardCount += result.cardCount;
+        }
+
+        return (accounts.Count, checkingCount, cardCount);
     }
 
     private async Task<(int checkingCount, int cardCount)> ProcessAccountAsync(
