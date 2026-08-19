@@ -1,6 +1,7 @@
 using FinanceHub.PluggyIntegration.Application.Commands.SyncAllPluggyAccounts;
 using FinanceHub.PluggyIntegration.Application.DTOs;
 using FinanceHub.PluggyIntegration.Application.Interfaces;
+using FinanceHub.PluggyIntegration.Application.Services;
 using FinanceHub.PluggyIntegration.Domain.Exceptions;
 using FinanceHub.Shared.Messaging.Events;
 using FluentAssertions;
@@ -14,6 +15,8 @@ namespace FinanceHub.UnitTests.PluggyIntegration;
 public class SyncAllPluggyAccountsCommandHandlerTests
 {
     private readonly IMeuPluggyClient _pluggyClient = Substitute.For<IMeuPluggyClient>();
+    private readonly IPluggyAggregationService _aggregationService = Substitute.For<IPluggyAggregationService>();
+    private readonly IPluggyTransactionMapper _transactionMapper = new PluggyTransactionMapper();
     private readonly IPublishEndpoint _publishEndpoint = Substitute.For<IPublishEndpoint>();
     private readonly SyncAllPluggyAccountsCommandHandler _handler;
 
@@ -21,6 +24,8 @@ public class SyncAllPluggyAccountsCommandHandlerTests
     {
         _handler = new SyncAllPluggyAccountsCommandHandler(
             _pluggyClient,
+            _aggregationService,
+            _transactionMapper,
             _publishEndpoint,
             NullLogger<SyncAllPluggyAccountsCommandHandler>.Instance
         );
@@ -68,8 +73,8 @@ public class SyncAllPluggyAccountsCommandHandlerTests
         };
 
         _pluggyClient.GetItemsAsync(validToken, Arg.Any<CancellationToken>()).Returns(items);
-        _pluggyClient.GetAllAccountsAsync(validToken, Arg.Any<CancellationToken>()).Returns(allAccounts);
-        _pluggyClient.GetAllTransactionsAsync(validToken, Arg.Any<CancellationToken>()).Returns(allTxs);
+        _aggregationService.FetchAllAccountsAsync(validToken, Arg.Any<CancellationToken>()).Returns(allAccounts);
+        _aggregationService.FetchAllTransactionsAsync(validToken, Arg.Any<CancellationToken>()).Returns(allTxs);
 
         // Act
         var result = await _handler.HandleAsync(new SyncAllPluggyAccountsCommand("user-01", validToken), CancellationToken.None);

@@ -5,10 +5,12 @@ import {
   Landmark,
   LayoutGrid,
   LogOut,
+  UserRound,
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
 import { cn } from '@/shared/utils/cn';
+import { IconCircle } from '@/shared/components/IconCircle/IconCircle';
 
 export interface SidebarProps {
   initialCollapsed?: boolean;
@@ -40,7 +42,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ initialCollapsed = false }) =>
       >
         {isCollapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
       </button>
-
       <div>
         {/* User Profile Header (Fidelidade ao Side Bar.pdf) */}
         <div
@@ -50,13 +51,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ initialCollapsed = false }) =>
           )}
         >
           <div className="flex items-center gap-3 min-w-0">
-            {/* User Avatar Circle */}
-            <div className="w-10 h-10 rounded-full bg-cyan-100 border-2 border-brand/30 flex items-center justify-center flex-shrink-0 overflow-hidden shadow-sm">
-              <svg className="w-8 h-8 text-cyan-600" viewBox="0 0 36 36" fill="currentColor">
-                <circle cx="18" cy="12" r="7" fill="#E05697" />
-                <path d="M6 32c0-6 5.37-10 12-10s12 4 12 10" fill="#1D555A" />
-              </svg>
-            </div>
+            <IconCircle
+              icon={UserRound}
+              tone="brand"
+              size="lg"
+              className="rounded-full border border-brand/25"
+              label="Perfil do usuário"
+            />
 
             {/* User Info (Visible in Expanded mode) */}
             {!isCollapsed && (

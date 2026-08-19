@@ -38,6 +38,17 @@ export function formatDateBR(dateString: string | Date | null | undefined): stri
   return dateFormatter.format(date);
 }
 
+export function formatDateTimeBR(dateString: string | Date | null | undefined): string {
+  if (!dateString) return '-';
+  const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
+  if (Number.isNaN(date.getTime())) return '-';
+
+  return new Intl.DateTimeFormat('pt-BR', {
+    timeZone: 'America/Sao_Paulo',
+    dateStyle: 'short',
+    timeStyle: 'short',
+  }).format(date);
+}
 /**
  * Mascara CPF de acordo com a LGPD (ex: "123.456.789-00" -> "***.456.789-**").
  */

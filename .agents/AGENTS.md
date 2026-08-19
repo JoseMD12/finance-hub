@@ -145,6 +145,10 @@ When generating code or configuring integrations, subagents **must** adhere to:
     - Backend (.NET 10): All Minimal API endpoints MUST be strictly centralized in dedicated endpoint extension classes (`<Domain>Endpoints.cs` / `Map<Domain>Endpoints()`). Inlining route definitions directly in `Program.cs` is strictly forbidden.
     - Frontend (React): All HTTP API requests and endpoints MUST be strictly centralized in dedicated feature API files (`src/features/<feature>/api/<feature>Api.ts`) or central API constants (`src/shared/api/apiEndpoints.ts`). Hardcoding raw URL endpoint strings inside React components or custom hooks is strictly forbidden.
 
+24. **Strict Explicit User Consent for Git Commits & Pushes**:
+    - Subagents and AI assistants MUST NEVER execute `git commit` or `git push` autonomously.
+    - Git commits and pushes are STRICTLY PROHIBITED unless the user explicitly requests them in the current prompt (e.g., via `/git-commit`, `/git-commit-many-by`, or explicit directive like "faça o commit"). Never commit fixes automatically after fixing lints or SonarCloud code smells.
+
 ---
 
 

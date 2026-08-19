@@ -10,6 +10,7 @@ export const API_ENDPOINTS = {
   },
   PLUGGY: {
     SYNC: '/api/v1/gateway/pluggy/sync',
+    ITEMS: '/api/v1/gateway/pluggy/items',
   },
   DASHBOARD: {
     SUMMARY: '/api/v1/gateway/dashboard',
