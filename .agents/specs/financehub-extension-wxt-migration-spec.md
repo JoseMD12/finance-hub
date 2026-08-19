@@ -1,8 +1,8 @@
 # FinanceHub Extension WXT Migration Specification
 
-**Status:** Draft
+**Status:** In Progress
 **Owner:** FinanceHub
-**Scope:** `extensions/financehub-pluggy-extension/`
+**Scope:** `src/Web/FinanceHub.Web.Extension/` with legacy reference at `extensions/financehub-pluggy-extension/`
 **Related rules:** `.agents/rules/browser-extension-architecture.md`
 
 ## 1. Goal
@@ -15,10 +15,13 @@ Migrate the FinanceHub Chrome extension from manually maintained JavaScript, HTM
 |---|---|---|
 | Browser platform | Chrome Manifest V3 | Required runtime for the current Side Panel and Service Worker implementation. |
 | Build framework | WXT | File-based entrypoints, Vite workflow, TypeScript support and future browser targets without hiding browser APIs. |
-| Source location | `extensions/financehub-pluggy-extension/src/` | Separates authored code from generated output and extension metadata. |
+| Source location | `src/Web/FinanceHub.Web.Extension/src/` | Keeps the extension beside the web application while separating authored code from generated output. |
 | Language | TypeScript strict | Makes message, storage and backend contracts explicit. |
 | Primary UI surface | Side Panel | The current user experience is persistent beside Meu.Pluggy, not an action popup. |
 | Backend data | FinanceHub PluggyIntegration accounts endpoint | Account identity and institution data must remain real backend data. |
+| Shared package | `src/Web/FinanceHub.Web.Shared/` | Independently versioned local package for contracts, tokens and reusable extension code. |
+| Environment model | One build configuration from `.env` | The extension does not need separate development, staging and production environments. |
+| Legacy migration | Keep the legacy extension until parity validation | Allows rollback and side-by-side comparison before removing the old implementation. |
 
 ## 3. Runtime Design
 
@@ -48,13 +51,13 @@ Side Panel
 
 ## 4. Target Entrypoints
 
-- `src/entrypoints/background.ts`: WXT background Service Worker.
-- `src/entrypoints/content.ts`: Meu.Pluggy Content Script.
-- `src/entrypoints/sidepanel/`: Side Panel document and UI entrypoint.
+- `src/Web/FinanceHub.Web.Extension/src/entrypoints/background.ts`: WXT background Service Worker.
+- `src/Web/FinanceHub.Web.Extension/src/entrypoints/content.ts`: Meu.Pluggy Content Script.
+- `src/Web/FinanceHub.Web.Extension/src/entrypoints/sidepanel/`: Side Panel document and UI entrypoint.
 
 ## 5. Open Decision 1 — Side Panel UI Technology
 
-### Recommended: React + TypeScript
+### Decision: React + TypeScript
 
 The Side Panel already has multiple independently changing states (session, identity, account loading, API error, logout and clipboard feedback). React gives those states explicit components and makes future UI changes safer. WXT supports React-based extension entrypoints while keeping Chrome APIs available.
 
@@ -62,7 +65,7 @@ The Side Panel already has multiple independently changing states (session, iden
 
 This has fewer dependencies and a smaller output, but state transitions and DOM cleanup remain manual. It is suitable for a very small static panel, but the current panel has already outgrown that shape.
 
-**Decision required:** Should the migrated WXT Side Panel use React + TypeScript (recommended) or remain TypeScript with modular DOM rendering?
+The migrated WXT Side Panel uses React + TypeScript. The extension project remains independent and consumes `FinanceHub.Web.Shared` through a local `file:` dependency.
 
 ## 6. Planned API Contract
 

@@ -1,0 +1,29 @@
+{
+  "name": "financehub-web-extension",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "wxt",
+    "build": "wxt build",
+    "zip": "wxt zip",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@financehub/web-shared": "file:../FinanceHub.Web.Shared",
+    "@wxt-dev/module-react": "^1.1.4",
+    "lucide-react": "^1.31.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.280",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "rollup": "^4.52.5",
+    "typescript": "~6.0.2",
+    "vitest": "^4.1.10",
+    "wxt": "^0.20.13"
+  }
+}

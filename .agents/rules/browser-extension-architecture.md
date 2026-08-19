@@ -1,6 +1,6 @@
 # FinanceHub Browser Extension Architecture Rules
 
-**Scope:** `extensions/financehub-pluggy-extension/`
+**Scope:** `src/Web/FinanceHub.Web.Extension/`
 **Runtime:** Chrome Manifest V3
 **Build:** WXT with Vite
 **Language:** TypeScript with strict checking
