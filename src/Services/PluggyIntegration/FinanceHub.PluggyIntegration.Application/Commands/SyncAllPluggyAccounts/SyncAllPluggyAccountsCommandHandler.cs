@@ -1,7 +1,6 @@
-using System.Globalization;
 using FinanceHub.PluggyIntegration.Application.DTOs;
 using FinanceHub.PluggyIntegration.Application.Interfaces;
-using FinanceHub.PluggyIntegration.Domain.Constants;
+using FinanceHub.PluggyIntegration.Application.Services;
 using FinanceHub.PluggyIntegration.Domain.Exceptions;
 using FinanceHub.Shared.Messaging.Events;
 using MassTransit;
@@ -11,6 +10,8 @@ namespace FinanceHub.PluggyIntegration.Application.Commands.SyncAllPluggyAccount
 
 public sealed class SyncAllPluggyAccountsCommandHandler(
     IMeuPluggyClient pluggyClient,
+    IPluggyAggregationService aggregationService,
+    IPluggyTransactionMapper transactionMapper,
     IPublishEndpoint publishEndpoint,
     ILogger<SyncAllPluggyAccountsCommandHandler> logger) : ISyncAllPluggyAccountsCommandHandler
 {
@@ -24,7 +25,7 @@ public sealed class SyncAllPluggyAccountsCommandHandler(
         logger.LogInformation("Iniciando sincronização unificada em lote via Meu.Pluggy para UserId: {UserId}", command.UserId);
 
         var itemsTask = pluggyClient.GetItemsAsync(command.PluggyAccessToken, cancellationToken);
-        var accountsTask = pluggyClient.GetAllAccountsAsync(command.PluggyAccessToken, cancellationToken);
+        var accountsTask = aggregationService.FetchAllAccountsAsync(command.PluggyAccessToken, cancellationToken);
 
         await Task.WhenAll(itemsTask, accountsTask);
 
@@ -43,7 +44,7 @@ public sealed class SyncAllPluggyAccountsCommandHandler(
             );
         }
 
-        var allTransactions = await pluggyClient.GetAllTransactionsAsync(command.PluggyAccessToken, cancellationToken);
+        var allTransactions = await aggregationService.FetchAllTransactionsAsync(command.PluggyAccessToken, cancellationToken);
 
         var itemMap = items.ToDictionary(i => i.Id, StringComparer.OrdinalIgnoreCase);
         var accountMap = accounts.ToDictionary(a => a.Id, StringComparer.OrdinalIgnoreCase);
@@ -60,63 +61,10 @@ public sealed class SyncAllPluggyAccountsCommandHandler(
 
             var item = itemMap.GetValueOrDefault(account.ItemId);
             var sourceName = item?.Connector.Name ?? account.Name;
-            var txDate = ParseDate(tx.Date);
-
-            if (IsCreditCardAccount(account))
-            {
-                DateTime? dueDate = ParseDueDate(account.CreditData?.BalanceDueDate);
-                var canonicalCategory = PluggyCategoryMapper.Map(tx.Category);
-
-                cardEvents.Add(new InvoiceItemIngested(
-                    IngestionId: Guid.NewGuid(),
-                    UserId: command.UserId,
-                    Source: sourceName,
-                    CreditCardAccountId: account.Id,
-                    CardLastFourDigits: null,
-                    BankTransactionId: tx.Id,
-                    Amount: tx.Amount,
-                    TransactionDate: txDate,
-                    Description: tx.Description,
-                    Category: canonicalCategory,
-                    CurrentInstallment: null,
-                    TotalInstallments: null,
-                    InvoiceDueDate: dueDate,
-                    Currency: account.CurrencyCode ?? PluggyConstants.DefaultCurrency,
-                    RawPayloadJson: null,
-                    OccurredAtUtc: DateTime.UtcNow
-                ));
-            }
-            else
-            {
-                checkingEvents.Add(new TransactionIngested(
-                    IngestionId: Guid.NewGuid(),
-                    UserId: command.UserId,
-                    Source: sourceName,
-                    AccountId: account.Id,
-                    BankTransactionId: tx.Id,
-                    Amount: tx.Amount,
-                    TransactionDate: txDate,
-                    Description: tx.Description,
-                    Currency: account.CurrencyCode ?? PluggyConstants.DefaultCurrency,
-                    RawPayloadJson: null,
-                    OccurredAtUtc: DateTime.UtcNow
-                ));
-            }
+            transactionMapper.MapTransactionToEvents(tx, account, sourceName, command.UserId, checkingEvents, cardEvents);
         }
 
-        var publishTasks = new List<Task>(checkingEvents.Count + cardEvents.Count);
-
-        foreach (var checkingEvent in checkingEvents)
-        {
-            publishTasks.Add(publishEndpoint.Publish(checkingEvent, cancellationToken));
-        }
-
-        foreach (var cardEvent in cardEvents)
-        {
-            publishTasks.Add(publishEndpoint.Publish(cardEvent, cancellationToken));
-        }
-
-        await Task.WhenAll(publishTasks);
+        await PublishEventsAsync(checkingEvents, cardEvents, cancellationToken);
 
         int totalCheckingTxs = checkingEvents.Count;
         int totalCardTxs = cardEvents.Count;
@@ -133,25 +81,23 @@ public sealed class SyncAllPluggyAccountsCommandHandler(
         );
     }
 
-    private static bool IsCreditCardAccount(PluggyAccountDto account) =>
-        account.Type == PluggyConstants.AccountTypes.Credit ||
-        account.Subtype == PluggyConstants.AccountSubtypes.CreditCard;
-
-    private static DateTime? ParseDueDate(string? rawDueDate)
+    private async Task PublishEventsAsync(
+        IReadOnlyList<TransactionIngested> checkingEvents,
+        IReadOnlyList<InvoiceItemIngested> cardEvents,
+        CancellationToken cancellationToken)
     {
-        if (!string.IsNullOrWhiteSpace(rawDueDate) &&
-            DateTime.TryParse(rawDueDate, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out var parsedDueDate))
+        var publishTasks = new List<Task>(checkingEvents.Count + cardEvents.Count);
+
+        foreach (var checkingEvent in checkingEvents)
         {
-            return DateTime.SpecifyKind(parsedDueDate, DateTimeKind.Utc);
+            publishTasks.Add(publishEndpoint.Publish(checkingEvent, cancellationToken));
         }
 
-        return null;
-    }
+        foreach (var cardEvent in cardEvents)
+        {
+            publishTasks.Add(publishEndpoint.Publish(cardEvent, cancellationToken));
+        }
 
-    private static DateTime ParseDate(string? rawDate)
-    {
-        return DateTime.TryParse(rawDate, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out var dt)
-            ? DateTime.SpecifyKind(dt, DateTimeKind.Utc)
-            : DateTime.UtcNow;
+        await Task.WhenAll(publishTasks);
     }
 }

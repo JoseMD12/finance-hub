@@ -1,4 +1,3 @@
-import React from 'react';
 import { Search, Bell, ShieldCheck } from 'lucide-react';
 
 export const Topbar: React.FC = () => {
@@ -22,7 +21,6 @@ export const Topbar: React.FC = () => {
           <ShieldCheck className="w-3.5 h-3.5" aria-hidden="true" />
           <span>Open Finance Online</span>
         </div>
-
         <button
           type="button"
           aria-label="Central de notificações"

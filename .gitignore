@@ -3,6 +3,10 @@
 ## Build results
 [Bb]in/
 [Oo]bj/
+[Nn]ode_modules/
+[Dd]ist/
+.output/
+.wxt/
 [Ll]og/
 [Ll]ogs/
 [Tt]est[Rr]esults/
@@ -11,6 +15,7 @@
 [Aa]rtifacts/
 *.componentcache
 *.compcache
+*.zip
 
 ## User-specific files
 *.rsuser
@@ -60,4 +65,3 @@ desktop.ini
 ## Local Downloads & Scratch Data
 downloaded/
 scratch/
-

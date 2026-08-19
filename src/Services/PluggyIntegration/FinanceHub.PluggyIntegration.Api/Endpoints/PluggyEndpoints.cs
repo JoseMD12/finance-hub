@@ -1,4 +1,7 @@
 using FinanceHub.PluggyIntegration.Application.Commands.SyncAllPluggyAccounts;
+using FinanceHub.PluggyIntegration.Application.Interfaces;
+using FinanceHub.PluggyIntegration.Application.Queries.GetPluggyAccounts;
+using FinanceHub.PluggyIntegration.Application.Queries.GetPluggyItems;
 using FinanceHub.PluggyIntegration.Domain.Constants;
 using FinanceHub.PluggyIntegration.Domain.Exceptions;
 using Microsoft.AspNetCore.Builder;
@@ -13,6 +16,43 @@ public static class PluggyEndpoints
     {
         var group = app.MapGroup("/api/v1/pluggy")
             .WithTags("PluggyIntegration");
+
+        group.MapGet("/items", async (
+            HttpContext httpContext,
+            IGetPluggyItemsQueryHandler handler,
+            CancellationToken cancellationToken) =>
+        {
+            var pluggyToken = httpContext.Request.Headers[PluggyConstants.HeaderNames.PluggyAccessToken].ToString();
+            if (string.IsNullOrWhiteSpace(pluggyToken))
+            {
+                throw new NullOrEmptyPluggyAccessTokenDomainException();
+            }
+
+            var query = new GetPluggyItemsQuery(pluggyToken);
+            var items = await handler.HandleAsync(query, cancellationToken);
+            return Results.Ok(items);
+        })
+        .WithName("GetPluggyItems")
+        .WithSummary("Lista todas as conexões e instituições bancárias vinculadas no Meu.Pluggy.");
+
+        group.MapGet("/accounts", async (
+            HttpContext httpContext,
+            IGetPluggyAccountsQueryHandler handler,
+            CancellationToken cancellationToken) =>
+        {
+            var pluggyToken = httpContext.Request.Headers[PluggyConstants.HeaderNames.PluggyAccessToken].ToString();
+            if (string.IsNullOrWhiteSpace(pluggyToken))
+            {
+                throw new NullOrEmptyPluggyAccessTokenDomainException();
+            }
+
+            var accounts = await handler.HandleAsync(
+                new GetPluggyAccountsQuery(pluggyToken),
+                cancellationToken);
+            return Results.Ok(accounts);
+        })
+        .WithName("GetPluggyAccounts")
+        .WithSummary("Lista as contas correntes e cartões vinculados às instituições do Meu.Pluggy.");
 
         group.MapPost("/sync", async (
             string? userId,

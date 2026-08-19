@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { cn } from '@/shared/utils/cn';
-import { ChevronDown, Check } from 'lucide-react';
+import { ChevronDown, Check, Landmark } from 'lucide-react';
+import { StatusBadge } from '@/shared/components/StatusBadge/StatusBadge';
 
 export interface SelectOption {
   value: string;
@@ -110,9 +111,9 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
           </span>
           <div className="flex items-center gap-2">
             {selectedOption?.badge && (
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-secondary/10 text-secondary">
+              <StatusBadge icon={Landmark} tone="secondary" className="px-2 py-0.5 text-[10px]">
                 {selectedOption.badge}
-              </span>
+              </StatusBadge>
             )}
             <ChevronDown className={cn('w-4 h-4 text-slate-400 transition-transform duration-200', isOpen && 'rotate-180 text-brand')} />
           </div>
@@ -156,9 +157,9 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
                   </span>
                   <div className="flex items-center gap-2">
                     {option.badge && (
-                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">
+                      <StatusBadge icon={Landmark} tone="secondary" className="rounded-md px-1.5 py-0.5 text-[10px]">
                         {option.badge}
-                      </span>
+                      </StatusBadge>
                     )}
                     {isSelected && <Check className="w-3.5 h-3.5 text-brand" />}
                   </div>

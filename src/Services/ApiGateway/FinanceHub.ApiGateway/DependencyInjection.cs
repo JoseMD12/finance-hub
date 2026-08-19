@@ -61,9 +61,9 @@ public static class DependencyInjection
 
         services.AddAuthorization(options =>
         {
-            options.AddPolicy("ReadScope", policy => policy.RequireClaim("scope", GatewayConstants.Scopes.Read));
-            options.AddPolicy("WriteScope", policy => policy.RequireClaim("scope", GatewayConstants.Scopes.Write));
-            options.AddPolicy("AdminScope", policy => policy.RequireClaim("scope", GatewayConstants.Scopes.Admin));
+            options.AddPolicy("ReadScope", policy => policy.RequireAssertion(context => HasScope(context.User, GatewayConstants.Scopes.Read)));
+            options.AddPolicy("WriteScope", policy => policy.RequireAssertion(context => HasScope(context.User, GatewayConstants.Scopes.Write)));
+            options.AddPolicy("AdminScope", policy => policy.RequireAssertion(context => HasScope(context.User, GatewayConstants.Scopes.Admin)));
         });
 
         // 3. Rate Limiting Policy
@@ -121,6 +121,25 @@ public static class DependencyInjection
         // 5. Health Checks
         services.AddHealthChecks();
 
+        // 6. CORS Configuration
+        var configuredOrigins = Environment.GetEnvironmentVariable(GatewayConstants.Cors.AllowedOriginsEnvVar)
+                             ?? configuration[GatewayConstants.Cors.AllowedOriginsEnvVar];
+
+        var allowedOrigins = !string.IsNullOrWhiteSpace(configuredOrigins)
+            ? configuredOrigins.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            : GatewayConstants.Cors.DefaultOrigins;
+
+        services.AddCors(options =>
+        {
+            options.AddPolicy(GatewayConstants.Cors.PolicyName, policy =>
+            {
+                policy.WithOrigins(allowedOrigins)
+                      .AllowAnyHeader()
+                      .AllowAnyMethod()
+                      .AllowCredentials();
+            });
+        });
+
         return services;
     }
 
@@ -139,6 +158,17 @@ public static class DependencyInjection
             rsa.KeySize = 2048;
         }
 
-        return new RsaSecurityKey(rsa);
+        return new RsaSecurityKey(rsa)
+        {
+            // The JWT handler uses the key id to select the signing key during
+            // validation. Without a stable kid, generated tokens can be
+            // rejected as "kid is missing" even when the same RSA key is configured.
+            KeyId = "financehub-rsa-v1"
+        };
     }
+
+    private static bool HasScope(ClaimsPrincipal user, string requiredScope) =>
+        user.FindAll("scope")
+            .SelectMany(claim => claim.Value.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            .Contains(requiredScope, StringComparer.Ordinal);
 }

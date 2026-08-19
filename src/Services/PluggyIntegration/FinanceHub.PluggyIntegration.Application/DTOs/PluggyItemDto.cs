@@ -8,5 +8,9 @@ public record PluggyConnectorDto(
 public record PluggyItemDto(
     string Id,
     string Status,
-    PluggyConnectorDto Connector
+    PluggyConnectorDto Connector,
+    decimal TotalBalance = 0m,
+    int AccountsCount = 0,
+    decimal TotalCredit = 0m,
+    DateTime? LastUpdatedAt = null
 );

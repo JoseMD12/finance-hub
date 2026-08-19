@@ -34,7 +34,8 @@ public class JwtTokenGenerator : IJwtTokenGenerator
         {
             new Claim(JwtRegisteredClaimNames.Sub, userId),
             new Claim(ClaimTypes.NameIdentifier, userId),
-            new Claim("scope", $"{GatewayConstants.Scopes.Read} {GatewayConstants.Scopes.Write}")
+            new Claim("scope", GatewayConstants.Scopes.Read),
+            new Claim("scope", GatewayConstants.Scopes.Write)
         };
 
         var signingCredentials = new SigningCredentials(_signingKey, SecurityAlgorithms.RsaSha256);

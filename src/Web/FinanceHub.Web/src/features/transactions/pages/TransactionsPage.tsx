@@ -6,6 +6,7 @@ import { formatCurrencyBRL, formatDateBR, maskSensitiveAccount } from '@/shared/
 import { Landmark, ArrowUpRight, ArrowDownRight, Eye, Tag, Loader2 } from 'lucide-react';
 import { useTransactionsQuery } from '../hooks/useTransactionsQuery';
 import type { TransactionDto } from '../types/transactions.types';
+import { StatusBadge } from '@/shared/components/StatusBadge/StatusBadge';
 
 export const TransactionsPage: React.FC = () => {
   const [selectedBank, setSelectedBank] = useState('all');
@@ -103,10 +104,9 @@ export const TransactionsPage: React.FC = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-secondary-light text-secondary-dark">
-                          <Tag className="w-3 h-3 text-secondary" />
+                        <StatusBadge icon={Tag} tone="secondary">
                           {t.category}
-                        </span>
+                        </StatusBadge>
                       </td>
                       <td className="px-6 py-4 text-slate-600 font-medium">
                         {t.paymentMethod} {t.installment && <span className="font-bold text-brand ml-1">({t.installment})</span>}

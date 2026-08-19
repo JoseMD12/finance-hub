@@ -39,4 +39,17 @@ public static class GatewayConstants
         public const int AnonymousPermitLimit = 30;
         public const int AuthenticatedPermitLimit = 120;
     }
+
+    public static class Cors
+    {
+        public const string PolicyName = "FrontendCorsPolicy";
+        public const string AllowedOriginsEnvVar = "CORS_ALLOWED_ORIGINS";
+        public static readonly string[] DefaultOrigins =
+        [
+            "http://localhost:5173",
+            "http://localhost:3000",
+            "http://127.0.0.1:5173",
+            "http://localhost:4173"
+        ];
+    }
 }

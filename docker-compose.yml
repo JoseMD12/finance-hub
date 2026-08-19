@@ -57,10 +57,10 @@ services:
       - .env
     environment:
       ConnectionStrings__TransactionAggregatorDb: "Host=financehub-postgres;Port=5432;Database=${POSTGRES_DB:-financehub_db};Username=${POSTGRES_USER:-financehub};Password=${POSTGRES_PASSWORD:-financehub_password}"
-      RabbitMq__Host: "financehub-rabbitmq"
-      RabbitMq__Port: "${RabbitMQ__Port:-5672}"
-      RabbitMq__Username: "${RabbitMQ__Username:-guest}"
-      RabbitMq__Password: "${RabbitMQ__Password:-guest}"
+      RabbitMQ__Host: "financehub-rabbitmq"
+      RabbitMQ__Port: "${RabbitMQ__Port:-5672}"
+      RabbitMQ__Username: "${RabbitMQ__Username:-guest}"
+      RabbitMQ__Password: "${RabbitMQ__Password:-guest}"
       OTEL_EXPORTER_OTLP_ENDPOINT: "http://financehub-jaeger:4317"
     ports:
       - "5002:5002"
@@ -78,10 +78,10 @@ services:
     env_file:
       - .env
     environment:
-      RabbitMq__Host: "financehub-rabbitmq"
-      RabbitMq__Port: "${RabbitMQ__Port:-5672}"
-      RabbitMq__Username: "${RabbitMQ__Username:-guest}"
-      RabbitMq__Password: "${RabbitMQ__Password:-guest}"
+      RabbitMQ__Host: "financehub-rabbitmq"
+      RabbitMQ__Port: "${RabbitMQ__Port:-5672}"
+      RabbitMQ__Username: "${RabbitMQ__Username:-guest}"
+      RabbitMQ__Password: "${RabbitMQ__Password:-guest}"
       PLUGGY_USER_API_BASE_URL: "${PLUGGY_USER_API_BASE_URL}"
       PLUGGY_USER_TOKEN: "${PLUGGY_USER_TOKEN}"
       OTEL_EXPORTER_OTLP_ENDPOINT: "http://financehub-jaeger:4317"

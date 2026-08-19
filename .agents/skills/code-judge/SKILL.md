@@ -36,9 +36,14 @@ It launches a tribunal of autonomous, specialized judge subagents that evaluate 
   - Domain layer has ZERO framework dependencies (no EF Core, ASP.NET, or SDKs).
   - Microservices never access another service's PostgreSQL database directly.
   - Mandatory separate files: interface (`I<Name>.cs`) and implementation (`<Name>.cs`).
-- **Rich Domain Model & Invariants**:
+- **Rich Domain Model, Aggregate Root & DDD Components (Mandatory Rich Classes, Zero Anemic Models)**:
+  - **Strictly Prohibit Anemic Domain Models**: Domain entities must NEVER be passive data bags with public `get; set;`.
+  - **Mandatory DDD Components**: All domain implementations MUST explicitly define Aggregate Roots, Aggregates, Entities, and Value Objects.
+  - **Aggregate Root Encapsulated Control**: Internal state of Entities and Value Objects MUST be mutated and defined EXCLUSIVELY through domain methods called directly by the Aggregate Root. External layers must never modify internal entity properties directly.
+  - **Encapsulated Business Logic**: All business rules, validations, calculations, and state mutations MUST reside strictly inside Domain Entities, Aggregate Roots, and Value Objects.
+  - **State Mutation & Invariants**: Object state changes MUST occur through explicit domain methods (e.g., `UpdateBalance()`, `Reconcile()`, `Categorize()`) that validate invariants and trigger Domain Events.
   - Aggregate roots encapsulate private setters, invariants, and factory methods.
-  - Value Objects (`Money`, `TransactionHash`, `AccountIdentifier`, `SanitizedDescription`) are immutable with explicit validation.
+  - Value Objects (`Money`, `TransactionHash`, `AccountIdentifier`, `SanitizedDescription`, `PluggyAccountInfo`) are immutable with explicit validation.
 - **CQRS & Query Optimization**:
   - Read queries use `.AsNoTracking().Select(...)` direct DTO projections.
   - Ingestion and write commands eliminate redundant database roundtrips and check EF Core change tracker states (`EntityState.Detached`).
@@ -128,3 +133,4 @@ A branch MUST be marked **BLOCKED** if any of the following are detected:
 3. ❌ Direct database cross-access between microservices.
 4. ❌ Hardcoded API secrets, tokens, or unencrypted PII.
 5. ❌ Breaking API contract change not documented in the specification.
+6. ❌ Anemic Domain Models (entities acting as simple DTO containers with public setters instead of rich domain methods).

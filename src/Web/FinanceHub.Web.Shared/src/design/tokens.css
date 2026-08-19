@@ -1,0 +1,16 @@
+:root {
+  --fh-brand: #e05697;
+  --fh-brand-dark: #941b5c;
+  --fh-brand-light: #fce7f3;
+  --fh-secondary: #1d555a;
+  --fh-secondary-dark: #164347;
+  --fh-secondary-light: #e6f4f1;
+  --fh-surface-ground: #f4f7f6;
+  --fh-surface-card: #fafcfb;
+  --fh-surface-muted: #eaeff0;
+  --fh-border-subtle: #e2e8f0;
+  --fh-shadow-card: 0 10px 25px -5px rgb(29 85 90 / 5%), 0 8px 10px -6px rgb(29 85 90 / 3%);
+  --fh-shadow-elevated: 0 20px 40px -10px rgb(29 85 90 / 12%);
+  --fh-font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --fh-transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}

@@ -20,12 +20,14 @@ public static class DependencyInjection
                       ?? configuration[PluggyConstants.Configuration.ApiBaseUrlKey] 
                       ?? throw new InvalidOperationException($"A configuração '{PluggyConstants.EnvironmentVariables.ApiBaseUrl}' é obrigatória.");
 
-        services.AddHttpClient<IMeuPluggyClient, MeuPluggyClient>(client =>
+        services.AddHttpClient<IPluggyHttpExecutor, PluggyHttpExecutor>(client =>
         {
             client.BaseAddress = new Uri(baseUrl);
             client.Timeout = TimeSpan.FromSeconds(PluggyConstants.Resilience.DefaultTimeoutSeconds);
         })
         .AddPolicyHandler(GetRetryPolicy());
+
+        services.AddScoped<IMeuPluggyClient, MeuPluggyClient>();
 
         return services;
     }
