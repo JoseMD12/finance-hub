@@ -3,12 +3,12 @@ import { Landmark } from 'lucide-react';
 import { getAccountInstitution, getAccountName, getAccountType } from '../view-models/accountViewModel';
 
 interface AccountsSectionProps {
-  accounts: PluggyAccount[];
-  isLoading: boolean;
-  hasError: boolean;
+  readonly accounts: readonly PluggyAccount[];
+  readonly isLoading: boolean;
+  readonly hasError: boolean;
 }
 
-export function AccountsSection({ accounts, isLoading, hasError }: AccountsSectionProps) {
+export function AccountsSection({ accounts, isLoading, hasError }: Readonly<AccountsSectionProps>) {
   return (
     <section className="accounts-section">
       <h2>Contas conectadas</h2>

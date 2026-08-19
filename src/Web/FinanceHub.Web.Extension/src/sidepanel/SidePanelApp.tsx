@@ -50,8 +50,9 @@ export function SidePanelApp() {
     };
 
     void getSessionState().then((state) => applyToken(state.pluggyToken || null));
+
     const handleStorageChange = (changes: Record<string, { newValue?: unknown }>, areaName: string) => {
-      if (areaName !== 'local' || !Object.prototype.hasOwnProperty.call(changes, STORAGE_KEYS.pluggyToken)) return;
+      if (areaName !== 'local' || !Object.hasOwn(changes, STORAGE_KEYS.pluggyToken)) return;
       const nextToken = changes[STORAGE_KEYS.pluggyToken]?.newValue;
       applyToken(typeof nextToken === 'string' ? nextToken : null);
     };

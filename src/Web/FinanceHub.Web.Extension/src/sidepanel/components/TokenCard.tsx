@@ -1,12 +1,12 @@
 import { Check, Copy } from 'lucide-react';
 
 interface TokenCardProps {
-  hasToken: boolean;
-  onCopy: () => void;
-  copied: boolean;
+  readonly hasToken: boolean;
+  readonly onCopy: () => void;
+  readonly copied: boolean;
 }
 
-export function TokenCard({ hasToken, onCopy, copied }: TokenCardProps) {
+export function TokenCard({ hasToken, onCopy, copied }: Readonly<TokenCardProps>) {
   return (
     <section className={`token-card${hasToken ? ' token-card-found' : ''}`} aria-live="polite">
       <div className="token-card-content">

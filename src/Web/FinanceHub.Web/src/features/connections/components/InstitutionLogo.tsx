@@ -4,10 +4,10 @@ import { IconCircle } from '@/shared/components/IconCircle/IconCircle';
 import { getInstitutionLogoUrl } from '../constants/connectionsConstants';
 
 interface InstitutionLogoProps {
-  institutionName: string;
+  readonly institutionName: string;
 }
 
-export function InstitutionLogo({ institutionName }: InstitutionLogoProps) {
+export function InstitutionLogo({ institutionName }: Readonly<InstitutionLogoProps>) {
   const [hasLoadError, setHasLoadError] = useState(false);
   const logoUrl = getInstitutionLogoUrl(institutionName);
 

@@ -45,6 +45,33 @@ export const ConnectionsPage: React.FC = () => {
   const connectedItems = items ?? [];
   const hasInstitutions = connectedItems.length > 0;
 
+  const renderInstitutionsContent = () => {
+    if (isLoadingItems) {
+      return (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Skeleton className="h-32 rounded-2xl" />
+          <Skeleton className="h-32 rounded-2xl" />
+          <Skeleton className="h-32 rounded-2xl" />
+        </div>
+      );
+    }
+
+    if (hasInstitutions) {
+      return (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {connectedItems.map((item) => (
+            <ConnectionCard
+              key={item.id}
+              item={item}
+            />
+          ))}
+        </div>
+      );
+    }
+
+    return <EmptyConnectionsState hasToken={hasToken} />;
+  };
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1">
@@ -75,24 +102,7 @@ export const ConnectionsPage: React.FC = () => {
           </h2>
         </div>
 
-        {isLoadingItems ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Skeleton className="h-32 rounded-2xl" />
-            <Skeleton className="h-32 rounded-2xl" />
-            <Skeleton className="h-32 rounded-2xl" />
-          </div>
-        ) : hasInstitutions ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {connectedItems.map((item) => (
-              <ConnectionCard
-                key={item.id}
-                item={item}
-              />
-            ))}
-          </div>
-        ) : (
-          <EmptyConnectionsState hasToken={hasToken} />
-        )}
+        {renderInstitutionsContent()}
       </section>
 
       <FileImporterCard />

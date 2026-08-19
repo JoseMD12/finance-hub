@@ -15,13 +15,13 @@ const toneClasses: Record<StatusBadgeTone, string> = {
 };
 
 interface StatusBadgeProps {
-  icon: LucideIcon;
-  children: ReactNode;
-  tone?: StatusBadgeTone;
-  className?: string;
+  readonly icon: LucideIcon;
+  readonly children: ReactNode;
+  readonly tone?: StatusBadgeTone;
+  readonly className?: string;
 }
 
-export function StatusBadge({ icon: Icon, children, tone = 'secondary', className }: StatusBadgeProps) {
+export function StatusBadge({ icon: Icon, children, tone = 'secondary', className }: Readonly<StatusBadgeProps>) {
   return (
     <span
       className={cn(

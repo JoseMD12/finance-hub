@@ -6,6 +6,14 @@ import { STORAGE_KEYS } from '../shared/contracts/storage';
 import { clearSession, saveToken, setLogoutLock } from '../shared/storage/sessionStorage';
 import { isJwtShape } from '../shared/security/token';
 
+function isMeuPluggyUrl(url: string | undefined): boolean {
+  try {
+    return new URL(url ?? '').hostname === RUNTIME_CONSTANTS.pluggyHost;
+  } catch {
+    return false;
+  }
+}
+
 export default defineBackground(() => {
   let logoutLockUntil = 0;
 
@@ -46,13 +54,5 @@ export default defineBackground(() => {
 
   function isLogoutLocked(): boolean {
     return Date.now() < logoutLockUntil;
-  }
-
-  function isMeuPluggyUrl(url: string | undefined): boolean {
-    try {
-      return new URL(url ?? '').hostname === RUNTIME_CONSTANTS.pluggyHost;
-    } catch {
-      return false;
-    }
   }
 });

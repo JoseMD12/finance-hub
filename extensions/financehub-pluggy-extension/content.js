@@ -41,7 +41,7 @@
       target?.textContent,
       target?.getAttribute('aria-label'),
       target?.getAttribute('title'),
-      target?.getAttribute('data-testid'),
+      target instanceof HTMLElement ? target.dataset.testid : undefined,
     ].filter(Boolean).join(' ').replace(/\s+/g, ' ');
 
     if (label && LOGOUT_TEXT_PATTERN.test(label)) {

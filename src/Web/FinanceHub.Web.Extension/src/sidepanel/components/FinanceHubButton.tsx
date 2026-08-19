@@ -1,10 +1,10 @@
 import { ArrowLeft } from 'lucide-react';
 
 interface FinanceHubButtonProps {
-  onClick: () => void;
+  readonly onClick: () => void;
 }
 
-export function FinanceHubButton({ onClick }: FinanceHubButtonProps) {
+export function FinanceHubButton({ onClick }: Readonly<FinanceHubButtonProps>) {
   return (
     <button type="button" className="financehub-button" onClick={onClick}>
       <ArrowLeft aria-hidden="true" />

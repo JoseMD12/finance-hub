@@ -43,7 +43,7 @@ export default defineContentScript({
         target?.textContent,
         target?.getAttribute('aria-label'),
         target?.getAttribute('title'),
-        target?.getAttribute('data-testid'),
+        target instanceof HTMLElement ? target.dataset.testid : undefined,
       ].filter(Boolean).join(' ').replace(/\s+/g, ' ');
       if (label && RUNTIME_CONSTANTS.logoutTextPattern.test(label)) notifyLogout();
     }, true);

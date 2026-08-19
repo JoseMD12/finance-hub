@@ -28,11 +28,11 @@ const iconSizeClasses: Record<IconCircleSize, string> = {
 };
 
 interface IconCircleProps {
-  icon: LucideIcon;
-  tone?: IconCircleTone;
-  size?: IconCircleSize;
-  className?: string;
-  label?: string;
+  readonly icon: LucideIcon;
+  readonly tone?: IconCircleTone;
+  readonly size?: IconCircleSize;
+  readonly className?: string;
+  readonly label?: string;
 }
 
 export function IconCircle({
@@ -41,7 +41,7 @@ export function IconCircle({
   size = 'md',
   className,
   label,
-}: IconCircleProps) {
+}: Readonly<IconCircleProps>) {
   return (
     <span
       className={cn(
@@ -51,7 +51,6 @@ export function IconCircle({
         className
       )}
       aria-label={label}
-      role={label ? 'img' : undefined}
     >
       <Icon className={iconSizeClasses[size]} aria-hidden={!label} />
     </span>
