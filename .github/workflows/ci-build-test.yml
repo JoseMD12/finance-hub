@@ -97,9 +97,9 @@ jobs:
         working-directory: src/Web/FinanceHub.Web
         run: npm ci --ignore-scripts
 
-      # - name: Lint Frontend Code
-      #   working-directory: src/Web/FinanceHub.Web
-      #   run: npm run lint
+      - name: Lint Frontend Code
+        working-directory: src/Web/FinanceHub.Web
+        run: npm run lint
 
       - name: Build Web Application
         working-directory: src/Web/FinanceHub.Web
