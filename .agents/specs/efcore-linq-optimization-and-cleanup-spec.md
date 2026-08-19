@@ -105,3 +105,92 @@ public interface IAccountBalanceRepository
 - [x] `dotnet build --configuration Release` with 0 warnings.
 - [x] `dotnet test --configuration Release` with 100% pass rate.
 - [x] GitHub Actions CI workflow validates backend and frontend jobs.
+
+---
+
+## 7. ⚡ External API & Pipeline Performance Analysis: `SyncAllPluggyAccountsCommandHandler`
+
+### 7.1 Identified Performance Bottleneck (3-Level Nested HTTP Loop & Sequential MassTransit Publish)
+
+In `src/Services/PluggyIntegration/FinanceHub.PluggyIntegration.Application/Commands/SyncAllPluggyAccounts/SyncAllPluggyAccountsCommandHandler.cs`, the synchronization execution flow currently performs a **3-level nested sequential loop**:
+
+```
+Items (N) ──[HTTP 1]──> Accounts (M) ──[HTTP 2]──> Transactions (T) ──[Sequential MassTransit Publish]──> Outbox/RabbitMQ
+```
+
+#### Detailed Breakdown of Bottlenecks:
+1. **$N \times M$ Sequential HTTP Roundtrips (Chatty External API)**:
+   - For every item $i \in [1..N]$, it executes `GetAccountsByItemIdAsync` sequentially.
+   - For every account $a \in [1..M]$, it executes `GetTransactionsByAccountIdAsync` sequentially.
+   - Example: 3 bank connections with 2 accounts each = $1 + 3 + 6 = 10$ serial HTTP roundtrips to Pluggy API. Under network latency of ~150-300ms per request, this alone introduces 1.5s to 3s of idle waiting.
+2. **Individual `await publishEndpoint.Publish(...)` Inside the Inner Loop ($T$ roundtrips)**:
+   - For 100 transactions, `Publish` is awaited 100 separate times sequentially inside the loop (`foreach (var tx in transactions)`).
+   - If MassTransit Outbox or RabbitMQ transaction is involved, this causes 100 individual sequential DB/broker roundtrips instead of a batch publish (`PublishBatch`).
+
+---
+
+### 7.2 Architectural Resolution & Optimization Plan
+
+#### 1. Parallel Task Fan-Out with Rate Limiting (`Task.WhenAll` / `Parallel.ForEachAsync`)
+- Instead of awaiting each account's transactions sequentially, parallelize account transaction fetching per item using `Task.WhenAll` or `Parallel.ForEachAsync(accounts, new ParallelOptions { MaxDegreeOfParallelism = 4 }, ...)`:
+```csharp
+// Fetch transactions for all accounts concurrently with controlled parallelism
+var accountTasks = accounts.Select(async account =>
+{
+    var txs = await pluggyClient.GetTransactionsByAccountIdAsync(account.Id, command.PluggyAccessToken, cancellationToken);
+    return (Account: account, Transactions: txs);
+});
+var accountResults = await Task.WhenAll(accountTasks);
+```
+
+#### 2. MassTransit Batch Event Publishing (`publishEndpoint.PublishBatch`)
+- Transform transaction mapping into an in-memory collection and dispatch in a single atomic batch:
+```csharp
+var events = transactions.Select(tx => new TransactionIngested(...));
+await publishEndpoint.PublishBatch(events, cancellationToken);
+```
+- Reduces $T$ serial broker/outbox roundtrips down to **1 single batch operation**.
+
+---
+
+### 7.3 Other Pipeline & Handler Inefficiencies Audited
+
+| Component / Flow | Issue Description | Optimization Strategy |
+| :--- | :--- | :--- |
+| **`PluggyEndpoints.cs` (Sync Trigger)** | HTTP POST `/api/v1/pluggy/sync` blocks the client synchronously awaiting the entire multi-level sync loop to finish before returning `200 OK`. | Make the sync asynchronous: publish a `StartPluggySyncCommand` or background worker, returning `202 Accepted` immediately with a Job/Sync ID for large portfolios. |
+| **`DashboardEndpoints.cs` in `ApiGateway`** | `GET /api/v1/gateway/dashboard` performs sequential HTTP calls: `GetConsolidatedBalanceAsync` followed by `GetTransactionsAsync`. | Use `Task.WhenAll(balanceTask, transactionsTask)` to fetch dashboard data concurrently from `TransactionAggregator`. |
+| **`CategorizeTransactionCommandHandler.cs`** | Executes `GetByIdAsync`, modifies entity, `UpdateAsync`, then executes `ruleRepo.AddOrUpdateAsync` (multiple serial DB roundtrips). | Batch update or leverage EF Core `SaveChangesAsync` in a unified transactional scope. |
+
+---
+
+## 8. 🔮 Future Improvements Backlog (Post-Sprint Roadmap)
+
+> **Note:** The following architectural enhancements are formally registered for implementation in a dedicated follow-up sprint:
+
+1. **Optimistic Concurrency Control (`xmin` / RowVersion in EF Core & PostgreSQL)**:
+   - **Target Entities**: `AccountBalance`, `CanonicalTransaction`, and `UserCategoryRule`.
+   - **Mechanism**: Configure PostgreSQL system column `xmin` via `.IsRowVersion()` in EF Core entity type configurations to prevent lost updates under race conditions during high-frequency concurrent syncs and webhooks.
+   - **Handling**: Handle `DbUpdateConcurrencyException` in application handlers with automated retry or merge policies.
+
+2. **Dead Letter Queue (DLQ) & Fault Tolerance Infrastructure**:
+   - **Target Consumers**: `TransactionIngestedConsumer`, `InvoiceItemIngestedConsumer`, and file parser ingestion workers.
+   - **Mechanism**: Configure MassTransit Error / Dead Letter Queues (`_error` and `_skipped` exchanges/queues) with exponential backoff retry policies (`UseMessageRetry(r => r.Exponential(...))`) and Outbox compensation. Poison messages failing max retry thresholds will be routed to a dead-letter quarantine queue for SRE audit and re-drive capabilities.
+
+3. **Chunked Parallel Batch Ingestion (`TransactionsBatchIngested` with 50 Items/Chunk)**:
+   - **Target Flow**: `SyncAllPluggyAccountsCommandHandler` $\longrightarrow$ `TransactionsBatchIngestedConsumer` (in `TransactionAggregator`).
+   - **Mechanism**: Group synchronized transactions into chunks of 50 items using `.Chunk(50)` and dispatch multiple `TransactionsBatchIngested` messages in parallel:
+     ```csharp
+     public record TransactionsBatchIngested(
+         Guid BatchId,
+         string UserId,
+         int ChunkIndex,
+         int TotalChunks,
+         IReadOnlyList<TransactionIngestedItem> Transactions,
+         DateTime OccurredAtUtc
+     );
+     ```
+   - **Performance Gains**:
+     - Reduces broker message overhead by a factor of 50 while preserving bounded message payload sizes.
+     - Allows `TransactionAggregator` consumer to execute bulk hash lookups (`_context.Transactions.Where(t => batchHashes.Contains(t.Hash))`) and bulk inserts (`AddRangeAsync`), eliminating per-row EF Core transaction overhead while maintaining parallel worker scalability.
+
+
