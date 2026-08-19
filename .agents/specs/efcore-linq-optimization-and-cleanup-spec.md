@@ -193,4 +193,20 @@ await publishEndpoint.PublishBatch(events, cancellationToken);
      - Reduces broker message overhead by a factor of 50 while preserving bounded message payload sizes.
      - Allows `TransactionAggregator` consumer to execute bulk hash lookups (`_context.Transactions.Where(t => batchHashes.Contains(t.Hash))`) and bulk inserts (`AddRangeAsync`), eliminating per-row EF Core transaction overhead while maintaining parallel worker scalability.
 
+---
 
+## 9. 🛠️ `PluggyIntegration` Service & Client Refactoring Specification
+
+### 9.1 🎯 Scope & Objectives
+1. **Single Responsibility Principle (SRP) Enforcement**:
+   - Extract `IPluggyHttpExecutor` / `PluggyHttpExecutor` to encapsulate HTTP request creation, `Authorization: Bearer` header injection, HTTP status code resilience / exception translation (`401/403` $\rightarrow$ `PluggySessionExpiredDomainException`, `429` $\rightarrow$ `PluggyRateLimitDomainException`), and JSON deserialization.
+2. **Resource API Client Simplification**:
+   - Refactor `IMeuPluggyClient` and `MeuPluggyClient` to serve strictly as a low-level HTTP endpoint client (`GetItemsAsync`, `UpdateItemAsync`, `GetAccountsByItemIdAsync`, `GetTransactionsByAccountIdAsync`).
+   - Remove high-level composite orchestration methods (`GetAllAccountsAsync`, `GetAllTransactionsAsync`) from the HTTP client interface and implementation.
+3. **Application Aggregation Service**:
+   - Introduce `IPluggyAggregationService` / `PluggyAggregationService` in `FinanceHub.PluggyIntegration.Application` to manage parallel Fan-Out fetching (`FetchAllAccountsAsync` and `FetchAllTransactionsAsync`).
+4. **Mandatory Separate Files & Rule 13 Compliance**:
+   - Interface (`IPluggyAggregationService.cs`) and implementation (`PluggyAggregationService.cs`) MUST reside in separate files in their respective folders (`Application/Interfaces/` and `Application/Services/`).
+   - Interface (`IPluggyHttpExecutor.cs`) and implementation (`PluggyHttpExecutor.cs`) MUST reside in separate files in `Infrastructure/Clients/`.
+5. **TDD Coverage**:
+   - Execute Red-Green-Refactor cycle using xUnit, FluentAssertions, and NSubstitute, maintaining $\ge 80\%$ test coverage.

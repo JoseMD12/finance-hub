@@ -11,6 +11,7 @@ namespace FinanceHub.PluggyIntegration.Application.Commands.SyncAllPluggyAccount
 
 public sealed class SyncAllPluggyAccountsCommandHandler(
     IMeuPluggyClient pluggyClient,
+    IPluggyAggregationService aggregationService,
     IPublishEndpoint publishEndpoint,
     ILogger<SyncAllPluggyAccountsCommandHandler> logger) : ISyncAllPluggyAccountsCommandHandler
 {
@@ -24,7 +25,7 @@ public sealed class SyncAllPluggyAccountsCommandHandler(
         logger.LogInformation("Iniciando sincronização unificada em lote via Meu.Pluggy para UserId: {UserId}", command.UserId);
 
         var itemsTask = pluggyClient.GetItemsAsync(command.PluggyAccessToken, cancellationToken);
-        var accountsTask = pluggyClient.GetAllAccountsAsync(command.PluggyAccessToken, cancellationToken);
+        var accountsTask = aggregationService.FetchAllAccountsAsync(command.PluggyAccessToken, cancellationToken);
 
         await Task.WhenAll(itemsTask, accountsTask);
 
@@ -43,7 +44,7 @@ public sealed class SyncAllPluggyAccountsCommandHandler(
             );
         }
 
-        var allTransactions = await pluggyClient.GetAllTransactionsAsync(command.PluggyAccessToken, cancellationToken);
+        var allTransactions = await aggregationService.FetchAllTransactionsAsync(command.PluggyAccessToken, cancellationToken);
 
         var itemMap = items.ToDictionary(i => i.Id, StringComparer.OrdinalIgnoreCase);
         var accountMap = accounts.ToDictionary(a => a.Id, StringComparer.OrdinalIgnoreCase);
