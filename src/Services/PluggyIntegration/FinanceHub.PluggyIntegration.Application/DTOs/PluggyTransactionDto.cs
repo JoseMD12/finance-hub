@@ -6,5 +6,6 @@ public record PluggyTransactionDto(
     decimal Amount,
     string Date,
     string? Type,
-    string? Category
+    string? Category,
+    string? AccountId = null
 );

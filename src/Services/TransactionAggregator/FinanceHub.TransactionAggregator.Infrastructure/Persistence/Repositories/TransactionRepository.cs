@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using FinanceHub.TransactionAggregator.Application.DTOs;
 using FinanceHub.TransactionAggregator.Application.Interfaces;
 using FinanceHub.TransactionAggregator.Domain.Entities;
 using FinanceHub.TransactionAggregator.Domain.ValueObjects;
@@ -49,6 +50,32 @@ public class TransactionRepository : ITransactionRepository
     {
         _context.Transactions.Update(transaction);
         await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<IEnumerable<TransactionDto>> GetProjectedByUserIdAsync(string userId, int page, int pageSize, CancellationToken cancellationToken)
+    {
+        return await _context.Transactions
+            .AsNoTracking()
+            .Where(t => t.UserId == userId)
+            .OrderByDescending(t => t.TransactionDateUtc)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(t => new TransactionDto(
+                t.Id,
+                t.UserId,
+                t.AccountInfo.InstitutionId,
+                t.AccountInfo.AccountId,
+                t.Amount.Amount,
+                t.Amount.Currency,
+                t.Type.ToString(),
+                t.Description.CleanText,
+                t.CategoryId,
+                t.CategorizationSource.ToString(),
+                t.IsManuallyCategorized,
+                t.TransactionDateUtc,
+                t.BankDetails.Channel.ToString(),
+                t.BankDetails.MerchantName))
+            .ToListAsync(cancellationToken);
     }
 
     public async Task<IEnumerable<CanonicalTransaction>> GetByUserIdAsync(string userId, int page, int pageSize, CancellationToken cancellationToken)

@@ -20,22 +20,6 @@ public class GetTransactionsQueryHandler : IGetTransactionsQueryHandler
 
     public async Task<IEnumerable<TransactionDto>> Handle(GetTransactionsQuery query, CancellationToken cancellationToken)
     {
-        var transactions = await _repository.GetByUserIdAsync(query.UserId, query.Page, query.PageSize, cancellationToken);
-
-        return transactions.Select(t => new TransactionDto(
-            t.Id,
-            t.UserId,
-            t.AccountInfo.InstitutionId,
-            t.AccountInfo.AccountId,
-            t.Amount.Amount,
-            t.Amount.Currency,
-            t.Type.ToString(),
-            t.Description.CleanText,
-            t.CategoryId,
-            t.CategorizationSource.ToString(),
-            t.IsManuallyCategorized,
-            t.TransactionDateUtc,
-            t.BankDetails.Channel.ToString(),
-            t.BankDetails.MerchantName));
+        return await _repository.GetProjectedByUserIdAsync(query.UserId, query.Page, query.PageSize, cancellationToken);
     }
 }

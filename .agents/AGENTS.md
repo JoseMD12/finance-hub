@@ -22,7 +22,7 @@ Use these slash commands in chat to instantly trigger specialized harness workfl
 | `/scaffold-slice <Service> <UseCase>` | `scaffold-slice` | Scaffold CQRS Command, Query, Handlers (separate `.cs` files) and Endpoints. |
 | `/scaffold-frontend-feature <Feature>` | `scaffold-frontend-feature` | Scaffold React + Vite Feature Slice (api, hooks, components, types, pages). |
 | `/run-tdd` | `run-tdd` | Execute compulsory Red -> Green -> Refactor TDD cycle. |
-| `/code-review` | `code-review` | Audit FAPI security, mTLS, LGPD (PII), RFC 7807 exceptions, zero magic strings. |
+| `/judge` | `code-judge` | Multi-judge tribunal auditing architecture/DDD, QA/security/TDD, and DevOps/CI. |
 | `/git-commit` | `git-commit` | Single atomic Conventional Commit of working changes. |
 | `/git-commit-many-by <strategy>` | `git-commit-many-by` | Layered (`layer`), Feature (`feature`), or Service (`service`) fractional commits. |
 | `/git-pr <destination-branch>` | `git-pr` | Prepare and open Pull Request to target branch with release notes & checklist. |

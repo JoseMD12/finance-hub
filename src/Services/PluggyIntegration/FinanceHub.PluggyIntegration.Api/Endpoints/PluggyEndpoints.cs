@@ -22,7 +22,7 @@ public static class PluggyEndpoints
         {
             if (string.IsNullOrWhiteSpace(userId))
             {
-                return Results.BadRequest(new { error = "UserId é obrigatório para sincronização." });
+                throw new UserIdRequiredDomainException();
             }
 
             var pluggyToken = httpContext.Request.Headers[PluggyConstants.HeaderNames.PluggyAccessToken].ToString();

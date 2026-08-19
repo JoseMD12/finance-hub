@@ -54,10 +54,10 @@ public class IngestTransactionCommandHandler : IIngestTransactionCommandHandler
             command.Amount,
             command.TransactionDateUtc);
 
-        if (await _transactionRepository.ExistsByHashAsync(hash, cancellationToken))
+        var existingId = await _transactionRepository.GetIdByHashAsync(hash, cancellationToken);
+        if (existingId != null)
         {
-            var existingId = await _transactionRepository.GetIdByHashAsync(hash, cancellationToken);
-            return existingId ?? Guid.Empty;
+            return existingId.Value;
         }
 
         var categorization = await _categoryResolverPipeline.ResolveCategoryAsync(

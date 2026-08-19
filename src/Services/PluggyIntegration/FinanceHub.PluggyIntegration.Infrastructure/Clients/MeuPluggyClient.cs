@@ -45,6 +45,18 @@ public sealed class MeuPluggyClient(
         return items ?? [];
     }
 
+    public async Task<IReadOnlyList<PluggyAccountDto>> GetAllAccountsAsync(string pluggyAccessToken, CancellationToken cancellationToken = default)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get, PluggyConstants.AccountsEndpoint);
+        EnsureAuthorizationHeader(request, pluggyAccessToken);
+
+        var response = await SendWithResilienceAsync(request, cancellationToken);
+        var content = await response.Content.ReadAsStringAsync(cancellationToken);
+
+        var accounts = JsonSerializer.Deserialize<List<PluggyAccountDto>>(content, JsonOptions);
+        return accounts ?? [];
+    }
+
     public async Task<IReadOnlyList<PluggyAccountDto>> GetAccountsByItemIdAsync(string itemId, string pluggyAccessToken, CancellationToken cancellationToken = default)
     {
         var request = new HttpRequestMessage(HttpMethod.Get, $"{PluggyConstants.AccountsEndpoint}?itemId={Uri.EscapeDataString(itemId)}");
@@ -55,6 +67,18 @@ public sealed class MeuPluggyClient(
 
         var accounts = JsonSerializer.Deserialize<List<PluggyAccountDto>>(content, JsonOptions);
         return accounts ?? [];
+    }
+
+    public async Task<IReadOnlyList<PluggyTransactionDto>> GetAllTransactionsAsync(string pluggyAccessToken, CancellationToken cancellationToken = default)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get, PluggyConstants.TransactionsEndpoint);
+        EnsureAuthorizationHeader(request, pluggyAccessToken);
+
+        var response = await SendWithResilienceAsync(request, cancellationToken);
+        var content = await response.Content.ReadAsStringAsync(cancellationToken);
+
+        var txs = JsonSerializer.Deserialize<List<PluggyTransactionDto>>(content, JsonOptions);
+        return txs ?? [];
     }
 
     public async Task<IReadOnlyList<PluggyTransactionDto>> GetTransactionsByAccountIdAsync(string accountId, string pluggyAccessToken, CancellationToken cancellationToken = default)
