@@ -25,6 +25,7 @@ public sealed class PluggyIntegrationServiceClient(
         var items = await response.Content.ReadFromJsonAsync<IReadOnlyList<GatewayPluggyItemDto>>(cancellationToken: ct);
         return items ?? [];
     }
+
     public async Task<GatewayPluggySyncSummaryDto?> TriggerSyncAsync(string? userId, string pluggyAccessToken, CancellationToken ct = default)
     {
         logger.LogInformation("Disparando sincronização via downstream PluggyIntegration para UserId: {UserId}...", userId);

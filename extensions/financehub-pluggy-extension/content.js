@@ -54,7 +54,6 @@
   }
 
   window.setInterval(inspectAuthenticationState, 1000);
-
   // Injeta um script no contexto principal da página (Main World) para interceptar requisições fetch/XHR
   const scriptNode = document.createElement('script');
   scriptNode.textContent = `

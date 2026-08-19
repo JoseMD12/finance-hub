@@ -9,6 +9,7 @@
     :root {
       --color-brand: #E05697;
       --color-brand-dark: #941B5C;
+<<<<<<< HEAD
       --color-brand-light: #FCE7F3;
 
       --color-secondary: #1D555A;
@@ -24,6 +25,20 @@
       --shadow-card: 0 10px 25px -5px rgba(29, 85, 90, 0.05), 0 8px 10px -6px rgba(29, 85, 90, 0.03);
       --shadow-elevated: 0 20px 40px -10px rgba(29, 85, 90, 0.12);
       --transition-default: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+=======
+      --color-brand-soft-bg: #FFF5F9;
+      --color-brand-soft-border: #FCE7F3;
+
+      --color-secondary: #1D555A;
+      --color-secondary-light: #E6F4F1;
+
+      --color-surface-ground: #F4F7F6;
+      --color-surface-card: #FAFCFB;
+      --color-border-subtle: #E2E8F0;
+
+      --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --shadow-card: 0 10px 25px -5px rgba(29, 85, 90, 0.05), 0 8px 10px -6px rgba(29, 85, 90, 0.03);
+>>>>>>> be1f797f1669b81be58e703427dc7e17744e3070
     }
 
     * {
@@ -33,10 +48,17 @@
     html, body {
       margin: 0;
       padding: 0;
+<<<<<<< HEAD
       width: 100%;
       background-color: var(--color-surface-ground);
       font-family: var(--font-sans);
       color: #334155;
+=======
+      width: 310px;
+      background-color: var(--color-surface-ground);
+      font-family: var(--font-sans);
+      color: #1E293B;
+>>>>>>> be1f797f1669b81be58e703427dc7e17744e3070
       border-radius: 16px;
       overflow: hidden;
       -webkit-font-smoothing: antialiased;
@@ -49,7 +71,11 @@
     }
 
     .header {
+<<<<<<< HEAD
       border-bottom: 2px solid var(--color-border-subtle);
+=======
+      border-bottom: 1px solid var(--color-border-subtle);
+>>>>>>> be1f797f1669b81be58e703427dc7e17744e3070
       padding-bottom: 10px;
       margin-bottom: 14px;
     }
@@ -67,6 +93,7 @@
       border-radius: 14px;
       padding: 14px;
       box-shadow: var(--shadow-card);
+<<<<<<< HEAD
       transition: var(--transition-default);
     }
 
@@ -78,6 +105,14 @@
     .card.found {
       background-color: var(--color-brand-light);
       border-color: var(--color-brand);
+=======
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .card.found {
+      background-color: var(--color-brand-soft-bg);
+      border-color: var(--color-brand-soft-border);
+>>>>>>> be1f797f1669b81be58e703427dc7e17744e3070
     }
 
     .card-content {
@@ -108,12 +143,20 @@
     .token-title {
       font-size: 14px;
       font-weight: 700;
+<<<<<<< HEAD
       color: #1D555A;
+=======
+      color: #1E293B;
+>>>>>>> be1f797f1669b81be58e703427dc7e17744e3070
     }
 
     .token-subtext {
       font-size: 11px;
+<<<<<<< HEAD
       color: #475569;
+=======
+      color: #64748B;
+>>>>>>> be1f797f1669b81be58e703427dc7e17744e3070
       margin-top: 3px;
       line-height: 1.3;
     }
@@ -133,9 +176,15 @@
     }
 
     .card.found .icon-btn {
+<<<<<<< HEAD
       background-color: var(--color-surface-card);
       color: var(--color-brand);
       border: 1px solid var(--color-brand-light);
+=======
+      background-color: #FAFCFB; /* Off-white */
+      color: var(--color-brand);
+      border: 1px solid var(--color-brand-soft-border);
+>>>>>>> be1f797f1669b81be58e703427dc7e17744e3070
     }
 
     .icon-btn:hover, .card.found .icon-btn:hover {
@@ -146,7 +195,11 @@
     .icon-btn:disabled {
       opacity: 0.5;
       cursor: not-allowed;
+<<<<<<< HEAD
       background-color: var(--color-surface-muted);
+=======
+      background-color: #E2E8F0;
+>>>>>>> be1f797f1669b81be58e703427dc7e17744e3070
       color: #475569;
     }
 
@@ -154,6 +207,7 @@
       width: 18px;
       height: 18px;
     }
+<<<<<<< HEAD
 
     .section-label {
       margin: 16px 2px 7px;
@@ -294,6 +348,8 @@
       width: 15px;
       height: 15px;
     }
+=======
+>>>>>>> be1f797f1669b81be58e703427dc7e17744e3070
   </style>
 </head>
 <body>
@@ -302,6 +358,7 @@
       <div class="brand-title">FinanceHub Sync</div>
     </div>
 
+<<<<<<< HEAD
     <div id="userSection" hidden>
       <div class="user-card">
         <div id="userAvatar" class="user-avatar">?</div>
@@ -312,6 +369,8 @@
       </div>
     </div>
 
+=======
+>>>>>>> be1f797f1669b81be58e703427dc7e17744e3070
     <div id="cardContainer" class="card">
       <div class="card-content">
         <div>
@@ -333,6 +392,7 @@
         </button>
       </div>
     </div>
+<<<<<<< HEAD
 
     <div id="accountsSection" hidden>
       <div class="section-label">Contas conectadas</div>
@@ -346,6 +406,8 @@
       </svg>
       Voltar para o FinanceHub
     </button>
+=======
+>>>>>>> be1f797f1669b81be58e703427dc7e17744e3070
   </div>
 
   <script src="popup.js"></script>

@@ -19,13 +19,7 @@ public class GetConsolidatedBalanceQueryHandler : IGetConsolidatedBalanceQueryHa
 
     public async Task<ConsolidatedBalanceDto> Handle(GetConsolidatedBalanceQuery query, CancellationToken cancellationToken)
     {
-        var balances = await _repository.GetByUserIdAsync(query.UserId, cancellationToken);
-        var balanceDtos = balances.Select(b => new AccountBalanceDto(
-            b.AccountInfo.InstitutionId,
-            b.AccountInfo.AccountId,
-            b.CurrentBalance.Amount,
-            b.CurrentBalance.Currency,
-            b.LastUpdatedAtUtc)).ToList();
+        var balanceDtos = (await _repository.GetProjectedByUserIdAsync(query.UserId, cancellationToken)).ToList();
 
         var totalBrl = balanceDtos
             .Where(b => b.Currency == "BRL")

@@ -56,7 +56,6 @@ services:
     env_file:
       - .env
     environment:
-      ConnectionStrings__TransactionAggregatorDb: "Host=financehub-postgres;Port=5432;Database=${POSTGRES_DB:-financehub_db};Username=${POSTGRES_USER:-financehub};Password=${POSTGRES_PASSWORD:-financehub_password}"
       RabbitMQ__Host: "financehub-rabbitmq"
       RabbitMQ__Port: "${RabbitMQ__Port:-5672}"
       RabbitMQ__Username: "${RabbitMQ__Username:-guest}"
@@ -77,7 +76,6 @@ services:
     container_name: pluggyintegration-api
     env_file:
       - .env
-    environment:
       RabbitMQ__Host: "financehub-rabbitmq"
       RabbitMQ__Port: "${RabbitMQ__Port:-5672}"
       RabbitMQ__Username: "${RabbitMQ__Username:-guest}"

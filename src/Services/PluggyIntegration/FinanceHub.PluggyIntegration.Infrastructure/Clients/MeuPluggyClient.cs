@@ -46,9 +46,9 @@ public sealed class MeuPluggyClient(
         return items ?? [];
     }
 
-    public async Task<IReadOnlyList<PluggyAccountDto>> GetAccountsByItemIdAsync(string itemId, string pluggyAccessToken, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<PluggyAccountDto>> GetAllAccountsAsync(string pluggyAccessToken, CancellationToken cancellationToken = default)
     {
-        var request = new HttpRequestMessage(HttpMethod.Get, $"{PluggyConstants.AccountsEndpoint}?itemId={Uri.EscapeDataString(itemId)}");
+        var request = new HttpRequestMessage(HttpMethod.Get, PluggyConstants.AccountsEndpoint);
         EnsureAuthorizationHeader(request, pluggyAccessToken);
 
         var response = await SendWithResilienceAsync(request, cancellationToken);
@@ -70,6 +70,30 @@ public sealed class MeuPluggyClient(
         var content = await response.Content.ReadAsStringAsync(cancellationToken);
         return JsonSerializer.Deserialize<PluggyItemDto>(content, JsonOptions)
             ?? throw new PluggyApiCommunicationDomainException("A API da Pluggy retornou uma resposta vazia ao solicitar a sincronização da instituição.");
+    }
+
+    public async Task<IReadOnlyList<PluggyAccountDto>> GetAccountsByItemIdAsync(string itemId, string pluggyAccessToken, CancellationToken cancellationToken = default)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get, $"{PluggyConstants.AccountsEndpoint}?itemId={Uri.EscapeDataString(itemId)}");
+        EnsureAuthorizationHeader(request, pluggyAccessToken);
+
+        var response = await SendWithResilienceAsync(request, cancellationToken);
+        var content = await response.Content.ReadAsStringAsync(cancellationToken);
+
+        var accounts = JsonSerializer.Deserialize<List<PluggyAccountDto>>(content, JsonOptions);
+        return accounts ?? [];
+    }
+
+    public async Task<IReadOnlyList<PluggyTransactionDto>> GetAllTransactionsAsync(string pluggyAccessToken, CancellationToken cancellationToken = default)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get, PluggyConstants.TransactionsEndpoint);
+        EnsureAuthorizationHeader(request, pluggyAccessToken);
+
+        var response = await SendWithResilienceAsync(request, cancellationToken);
+        var content = await response.Content.ReadAsStringAsync(cancellationToken);
+
+        var txs = JsonSerializer.Deserialize<List<PluggyTransactionDto>>(content, JsonOptions);
+        return txs ?? [];
     }
 
     public async Task<IReadOnlyList<PluggyTransactionDto>> GetTransactionsByAccountIdAsync(string accountId, string pluggyAccessToken, CancellationToken cancellationToken = default)

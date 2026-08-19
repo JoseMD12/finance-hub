@@ -21,28 +21,112 @@ public sealed class SyncAllPluggyAccountsCommandHandler(
             throw new NullOrEmptyPluggyAccessTokenDomainException();
         }
 
-        logger.LogInformation("Iniciando sincronização unificada de contas via Meu.Pluggy para UserId: {UserId}", command.UserId);
+        logger.LogInformation("Iniciando sincronização unificada em lote via Meu.Pluggy para UserId: {UserId}", command.UserId);
 
-        var items = await pluggyClient.GetItemsAsync(command.PluggyAccessToken, cancellationToken);
+        var itemsTask = pluggyClient.GetItemsAsync(command.PluggyAccessToken, cancellationToken);
+        var accountsTask = pluggyClient.GetAllAccountsAsync(command.PluggyAccessToken, cancellationToken);
 
-        int totalAccounts = 0;
-        int totalCheckingTxs = 0;
-        int totalCardTxs = 0;
+        await Task.WhenAll(itemsTask, accountsTask);
 
-        foreach (var item in items)
+        var items = await itemsTask;
+        var accounts = await accountsTask;
+
+        if (items.Count == 0 || accounts.Count == 0)
         {
-            var result = await ProcessItemAsync(item, command.UserId, command.PluggyAccessToken, cancellationToken);
-            totalAccounts += result.accounts;
-            totalCheckingTxs += result.checkingCount;
-            totalCardTxs += result.cardCount;
+            logger.LogInformation("Sincronização concluída com zero itens ou contas para sincronizar.");
+            return new SyncPluggySummaryDto(
+                TotalItemsSynced: items.Count,
+                TotalAccountsSynced: accounts.Count,
+                TotalCheckingTransactionsIngested: 0,
+                TotalCardTransactionsIngested: 0,
+                SyncedAtUtc: DateTime.UtcNow
+            );
         }
 
-        logger.LogInformation("Sincronização concluída: {Items} items, {Accounts} contas, {CheckingTxs} txs de conta corrente, {CardTxs} txs de cartão de crédito.",
-            items.Count, totalAccounts, totalCheckingTxs, totalCardTxs);
+        var allTransactions = await pluggyClient.GetAllTransactionsAsync(command.PluggyAccessToken, cancellationToken);
+
+        var itemMap = items.ToDictionary(i => i.Id, StringComparer.OrdinalIgnoreCase);
+        var accountMap = accounts.ToDictionary(a => a.Id, StringComparer.OrdinalIgnoreCase);
+
+        var checkingEvents = new List<TransactionIngested>();
+        var cardEvents = new List<InvoiceItemIngested>();
+
+        foreach (var tx in allTransactions)
+        {
+            if (string.IsNullOrWhiteSpace(tx.AccountId) || !accountMap.TryGetValue(tx.AccountId, out var account))
+            {
+                continue;
+            }
+
+            var item = itemMap.GetValueOrDefault(account.ItemId);
+            var sourceName = item?.Connector.Name ?? account.Name;
+            var txDate = ParseDate(tx.Date);
+
+            if (IsCreditCardAccount(account))
+            {
+                DateTime? dueDate = ParseDueDate(account.CreditData?.BalanceDueDate);
+                var canonicalCategory = PluggyCategoryMapper.Map(tx.Category);
+
+                cardEvents.Add(new InvoiceItemIngested(
+                    IngestionId: Guid.NewGuid(),
+                    UserId: command.UserId,
+                    Source: sourceName,
+                    CreditCardAccountId: account.Id,
+                    CardLastFourDigits: null,
+                    BankTransactionId: tx.Id,
+                    Amount: tx.Amount,
+                    TransactionDate: txDate,
+                    Description: tx.Description,
+                    Category: canonicalCategory,
+                    CurrentInstallment: null,
+                    TotalInstallments: null,
+                    InvoiceDueDate: dueDate,
+                    Currency: account.CurrencyCode ?? PluggyConstants.DefaultCurrency,
+                    RawPayloadJson: null,
+                    OccurredAtUtc: DateTime.UtcNow
+                ));
+            }
+            else
+            {
+                checkingEvents.Add(new TransactionIngested(
+                    IngestionId: Guid.NewGuid(),
+                    UserId: command.UserId,
+                    Source: sourceName,
+                    AccountId: account.Id,
+                    BankTransactionId: tx.Id,
+                    Amount: tx.Amount,
+                    TransactionDate: txDate,
+                    Description: tx.Description,
+                    Currency: account.CurrencyCode ?? PluggyConstants.DefaultCurrency,
+                    RawPayloadJson: null,
+                    OccurredAtUtc: DateTime.UtcNow
+                ));
+            }
+        }
+
+        var publishTasks = new List<Task>(checkingEvents.Count + cardEvents.Count);
+
+        foreach (var checkingEvent in checkingEvents)
+        {
+            publishTasks.Add(publishEndpoint.Publish(checkingEvent, cancellationToken));
+        }
+
+        foreach (var cardEvent in cardEvents)
+        {
+            publishTasks.Add(publishEndpoint.Publish(cardEvent, cancellationToken));
+        }
+
+        await Task.WhenAll(publishTasks);
+
+        int totalCheckingTxs = checkingEvents.Count;
+        int totalCardTxs = cardEvents.Count;
+
+        logger.LogInformation("Sincronização em lote concluída: {Items} items, {Accounts} contas, {CheckingTxs} txs de conta corrente, {CardTxs} txs de cartão de crédito.",
+            items.Count, accounts.Count, totalCheckingTxs, totalCardTxs);
 
         return new SyncPluggySummaryDto(
             TotalItemsSynced: items.Count,
-            TotalAccountsSynced: totalAccounts,
+            TotalAccountsSynced: accounts.Count,
             TotalCheckingTransactionsIngested: totalCheckingTxs,
             TotalCardTransactionsIngested: totalCardTxs,
             SyncedAtUtc: DateTime.UtcNow
@@ -63,127 +147,87 @@ public sealed class SyncAllPluggyAccountsCommandHandler(
             throw new PluggyApiCommunicationDomainException($"A instituição '{command.ItemId}' não foi encontrada na sessão atual da Pluggy.");
         }
 
-        var result = await ProcessItemAsync(item, command.UserId, command.PluggyAccessToken, cancellationToken);
-        return new SyncPluggySummaryDto(1, result.accounts, result.checkingCount, result.cardCount, DateTime.UtcNow);
-    }
-
-    private async Task<(int accounts, int checkingCount, int cardCount)> ProcessItemAsync(
-        PluggyItemDto item,
-        string? userId,
-        string pluggyAccessToken,
-        CancellationToken cancellationToken)
-    {
-        var accounts = await pluggyClient.GetAccountsByItemIdAsync(item.Id, pluggyAccessToken, cancellationToken);
-        var checkingCount = 0;
-        var cardCount = 0;
+        var accounts = await pluggyClient.GetAccountsByItemIdAsync(item.Id, command.PluggyAccessToken, cancellationToken);
+        var checkingEvents = new List<TransactionIngested>();
+        var cardEvents = new List<InvoiceItemIngested>();
+        var sourceName = item.Connector.Name;
 
         foreach (var account in accounts)
         {
-            var result = await ProcessAccountAsync(item, account, userId, pluggyAccessToken, cancellationToken);
-            checkingCount += result.checkingCount;
-            cardCount += result.cardCount;
+            var transactions = await pluggyClient.GetTransactionsByAccountIdAsync(account.Id, command.PluggyAccessToken, cancellationToken);
+
+            foreach (var tx in transactions)
+            {
+                var txDate = ParseDate(tx.Date);
+
+                if (IsCreditCardAccount(account))
+                {
+                    DateTime? dueDate = ParseDueDate(account.CreditData?.BalanceDueDate);
+                    var canonicalCategory = PluggyCategoryMapper.Map(tx.Category);
+
+                    cardEvents.Add(new InvoiceItemIngested(
+                        IngestionId: Guid.NewGuid(),
+                        UserId: command.UserId ?? string.Empty,
+                        Source: sourceName,
+                        CreditCardAccountId: account.Id,
+                        CardLastFourDigits: null,
+                        BankTransactionId: tx.Id,
+                        Amount: tx.Amount,
+                        TransactionDate: txDate,
+                        Description: tx.Description,
+                        Category: canonicalCategory,
+                        CurrentInstallment: null,
+                        TotalInstallments: null,
+                        InvoiceDueDate: dueDate,
+                        Currency: account.CurrencyCode ?? PluggyConstants.DefaultCurrency,
+                        RawPayloadJson: null,
+                        OccurredAtUtc: DateTime.UtcNow
+                    ));
+                }
+                else
+                {
+                    checkingEvents.Add(new TransactionIngested(
+                        IngestionId: Guid.NewGuid(),
+                        UserId: command.UserId ?? string.Empty,
+                        Source: sourceName,
+                        AccountId: account.Id,
+                        BankTransactionId: tx.Id,
+                        Amount: tx.Amount,
+                        TransactionDate: txDate,
+                        Description: tx.Description,
+                        Currency: account.CurrencyCode ?? PluggyConstants.DefaultCurrency,
+                        RawPayloadJson: null,
+                        OccurredAtUtc: DateTime.UtcNow
+                    ));
+                }
+            }
         }
 
-        return (accounts.Count, checkingCount, cardCount);
-    }
+        var publishTasks = new List<Task>(checkingEvents.Count + cardEvents.Count);
 
-    private async Task<(int checkingCount, int cardCount)> ProcessAccountAsync(
-        PluggyItemDto item,
-        PluggyAccountDto account,
-        string? userId,
-        string pluggyAccessToken,
-        CancellationToken cancellationToken)
-    {
-        var transactions = await pluggyClient.GetTransactionsByAccountIdAsync(account.Id, pluggyAccessToken, cancellationToken);
-
-        if (IsCreditCardAccount(account))
+        foreach (var checkingEvent in checkingEvents)
         {
-            int cardCount = await ProcessCreditCardTransactionsAsync(item, account, transactions, userId, cancellationToken);
-            return (0, cardCount);
+            publishTasks.Add(publishEndpoint.Publish(checkingEvent, cancellationToken));
         }
 
-        int checkingCount = await ProcessCheckingTransactionsAsync(item, account, transactions, userId, cancellationToken);
-        return (checkingCount, 0);
-    }
+        foreach (var cardEvent in cardEvents)
+        {
+            publishTasks.Add(publishEndpoint.Publish(cardEvent, cancellationToken));
+        }
 
+        await Task.WhenAll(publishTasks);
+
+        return new SyncPluggySummaryDto(
+            TotalItemsSynced: 1,
+            TotalAccountsSynced: accounts.Count,
+            TotalCheckingTransactionsIngested: checkingEvents.Count,
+            TotalCardTransactionsIngested: cardEvents.Count,
+            SyncedAtUtc: DateTime.UtcNow
+        );
+    }
     private static bool IsCreditCardAccount(PluggyAccountDto account) =>
         account.Type == PluggyConstants.AccountTypes.Credit ||
         account.Subtype == PluggyConstants.AccountSubtypes.CreditCard;
-
-    private async Task<int> ProcessCreditCardTransactionsAsync(
-        PluggyItemDto item,
-        PluggyAccountDto account,
-        IReadOnlyList<PluggyTransactionDto> transactions,
-        string? userId,
-        CancellationToken cancellationToken)
-    {
-        DateTime? dueDate = ParseDueDate(account.CreditData?.BalanceDueDate);
-        int count = 0;
-
-        foreach (var tx in transactions)
-        {
-            var txDate = ParseDate(tx.Date);
-            var canonicalCategory = PluggyCategoryMapper.Map(tx.Category);
-
-            var cardEvent = new InvoiceItemIngested(
-                IngestionId: Guid.NewGuid(),
-                UserId: userId,
-                Source: item.Connector.Name,
-                CreditCardAccountId: account.Id,
-                CardLastFourDigits: null,
-                BankTransactionId: tx.Id,
-                Amount: tx.Amount,
-                TransactionDate: txDate,
-                Description: tx.Description,
-                Category: canonicalCategory,
-                CurrentInstallment: null,
-                TotalInstallments: null,
-                InvoiceDueDate: dueDate,
-                Currency: account.CurrencyCode ?? PluggyConstants.DefaultCurrency,
-                RawPayloadJson: null,
-                OccurredAtUtc: DateTime.UtcNow
-            );
-
-            await publishEndpoint.Publish(cardEvent, cancellationToken);
-            count++;
-        }
-
-        return count;
-    }
-
-    private async Task<int> ProcessCheckingTransactionsAsync(
-        PluggyItemDto item,
-        PluggyAccountDto account,
-        IReadOnlyList<PluggyTransactionDto> transactions,
-        string? userId,
-        CancellationToken cancellationToken)
-    {
-        int count = 0;
-
-        foreach (var tx in transactions)
-        {
-            var txDate = ParseDate(tx.Date);
-
-            var checkingEvent = new TransactionIngested(
-                IngestionId: Guid.NewGuid(),
-                UserId: userId,
-                Source: item.Connector.Name,
-                AccountId: account.Id,
-                BankTransactionId: tx.Id,
-                Amount: tx.Amount,
-                TransactionDate: txDate,
-                Description: tx.Description,
-                Currency: account.CurrencyCode ?? PluggyConstants.DefaultCurrency,
-                RawPayloadJson: null,
-                OccurredAtUtc: DateTime.UtcNow
-            );
-
-            await publishEndpoint.Publish(checkingEvent, cancellationToken);
-            count++;
-        }
-
-        return count;
-    }
 
     private static DateTime? ParseDueDate(string? rawDueDate)
     {

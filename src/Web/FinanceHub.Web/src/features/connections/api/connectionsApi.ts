@@ -1,6 +1,12 @@
 import { httpClient } from '@/shared/api/httpClient';
 import { API_ENDPOINTS, API_HEADERS } from '@/shared/api/apiEndpoints';
-import type { PluggyItemDto, PluggySyncSummaryDto } from '../types/connections.types';
+export interface PluggySyncSummaryDto {
+  totalItemsSynced: number;
+  totalAccountsSynced: number;
+  totalCheckingTransactionsIngested: number;
+  totalCardTransactionsIngested: number;
+  syncedAtUtc: string;
+}
 
 export const getPluggyItemsApi = async (
   pluggyAccessToken: string,

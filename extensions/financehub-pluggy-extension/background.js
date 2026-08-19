@@ -61,8 +61,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     logoutLockUntil = 0;
     chrome.storage.local.remove(LOGOUT_LOCK_KEY, () => {
       chrome.storage.local.set({ pluggyToken: message.token, lastSync: new Date().toISOString() }, () => {
-      console.log('[FinanceHub Extension] Token salvo com sucesso no storage!');
-      sendResponse({ status: 'success' });
+        console.log('[FinanceHub Extension] Token salvo com sucesso no storage!');
+        sendResponse({ status: 'success' });
       });
     });
     return true;

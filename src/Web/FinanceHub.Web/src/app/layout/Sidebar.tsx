@@ -5,8 +5,6 @@ import {
   Landmark,
   LayoutGrid,
   LogOut,
-  ChevronLeft,
-  ChevronRight,
   UserRound,
 } from 'lucide-react';
 import { cn } from '@/shared/utils/cn';
@@ -42,7 +40,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ initialCollapsed = false }) =>
       >
         {isCollapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
       </button>
-
       <div>
         {/* User Profile Header (Fidelidade ao Side Bar.pdf) */}
         <div

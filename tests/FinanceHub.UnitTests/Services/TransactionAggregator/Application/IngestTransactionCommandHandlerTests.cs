@@ -53,8 +53,8 @@ public class IngestTransactionCommandHandlerTests
     public async Task Handle_WhenNewTransaction_ShouldPersistCategorizeAndReturnId()
     {
         // Arrange
-        _txRepo.ExistsByHashAsync(Arg.Any<TransactionHash>(), Arg.Any<CancellationToken>())
-            .Returns(false);
+        _txRepo.GetIdByHashAsync(Arg.Any<TransactionHash>(), Arg.Any<CancellationToken>())
+            .Returns((Guid?)null);
 
         // Act
         var resultId = await _handler.Handle(BuildCommand(), CancellationToken.None);
@@ -74,8 +74,8 @@ public class IngestTransactionCommandHandlerTests
     public async Task Handle_WhenNewTransaction_ShouldPublishTransactionNormalizedEvent()
     {
         // Arrange
-        _txRepo.ExistsByHashAsync(Arg.Any<TransactionHash>(), Arg.Any<CancellationToken>())
-            .Returns(false);
+        _txRepo.GetIdByHashAsync(Arg.Any<TransactionHash>(), Arg.Any<CancellationToken>())
+            .Returns((Guid?)null);
 
         // Act
         await _handler.Handle(BuildCommand(), CancellationToken.None);
@@ -94,8 +94,8 @@ public class IngestTransactionCommandHandlerTests
     public async Task Handle_WhenNewTransaction_ShouldPublishEventAfterPersistence()
     {
         // Arrange — track call order
-        _txRepo.ExistsByHashAsync(Arg.Any<TransactionHash>(), Arg.Any<CancellationToken>())
-            .Returns(false);
+        _txRepo.GetIdByHashAsync(Arg.Any<TransactionHash>(), Arg.Any<CancellationToken>())
+            .Returns((Guid?)null);
 
         var callOrder = new System.Collections.Generic.List<string>();
         _txRepo.AddAsync(Arg.Any<CanonicalTransaction>(), Arg.Any<CancellationToken>())
@@ -117,8 +117,6 @@ public class IngestTransactionCommandHandlerTests
     {
         // Arrange
         var existingId = Guid.NewGuid();
-        _txRepo.ExistsByHashAsync(Arg.Any<TransactionHash>(), Arg.Any<CancellationToken>())
-            .Returns(true);
         _txRepo.GetIdByHashAsync(Arg.Any<TransactionHash>(), Arg.Any<CancellationToken>())
             .Returns(existingId);
 
@@ -137,8 +135,8 @@ public class IngestTransactionCommandHandlerTests
     public async Task Handle_WhenPublisherThrows_ShouldPropagateExceptionWithoutSwallowing()
     {
         // Arrange
-        _txRepo.ExistsByHashAsync(Arg.Any<TransactionHash>(), Arg.Any<CancellationToken>())
-            .Returns(false);
+        _txRepo.GetIdByHashAsync(Arg.Any<TransactionHash>(), Arg.Any<CancellationToken>())
+            .Returns((Guid?)null);
         _eventPublisher
             .PublishAsync(Arg.Any<TransactionNormalized>(), Arg.Any<CancellationToken>())
             .ThrowsAsync(new InvalidOperationException("RabbitMQ unavailable"));
@@ -155,8 +153,8 @@ public class IngestTransactionCommandHandlerTests
     public async Task Handle_WhenNewTransactionWithCreditType_ShouldPublishWithCorrectTransactionType()
     {
         // Arrange
-        _txRepo.ExistsByHashAsync(Arg.Any<TransactionHash>(), Arg.Any<CancellationToken>())
-            .Returns(false);
+        _txRepo.GetIdByHashAsync(Arg.Any<TransactionHash>(), Arg.Any<CancellationToken>())
+            .Returns((Guid?)null);
 
         // Act
         await _handler.Handle(BuildCommand(type: TransactionType.Credit, amount: 500m), CancellationToken.None);

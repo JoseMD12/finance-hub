@@ -49,7 +49,6 @@ export function formatDateTimeBR(dateString: string | Date | null | undefined): 
     timeStyle: 'short',
   }).format(date);
 }
-
 /**
  * Mascara CPF de acordo com a LGPD (ex: "123.456.789-00" -> "***.456.789-**").
  */
