@@ -1,15 +1,12 @@
 using FinanceHub.PluggyIntegration.Application.Commands.SyncAllPluggyAccounts;
 using FinanceHub.PluggyIntegration.Application.Interfaces;
-using FinanceHub.PluggyIntegration.Application.Queries.GetPluggyItems;
 using FinanceHub.PluggyIntegration.Application.Queries.GetPluggyAccounts;
+using FinanceHub.PluggyIntegration.Application.Queries.GetPluggyItems;
 using FinanceHub.PluggyIntegration.Domain.Constants;
 using FinanceHub.PluggyIntegration.Domain.Exceptions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
-using System.Security.Claims;
-
-using FinanceHub.PluggyIntegration.Application.Commands.SyncSinglePluggyItem;
 
 namespace FinanceHub.PluggyIntegration.Api.Endpoints;
 
@@ -56,31 +53,6 @@ public static class PluggyEndpoints
         })
         .WithName("GetPluggyAccounts")
         .WithSummary("Lista as contas correntes e cartões vinculados às instituições do Meu.Pluggy.");
-
-        group.MapPost("/items/{itemId}/sync", async (
-            string itemId,
-            string? userId,
-            HttpContext httpContext,
-            ClaimsPrincipal user,
-            ISyncSinglePluggyItemCommandHandler handler,
-            CancellationToken cancellationToken) =>
-        {
-            var pluggyToken = httpContext.Request.Headers[PluggyConstants.HeaderNames.PluggyAccessToken].ToString();
-            if (string.IsNullOrWhiteSpace(pluggyToken))
-            {
-                throw new NullOrEmptyPluggyAccessTokenDomainException();
-            }
-
-            var resolvedUserId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value
-                              ?? user.FindFirst("sub")?.Value
-                              ?? userId;
-            var summary = await handler.HandleAsync(
-                new SyncSinglePluggyItemCommand(itemId, resolvedUserId, pluggyToken),
-                cancellationToken);
-            return Results.Ok(summary);
-        })
-        .WithName("SyncPluggyItem")
-        .WithSummary("Solicita uma nova sincronização para uma instituição específica via Meu.Pluggy.");
 
         group.MapPost("/sync", async (
             string? userId,

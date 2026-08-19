@@ -156,15 +156,7 @@ async function runTestSuite() {
     });
     record('POST /sync (Full Portfolio Ingestion)', `${config.urls.pluggy}/api/v1/pluggy/sync`, 200, syncRes);
 
-    // 3.4 POST Single Item Sync if items are available
-    if (Array.isArray(itemsRes.body) && itemsRes.body.length > 0) {
-      const firstItemId = itemsRes.body[0].id;
-      const singleSyncRes = await makeRequest(
-        `${config.urls.pluggy}/api/v1/pluggy/items/${encodeURIComponent(firstItemId)}/sync?userId=${encodeURIComponent(config.userId)}`,
-        { method: 'POST', headers: authHeader }
-      );
-      record(`POST /items/${firstItemId}/sync (Single Item Sync)`, `${config.urls.pluggy}/api/v1/pluggy/items/${firstItemId}/sync`, 200, singleSyncRes);
-    }
+
   } else {
     console.log('⚠️  Skipping token-authenticated tests (No token provided in config).');
   }
