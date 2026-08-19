@@ -1,6 +1,7 @@
 using FinanceHub.PluggyIntegration.Application.Commands.SyncAllPluggyAccounts;
 using FinanceHub.PluggyIntegration.Application.Interfaces;
 using FinanceHub.PluggyIntegration.Application.Queries.GetPluggyItems;
+using FinanceHub.PluggyIntegration.Application.Queries.GetPluggyAccounts;
 using FinanceHub.PluggyIntegration.Domain.Constants;
 using FinanceHub.PluggyIntegration.Domain.Exceptions;
 using Microsoft.AspNetCore.Builder;
@@ -34,6 +35,25 @@ public static class PluggyEndpoints
         })
         .WithName("GetPluggyItems")
         .WithSummary("Lista todas as conexões e instituições bancárias vinculadas no Meu.Pluggy.");
+
+        group.MapGet("/accounts", async (
+            HttpContext httpContext,
+            IGetPluggyAccountsQueryHandler handler,
+            CancellationToken cancellationToken) =>
+        {
+            var pluggyToken = httpContext.Request.Headers[PluggyConstants.HeaderNames.PluggyAccessToken].ToString();
+            if (string.IsNullOrWhiteSpace(pluggyToken))
+            {
+                throw new NullOrEmptyPluggyAccessTokenDomainException();
+            }
+
+            var accounts = await handler.HandleAsync(
+                new GetPluggyAccountsQuery(pluggyToken),
+                cancellationToken);
+            return Results.Ok(accounts);
+        })
+        .WithName("GetPluggyAccounts")
+        .WithSummary("Lista as contas correntes e cartões vinculados às instituições do Meu.Pluggy.");
 
         group.MapPost("/items/{itemId}/sync", async (
             string itemId,
