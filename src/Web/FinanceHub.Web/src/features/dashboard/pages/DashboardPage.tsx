@@ -4,11 +4,8 @@ import { formatCurrencyBRL } from '@/shared/utils/formatters';
 import { Landmark, TrendingUp, TrendingDown, ArrowUpRight, Loader2 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { useDashboardQuery } from '../hooks/useDashboardQuery';
-<<<<<<< HEAD
 import { IconCircle } from '@/shared/components/IconCircle/IconCircle';
 import { StatusBadge } from '@/shared/components/StatusBadge/StatusBadge';
-=======
->>>>>>> be1f797f1669b81be58e703427dc7e17744e3070
 
 export const DashboardPage: React.FC = () => {
   const { data: dashboard, isLoading, error } = useDashboardQuery();

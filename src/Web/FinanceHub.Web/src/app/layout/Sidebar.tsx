@@ -6,6 +6,8 @@ import {
   LayoutGrid,
   LogOut,
   UserRound,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { cn } from '@/shared/utils/cn';
 import { IconCircle } from '@/shared/components/IconCircle/IconCircle';
