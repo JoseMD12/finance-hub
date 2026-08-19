@@ -1,6 +1,5 @@
 using System.Net;
 using System.Net.Http.Headers;
-using System.Net.Http.Json;
 using System.Text.Json;
 using FinanceHub.PluggyIntegration.Domain.Exceptions;
 using Microsoft.Extensions.Logging;
@@ -19,21 +18,6 @@ public sealed class PluggyHttpExecutor(
     public async Task<TResponse> GetAsync<TResponse>(string endpoint, string accessToken, CancellationToken cancellationToken = default)
     {
         var request = new HttpRequestMessage(HttpMethod.Get, endpoint);
-        EnsureAuthorizationHeader(request, accessToken);
-
-        var response = await SendWithResilienceAsync(request, cancellationToken);
-        var content = await response.Content.ReadAsStringAsync(cancellationToken);
-
-        var result = JsonSerializer.Deserialize<TResponse>(content, JsonOptions);
-        return result ?? throw new PluggyApiCommunicationDomainException("A API da Pluggy retornou uma resposta vazia.");
-    }
-
-    public async Task<TResponse> PatchAsync<TResponse>(string endpoint, object body, string accessToken, CancellationToken cancellationToken = default)
-    {
-        var request = new HttpRequestMessage(HttpMethod.Patch, endpoint)
-        {
-            Content = JsonContent.Create(body)
-        };
         EnsureAuthorizationHeader(request, accessToken);
 
         var response = await SendWithResilienceAsync(request, cancellationToken);

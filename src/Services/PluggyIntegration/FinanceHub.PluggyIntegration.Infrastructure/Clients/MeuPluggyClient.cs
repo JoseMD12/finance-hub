@@ -9,9 +9,6 @@ public sealed class MeuPluggyClient(IPluggyHttpExecutor executor) : IMeuPluggyCl
     public Task<IReadOnlyList<PluggyItemDto>> GetItemsAsync(string pluggyAccessToken, CancellationToken cancellationToken = default)
         => executor.GetAsync<IReadOnlyList<PluggyItemDto>>(PluggyConstants.ItemsEndpoint, pluggyAccessToken, cancellationToken);
 
-    public Task<PluggyItemDto> UpdateItemAsync(string itemId, string pluggyAccessToken, CancellationToken cancellationToken = default)
-        => executor.PatchAsync<PluggyItemDto>($"{PluggyConstants.ItemsEndpoint}/{Uri.EscapeDataString(itemId)}", new { }, pluggyAccessToken, cancellationToken);
-
     public Task<IReadOnlyList<PluggyAccountDto>> GetAccountsByItemIdAsync(string itemId, string pluggyAccessToken, CancellationToken cancellationToken = default)
         => executor.GetAsync<IReadOnlyList<PluggyAccountDto>>($"{PluggyConstants.AccountsEndpoint}?itemId={Uri.EscapeDataString(itemId)}", pluggyAccessToken, cancellationToken);
 
