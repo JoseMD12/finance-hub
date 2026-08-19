@@ -30,10 +30,10 @@ public class SyncAllPluggyAccountsCommandHandlerTests
     [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
-    public async Task HandleAsync_WhenPluggyAccessTokenNullOrEmpty_ShouldThrowNullOrEmptyPluggyAccessTokenDomainException(string invalidToken)
+    public async Task HandleAsync_WhenPluggyAccessTokenNullOrEmpty_ShouldThrowNullOrEmptyPluggyAccessTokenDomainException(string? invalidToken)
     {
         // Arrange
-        var command = new SyncAllPluggyAccountsCommand("user-01", invalidToken);
+        var command = new SyncAllPluggyAccountsCommand("user-01", invalidToken!);
 
         // Act
         Func<Task> act = async () => await _handler.HandleAsync(command, CancellationToken.None);
