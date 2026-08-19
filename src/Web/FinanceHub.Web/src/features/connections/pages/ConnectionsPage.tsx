@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { usePluggyToken } from '../hooks/usePluggyToken';
 import { useSyncPluggyMutation } from '../hooks/useSyncPluggyMutation';
 import { useConnectedInstitutionsQuery } from '../hooks/useConnectedInstitutionsQuery';
@@ -12,8 +12,9 @@ import { Skeleton } from '@/shared/components/Skeleton/Skeleton';
 export const ConnectionsPage: React.FC = () => {
   const { token, hasToken, lastSync, saveToken, saveLastSync, clearToken } = usePluggyToken();
   const { data: items, isLoading: isLoadingItems } = useConnectedInstitutionsQuery(token);
+  const autoSyncTokenRef = useRef<string | null>(null);
 
-  const syncMutation = useSyncPluggyMutation({
+  const { mutate: syncAccounts, isPending: isSyncing } = useSyncPluggyMutation({
     onSyncSuccess: (summary) => {
       saveLastSync(summary);
     },
@@ -21,9 +22,25 @@ export const ConnectionsPage: React.FC = () => {
 
   const handleSync = (targetToken: string) => {
     saveToken(targetToken);
-    syncMutation.mutate(targetToken);
+    syncAccounts(targetToken);
   };
 
+  useEffect(() => {
+    if (!token) {
+      autoSyncTokenRef.current = null;
+      return;
+    }
+
+    const hasConnectedItems = Boolean(items?.length);
+    const alreadyAutoSynced = autoSyncTokenRef.current === token;
+
+    if (!hasConnectedItems || lastSync || isSyncing || alreadyAutoSynced) {
+      return;
+    }
+
+    autoSyncTokenRef.current = token;
+    syncAccounts(token);
+  }, [isSyncing, items, lastSync, syncAccounts, token]);
 
   const connectedItems = items ?? [];
   const hasInstitutions = connectedItems.length > 0;
@@ -44,7 +61,7 @@ export const ConnectionsPage: React.FC = () => {
       <PluggySyncPanel
         token={token}
         isConnected={hasInstitutions || Boolean(lastSync)}
-        isSyncing={syncMutation.isPending}
+        isSyncing={isSyncing}
         lastSync={lastSync}
         onSync={handleSync}
         onSaveToken={saveToken}
