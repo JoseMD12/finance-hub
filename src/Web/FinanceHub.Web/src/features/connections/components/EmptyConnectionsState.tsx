@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card } from '@/shared/components/Card/Card';
 import { Landmark, ShieldAlert } from 'lucide-react';
+import { IconCircle } from '@/shared/components/IconCircle/IconCircle';
 
 interface EmptyConnectionsStateProps {
   hasToken: boolean;
@@ -9,9 +10,12 @@ interface EmptyConnectionsStateProps {
 export const EmptyConnectionsState: React.FC<EmptyConnectionsStateProps> = ({ hasToken }) => {
   return (
     <Card className="flex flex-col items-center justify-center p-8 text-center border-dashed border-slate-200">
-      <div className="w-12 h-12 rounded-2xl bg-secondary-light text-secondary flex items-center justify-center mb-3">
-        {hasToken ? <Landmark className="w-6 h-6" /> : <ShieldAlert className="w-6 h-6 text-slate-400" />}
-      </div>
+      <IconCircle
+        icon={hasToken ? Landmark : ShieldAlert}
+        tone={hasToken ? 'secondary' : 'muted'}
+        size="lg"
+        className="mb-3 h-12 w-12 rounded-2xl"
+      />
       <h3 className="text-sm font-bold text-slate-800 mb-1">
         {hasToken ? 'Nenhuma conta sincronizada' : 'Nenhuma instituição conectada'}
       </h3>

@@ -2,6 +2,7 @@ import React from 'react';
 import { Card } from '@/shared/components/Card/Card';
 import { CheckCircle2, Landmark, CreditCard, ArrowLeftRight } from 'lucide-react';
 import type { PluggySyncSummaryDto } from '../types/connections.types';
+import { IconCircle } from '@/shared/components/IconCircle/IconCircle';
 
 interface SyncSummaryBannerProps {
   summary: PluggySyncSummaryDto;
@@ -14,9 +15,7 @@ export const SyncSummaryBanner: React.FC<SyncSummaryBannerProps> = ({ summary })
     <Card className="border-status-success/30 bg-status-success-bg/40 py-3.5 px-4 md:px-5">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-xl bg-status-success text-white flex items-center justify-center font-bold text-sm shadow-sm flex-shrink-0">
-            <CheckCircle2 className="w-4 h-4" />
-          </div>
+          <IconCircle icon={CheckCircle2} tone="success" size="md" />
           <div>
             <h3 className="text-xs font-bold text-slate-800">
               Sincronização Realizada com Sucesso

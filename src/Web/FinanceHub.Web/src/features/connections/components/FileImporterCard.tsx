@@ -2,15 +2,15 @@ import React from 'react';
 import { Card } from '@/shared/components/Card/Card';
 import { UploadCloud, FileSpreadsheet, Clock } from 'lucide-react';
 import { CONNECTIONS_DEFAULTS } from '../constants/connectionsConstants';
+import { IconCircle } from '@/shared/components/IconCircle/IconCircle';
+import { StatusBadge } from '@/shared/components/StatusBadge/StatusBadge';
 
 export const FileImporterCard: React.FC = () => {
   return (
     <Card className="flex flex-col gap-4 border-slate-200">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-200/80 pb-3">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-tertiary-light text-tertiary flex items-center justify-center font-bold text-sm shadow-sm flex-shrink-0">
-            <UploadCloud className="w-5 h-5" />
-          </div>
+          <IconCircle icon={UploadCloud} tone="tertiary" size="lg" />
           <div>
             <h2 className="text-sm font-bold text-slate-800">
               Importação de Extratos Off-line
@@ -22,10 +22,7 @@ export const FileImporterCard: React.FC = () => {
         </div>
 
         <div>
-          <span className="inline-flex items-center gap-1.5 text-[11px] font-bold px-3 py-1 rounded-full bg-status-warning-bg text-status-warning">
-            <Clock className="w-3.5 h-3.5" />
-            Em Breve
-          </span>
+          <StatusBadge icon={Clock} tone="warning">Em Breve</StatusBadge>
         </div>
       </div>
 

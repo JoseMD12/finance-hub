@@ -4,6 +4,8 @@ import { Button } from '@/shared/components/Button/Button';
 import { KeyRound, ExternalLink, RefreshCw, CheckCircle2, AlertCircle, XCircle, Puzzle } from 'lucide-react';
 import { CONNECTIONS_DEFAULTS } from '../constants/connectionsConstants';
 import { formatDateTimeBR } from '@/shared/utils/formatters';
+import { IconCircle } from '@/shared/components/IconCircle/IconCircle';
+import { StatusBadge } from '@/shared/components/StatusBadge/StatusBadge';
 import type { PluggySyncSummaryDto } from '../types/connections.types';
 
 interface PluggySyncPanelProps {
@@ -48,23 +50,19 @@ export const PluggySyncPanel: React.FC<PluggySyncPanelProps> = ({
     <Card className="flex flex-col gap-3.5 border-slate-200 py-4 px-4 md:px-5">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-brand-light text-brand flex items-center justify-center font-bold text-xs shadow-sm flex-shrink-0">
-            <KeyRound className="w-4 h-4" />
-          </div>
+          <IconCircle icon={KeyRound} tone="brand" size="sm" />
           <div className="flex items-center gap-2">
             <h2 className="text-xs font-bold text-slate-800">
               Sessão Meu.Pluggy
             </h2>
             {isConnected ? (
-              <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-status-success-bg text-status-success">
-                <CheckCircle2 className="w-2.5 h-2.5" />
+              <StatusBadge icon={CheckCircle2} tone="success" className="px-2 py-0.5 text-[10px]">
                 Conectado
-              </span>
+              </StatusBadge>
             ) : (
-              <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-status-warning-bg text-status-warning">
-                <AlertCircle className="w-2.5 h-2.5" />
+              <StatusBadge icon={AlertCircle} tone="warning" className="px-2 py-0.5 text-[10px]">
                 Pendente
-              </span>
+              </StatusBadge>
             )}
           </div>
         </div>

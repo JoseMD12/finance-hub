@@ -4,6 +4,8 @@ import { formatCurrencyBRL } from '@/shared/utils/formatters';
 import { Landmark, TrendingUp, TrendingDown, ArrowUpRight, Loader2 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { useDashboardQuery } from '../hooks/useDashboardQuery';
+import { IconCircle } from '@/shared/components/IconCircle/IconCircle';
+import { StatusBadge } from '@/shared/components/StatusBadge/StatusBadge';
 
 export const DashboardPage: React.FC = () => {
   const { data: dashboard, isLoading, error } = useDashboardQuery();
@@ -46,9 +48,7 @@ export const DashboardPage: React.FC = () => {
             <Card className="flex flex-col gap-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-slate-500">Saldo Consolidado Total</span>
-                <div className="w-8 h-8 rounded-xl bg-brand-light text-brand flex items-center justify-center">
-                  <Landmark className="w-4 h-4" />
-                </div>
+                <IconCircle icon={Landmark} tone="brand" size="md" />
               </div>
               <div className="text-2xl font-extrabold text-brand tracking-tight">
                 {formatCurrencyBRL(totalBalance)}
@@ -61,9 +61,7 @@ export const DashboardPage: React.FC = () => {
             <Card className="flex flex-col gap-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-slate-500">Receitas do Mês</span>
-                <div className="w-8 h-8 rounded-xl bg-status-success-bg text-status-success flex items-center justify-center">
-                  <TrendingUp className="w-4 h-4" />
-                </div>
+                <IconCircle icon={TrendingUp} tone="success" size="md" />
               </div>
               <div className="text-2xl font-extrabold text-status-success tracking-tight">
                 + {formatCurrencyBRL(monthlyIncome)}
@@ -74,9 +72,7 @@ export const DashboardPage: React.FC = () => {
             <Card className="flex flex-col gap-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-slate-500">Despesas do Mês</span>
-                <div className="w-8 h-8 rounded-xl bg-status-danger-bg text-status-danger flex items-center justify-center">
-                  <TrendingDown className="w-4 h-4" />
-                </div>
+                <IconCircle icon={TrendingDown} tone="danger" size="md" />
               </div>
               <div className="text-2xl font-extrabold text-status-danger tracking-tight">
                 - {formatCurrencyBRL(monthlyExpense)}
@@ -108,14 +104,12 @@ export const DashboardPage: React.FC = () => {
                         className="flex items-center justify-between p-4 bg-surface-ground rounded-xl border border-border-subtle hover:border-slate-300 transition-colors"
                       >
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-xl bg-secondary-light text-secondary flex items-center justify-center font-bold text-xs shadow-sm">
-                            {bank.institutionName.substring(0, 2).toUpperCase()}
-                          </div>
+                          <IconCircle icon={Landmark} tone="secondary" size="lg" />
                           <div>
                             <span className="text-sm font-bold text-slate-800">{bank.institutionName}</span>
-                            <span className="ml-2.5 text-[10px] font-bold px-2 py-0.5 rounded-full bg-secondary/10 text-secondary">
+                            <StatusBadge icon={Landmark} tone="secondary" className="ml-2.5 px-2 py-0.5 text-[10px]">
                               {bank.badge ?? 'Meu.Pluggy Open Finance'}
-                            </span>
+                            </StatusBadge>
                           </div>
                         </div>
                         <span className="text-sm font-extrabold text-slate-800">
