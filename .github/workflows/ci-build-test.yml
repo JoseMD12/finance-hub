@@ -89,13 +89,13 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
           cache-dependency-path: src/Web/FinanceHub.Web/package-lock.json
 
       - name: Install Dependencies
         working-directory: src/Web/FinanceHub.Web
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       # - name: Lint Frontend Code
       #   working-directory: src/Web/FinanceHub.Web
@@ -117,13 +117,13 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
           cache-dependency-path: src/Web/FinanceHub.Web/package-lock.json
 
       - name: Install Dependencies
         working-directory: src/Web/FinanceHub.Web
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       - name: Run Frontend Tests
         working-directory: src/Web/FinanceHub.Web
