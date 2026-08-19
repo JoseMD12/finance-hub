@@ -5,5 +5,4 @@ namespace FinanceHub.PluggyIntegration.Application.Commands.SyncAllPluggyAccount
 public interface ISyncAllPluggyAccountsCommandHandler
 {
     Task<SyncPluggySummaryDto> HandleAsync(SyncAllPluggyAccountsCommand command, CancellationToken cancellationToken = default);
-    Task<SyncPluggySummaryDto> HandleItemAsync(SyncSinglePluggyItemCommand command, CancellationToken cancellationToken = default);
 }

@@ -9,6 +9,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using System.Security.Claims;
 
+using FinanceHub.PluggyIntegration.Application.Commands.SyncSinglePluggyItem;
+
 namespace FinanceHub.PluggyIntegration.Api.Endpoints;
 
 public static class PluggyEndpoints
@@ -60,7 +62,7 @@ public static class PluggyEndpoints
             string? userId,
             HttpContext httpContext,
             ClaimsPrincipal user,
-            ISyncAllPluggyAccountsCommandHandler handler,
+            ISyncSinglePluggyItemCommandHandler handler,
             CancellationToken cancellationToken) =>
         {
             var pluggyToken = httpContext.Request.Headers[PluggyConstants.HeaderNames.PluggyAccessToken].ToString();
@@ -72,7 +74,7 @@ public static class PluggyEndpoints
             var resolvedUserId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value
                               ?? user.FindFirst("sub")?.Value
                               ?? userId;
-            var summary = await handler.HandleItemAsync(
+            var summary = await handler.HandleAsync(
                 new SyncSinglePluggyItemCommand(itemId, resolvedUserId, pluggyToken),
                 cancellationToken);
             return Results.Ok(summary);

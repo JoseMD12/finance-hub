@@ -1,6 +1,7 @@
 using FinanceHub.PluggyIntegration.Application.Commands.SyncAllPluggyAccounts;
 using FinanceHub.PluggyIntegration.Application.DTOs;
 using FinanceHub.PluggyIntegration.Application.Interfaces;
+using FinanceHub.PluggyIntegration.Application.Services;
 using FinanceHub.PluggyIntegration.Domain.Exceptions;
 using FinanceHub.Shared.Messaging.Events;
 using FluentAssertions;
@@ -15,6 +16,7 @@ public class SyncAllPluggyAccountsCommandHandlerTests
 {
     private readonly IMeuPluggyClient _pluggyClient = Substitute.For<IMeuPluggyClient>();
     private readonly IPluggyAggregationService _aggregationService = Substitute.For<IPluggyAggregationService>();
+    private readonly IPluggyTransactionMapper _transactionMapper = new PluggyTransactionMapper();
     private readonly IPublishEndpoint _publishEndpoint = Substitute.For<IPublishEndpoint>();
     private readonly SyncAllPluggyAccountsCommandHandler _handler;
 
@@ -23,6 +25,7 @@ public class SyncAllPluggyAccountsCommandHandlerTests
         _handler = new SyncAllPluggyAccountsCommandHandler(
             _pluggyClient,
             _aggregationService,
+            _transactionMapper,
             _publishEndpoint,
             NullLogger<SyncAllPluggyAccountsCommandHandler>.Instance
         );
