@@ -5,9 +5,9 @@
  * Executes all health checks, domain validation, and Open Finance sync tests in a single command.
  */
 
-const http = require('http');
-const https = require('https');
-const { URL } = require('url');
+const http = require('node:http');
+const https = require('node:https');
+const { URL } = require('node:url');
 
 // Parse input configuration object from CLI argument or environment variables
 function parseConfig() {
@@ -17,7 +17,7 @@ function parseConfig() {
   if (arg) {
     try {
       config = JSON.parse(arg);
-    } catch (e) {
+    } catch {
       console.error('⚠️  Failed to parse input argument as JSON. Falling back to defaults.');
     }
   }
@@ -26,9 +26,9 @@ function parseConfig() {
     token: config.token || process.env.PLUGGY_ACCESS_TOKEN || '',
     userId: config.userId || process.env.TEST_USER_ID || 'josehenriquedotta61@gmail.com',
     urls: {
-      pluggy: (config.urls && config.urls.pluggy) || process.env.PLUGGY_SERVICE_URL || 'http://localhost:5056',
-      gateway: (config.urls && config.urls.gateway) || process.env.GATEWAY_SERVICE_URL || 'http://localhost:5050',
-      aggregator: (config.urls && config.urls.aggregator) || process.env.AGGREGATOR_SERVICE_URL || 'http://localhost:5002',
+      pluggy: config.urls?.pluggy || process.env.PLUGGY_SERVICE_URL || 'http://localhost:5056',
+      gateway: config.urls?.gateway || process.env.GATEWAY_SERVICE_URL || 'http://localhost:5050',
+      aggregator: config.urls?.aggregator || process.env.AGGREGATOR_SERVICE_URL || 'http://localhost:5002',
     }
   };
 }
@@ -156,7 +156,6 @@ async function runTestSuite() {
     });
     record('POST /sync (Full Portfolio Ingestion)', `${config.urls.pluggy}/api/v1/pluggy/sync`, 200, syncRes);
 
-
   } else {
     console.log('⚠️  Skipping token-authenticated tests (No token provided in config).');
   }
@@ -188,7 +187,9 @@ async function runTestSuite() {
   }
 }
 
-runTestSuite().catch((err) => {
+try {
+  await runTestSuite();
+} catch (err) {
   console.error('Fatal error during test suite execution:', err);
   process.exit(1);
-});
+}
