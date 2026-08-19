@@ -6,51 +6,125 @@ on:
       - main
       - develop
   pull_request:
+    branches:
+      - main
+      - develop
     types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 env:
   JWT_ISSUER: "https://financehub.local"
   JWT_AUDIENCE: "financehub-gateway"
-  AUTH_CONSENT_BASE_URL: "http://localhost:5001"
+  PLUGGY_INTEGRATION_BASE_URL: "http://localhost:5056"
+  PLUGGY_USER_API_BASE_URL: "http://mock.pluggy.local"
+  PLUGGY_USER_TOKEN: "mock-pluggy-token"
   TRANSACTION_AGGREGATOR_BASE_URL: "http://localhost:5002"
 
 jobs:
-  build:
-    name: Build Solution
+  backend-build:
+    name: Backend Build (.NET 10)
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
       - name: Setup .NET 10 SDK
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
 
-      - uses: actions/checkout@v4
-
       - name: Restore Dependencies
         run: dotnet restore
 
-      - name: Build
+      - name: Build Solution
         run: dotnet build --no-restore --configuration Release
 
-  test:
-    name: Run Unit Tests
-    needs: build
+      - name: Temporarily Save Build Binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-binaries
+          path: |
+            **/bin/Release/net10.0/
+            **/obj/Release/net10.0/
+          retention-days: 1
+
+  backend-test:
+    name: Backend Unit Tests (.NET 10)
+    needs: backend-build
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
       - name: Setup .NET 10 SDK
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
 
-      - uses: actions/checkout@v4
+      - name: Restore Saved Build Binaries
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-binaries
 
-      - name: Restore Dependencies
-        run: dotnet restore
-
-      - name: Build
-        run: dotnet build --no-restore --configuration Release
-
-      - name: Test
+      - name: Run Unit Tests (Using Pre-built Binaries)
         run: dotnet test --no-build --configuration Release --verbosity normal
+
+  frontend-web-build:
+    name: Frontend Web Build (React + Vite)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: src/Web/FinanceHub.Web/package-lock.json
+
+      - name: Install Dependencies
+        working-directory: src/Web/FinanceHub.Web
+        run: npm ci --ignore-scripts
+
+      # - name: Lint Frontend Code
+      #   working-directory: src/Web/FinanceHub.Web
+      #   run: npm run lint
+
+      - name: Build Web Application
+        working-directory: src/Web/FinanceHub.Web
+        run: npm run build
+
+  frontend-web-test:
+    name: Frontend Web Tests (Vitest)
+    needs: frontend-web-build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: src/Web/FinanceHub.Web/package-lock.json
+
+      - name: Install Dependencies
+        working-directory: src/Web/FinanceHub.Web
+        run: npm ci --ignore-scripts
+
+      - name: Run Frontend Tests
+        working-directory: src/Web/FinanceHub.Web
+        run: npm test
