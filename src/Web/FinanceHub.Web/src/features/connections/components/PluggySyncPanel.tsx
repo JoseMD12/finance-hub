@@ -8,6 +8,7 @@ import type { PluggySyncSummaryDto } from '../types/connections.types';
 
 interface PluggySyncPanelProps {
   token: string;
+  isConnected: boolean;
   isSyncing: boolean;
   lastSync: PluggySyncSummaryDto | null;
   onSync: (token: string) => void;
@@ -17,6 +18,7 @@ interface PluggySyncPanelProps {
 
 export const PluggySyncPanel: React.FC<PluggySyncPanelProps> = ({
   token,
+  isConnected,
   isSyncing,
   lastSync,
   onSync,
@@ -40,7 +42,7 @@ export const PluggySyncPanel: React.FC<PluggySyncPanelProps> = ({
     onSync(inputToken.trim());
   };
 
-  const hasActiveSession = Boolean(token.trim());
+  const hasToken = Boolean(token.trim());
 
   return (
     <Card className="flex flex-col gap-3.5 border-slate-200 py-4 px-4 md:px-5">
@@ -53,7 +55,7 @@ export const PluggySyncPanel: React.FC<PluggySyncPanelProps> = ({
             <h2 className="text-xs font-bold text-slate-800">
               Sessão Meu.Pluggy
             </h2>
-            {hasActiveSession ? (
+            {isConnected ? (
               <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-status-success-bg text-status-success">
                 <CheckCircle2 className="w-2.5 h-2.5" />
                 Conectado
@@ -109,7 +111,7 @@ export const PluggySyncPanel: React.FC<PluggySyncPanelProps> = ({
             placeholder="Cole o token da extensão..."
             className="w-full pr-8 pl-3 py-1.5 border border-border-subtle rounded-xl text-xs focus:outline-none form-input-focus bg-surface-card"
           />
-          {hasActiveSession && (
+          {hasToken && (
             <button
               type="button"
               onClick={onClearToken}

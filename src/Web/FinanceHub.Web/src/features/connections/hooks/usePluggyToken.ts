@@ -23,13 +23,19 @@ export function usePluggyToken() {
 
   const saveToken = useCallback((newToken: string) => {
     const trimmed = newToken.trim();
+
+    if (trimmed !== token) {
+      setLastSync(null);
+      sessionStorage.removeItem(CONNECTIONS_STORAGE_KEYS.LAST_SYNC);
+    }
+
     setToken(trimmed);
     if (trimmed) {
       sessionStorage.setItem(CONNECTIONS_STORAGE_KEYS.ACCESS_TOKEN, trimmed);
     } else {
       sessionStorage.removeItem(CONNECTIONS_STORAGE_KEYS.ACCESS_TOKEN);
     }
-  }, []);
+  }, [token]);
 
   const saveLastSync = useCallback((summary: PluggySyncSummaryDto) => {
     setLastSync(summary);

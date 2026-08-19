@@ -43,6 +43,7 @@ export const ConnectionsPage: React.FC = () => {
 
       <PluggySyncPanel
         token={token}
+        isConnected={hasInstitutions || Boolean(lastSync)}
         isSyncing={syncMutation.isPending}
         lastSync={lastSync}
         onSync={handleSync}

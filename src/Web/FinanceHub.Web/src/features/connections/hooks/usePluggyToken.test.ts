@@ -43,4 +43,24 @@ describe('usePluggyToken Hook', () => {
     expect(result.current.hasToken).toBe(false);
     expect(sessionStorage.getItem(CONNECTIONS_STORAGE_KEYS.ACCESS_TOKEN)).toBeNull();
   });
+
+  it('clears the previous sync summary when a different token is saved', () => {
+    const { result } = renderHook(() => usePluggyToken());
+    const summary = {
+      totalItemsSynced: 1,
+      totalAccountsSynced: 2,
+      totalCheckingTransactionsIngested: 3,
+      totalCardTransactionsIngested: 4,
+      syncedAtUtc: '2026-08-19T12:00:00Z',
+    };
+
+    act(() => {
+      result.current.saveToken('first-token');
+      result.current.saveLastSync(summary);
+      result.current.saveToken('second-token');
+    });
+
+    expect(result.current.lastSync).toBeNull();
+    expect(sessionStorage.getItem(CONNECTIONS_STORAGE_KEYS.LAST_SYNC)).toBeNull();
+  });
 });
