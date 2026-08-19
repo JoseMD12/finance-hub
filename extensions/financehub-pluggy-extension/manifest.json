@@ -6,11 +6,16 @@
   "permissions": [
     "storage",
     "webRequest",
-    "cookies"
+    "cookies",
+    "sidePanel",
+    "scripting",
+    "tabs"
   ],
   "host_permissions": [
     "https://meu.pluggy.ai/*",
     "https://my-api.pluggy.ai/*",
+    "http://localhost:3000/*",
+    "http://localhost:5056/*",
     "http://localhost:5000/*",
     "http://localhost:5173/*"
   ],
@@ -29,7 +34,9 @@
     }
   ],
   "action": {
-    "default_popup": "popup.html",
     "default_title": "FinanceHub Pluggy Sync"
+  },
+  "side_panel": {
+    "default_path": "popup.html"
   }
 }

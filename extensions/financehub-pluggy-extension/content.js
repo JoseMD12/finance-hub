@@ -1,6 +1,59 @@
 // Content script para meu.pluggy.ai — Interceptação de Rede & Injeção no Main World
 (function () {
+  const LOGIN_PATH_MARKERS = ['/login', '/signin', '/sign-in'];
+  const LOGOUT_TEXT_PATTERN = /\b(sair|logout|log\s*out|encerrar\s+sess[aã]o)\b/i;
+  let lastPath = window.location.pathname;
+
   console.log('[FinanceHub Extension] Content script de interceptação ativado em meu.pluggy.ai');
+
+  function notifyLogout() {
+    chrome.runtime.sendMessage({ action: 'logoutDetected' });
+  }
+
+  function getInteractiveTarget(event) {
+    const path = typeof event.composedPath === 'function' ? event.composedPath() : [];
+    const pathTarget = path.find((entry) => entry instanceof Element
+      && entry.matches('button, a, [role="button"]'));
+
+    if (pathTarget) return pathTarget;
+    return event.target instanceof Element
+      ? event.target.closest('button, a, [role="button"]')
+      : null;
+  }
+
+  function isLoginPath() {
+    const path = window.location.pathname.toLowerCase();
+    return LOGIN_PATH_MARKERS.some((marker) => path === marker || path.startsWith(`${marker}/`));
+  }
+
+  function inspectAuthenticationState() {
+    if (window.location.pathname !== lastPath) {
+      lastPath = window.location.pathname;
+      if (isLoginPath()) {
+        notifyLogout();
+      }
+    }
+  }
+
+  document.addEventListener('click', (event) => {
+    const target = getInteractiveTarget(event);
+    const label = [
+      target?.textContent,
+      target?.getAttribute('aria-label'),
+      target?.getAttribute('title'),
+      target?.getAttribute('data-testid'),
+    ].filter(Boolean).join(' ').replace(/\s+/g, ' ');
+
+    if (label && LOGOUT_TEXT_PATTERN.test(label)) {
+      notifyLogout();
+    }
+  }, true);
+
+  if (isLoginPath()) {
+    notifyLogout();
+  }
+
+  window.setInterval(inspectAuthenticationState, 1000);
 
   // Injeta um script no contexto principal da página (Main World) para interceptar requisições fetch/XHR
   const scriptNode = document.createElement('script');

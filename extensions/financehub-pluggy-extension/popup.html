@@ -9,18 +9,21 @@
     :root {
       --color-brand: #E05697;
       --color-brand-dark: #941B5C;
-      --color-brand-soft-bg: #FFF5F9;
-      --color-brand-soft-border: #FCE7F3;
+      --color-brand-light: #FCE7F3;
 
       --color-secondary: #1D555A;
+      --color-secondary-dark: #164347;
       --color-secondary-light: #E6F4F1;
 
-      --color-surface-ground: #F4F7F6;
+      --color-surface-ground: #EAEFF0;
       --color-surface-card: #FAFCFB;
-      --color-border-subtle: #E2E8F0;
+      --color-surface-muted: #EAEFF0;
+      --color-border-subtle: #CBD5E1;
 
       --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       --shadow-card: 0 10px 25px -5px rgba(29, 85, 90, 0.05), 0 8px 10px -6px rgba(29, 85, 90, 0.03);
+      --shadow-elevated: 0 20px 40px -10px rgba(29, 85, 90, 0.12);
+      --transition-default: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     * {
@@ -30,10 +33,10 @@
     html, body {
       margin: 0;
       padding: 0;
-      width: 310px;
+      width: 100%;
       background-color: var(--color-surface-ground);
       font-family: var(--font-sans);
-      color: #1E293B;
+      color: #334155;
       border-radius: 16px;
       overflow: hidden;
       -webkit-font-smoothing: antialiased;
@@ -46,7 +49,7 @@
     }
 
     .header {
-      border-bottom: 1px solid var(--color-border-subtle);
+      border-bottom: 2px solid var(--color-border-subtle);
       padding-bottom: 10px;
       margin-bottom: 14px;
     }
@@ -64,12 +67,17 @@
       border-radius: 14px;
       padding: 14px;
       box-shadow: var(--shadow-card);
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: var(--transition-default);
+    }
+
+    .card:hover, .user-card:hover, .account-row:hover {
+      box-shadow: var(--shadow-elevated);
+      transform: translateY(-2px);
     }
 
     .card.found {
-      background-color: var(--color-brand-soft-bg);
-      border-color: var(--color-brand-soft-border);
+      background-color: var(--color-brand-light);
+      border-color: var(--color-brand);
     }
 
     .card-content {
@@ -100,12 +108,12 @@
     .token-title {
       font-size: 14px;
       font-weight: 700;
-      color: #1E293B;
+      color: #1D555A;
     }
 
     .token-subtext {
       font-size: 11px;
-      color: #64748B;
+      color: #475569;
       margin-top: 3px;
       line-height: 1.3;
     }
@@ -125,9 +133,9 @@
     }
 
     .card.found .icon-btn {
-      background-color: #FAFCFB; /* Off-white */
+      background-color: var(--color-surface-card);
       color: var(--color-brand);
-      border: 1px solid var(--color-brand-soft-border);
+      border: 1px solid var(--color-brand-light);
     }
 
     .icon-btn:hover, .card.found .icon-btn:hover {
@@ -138,7 +146,7 @@
     .icon-btn:disabled {
       opacity: 0.5;
       cursor: not-allowed;
-      background-color: #E2E8F0;
+      background-color: var(--color-surface-muted);
       color: #475569;
     }
 
@@ -146,12 +154,162 @@
       width: 18px;
       height: 18px;
     }
+
+    .section-label {
+      margin: 16px 2px 7px;
+      color: #475569;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .user-card {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 12px;
+      background: var(--color-secondary-light);
+      border: 1px solid rgba(29, 85, 90, 0.08);
+      border-radius: 14px;
+      transition: var(--transition-default);
+    }
+
+    #userSection {
+      margin-bottom: 16px;
+    }
+
+    .user-avatar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 11px;
+      background: var(--color-secondary);
+      color: #FAFCFB;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .user-name {
+      color: var(--color-secondary);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .user-email {
+      overflow: hidden;
+      margin-top: 2px;
+      color: #475569;
+      font-size: 10px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .accounts-list {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .account-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 11px;
+      background: var(--color-surface-card);
+      border: 1px solid var(--color-border-subtle);
+      border-radius: 12px;
+      transition: var(--transition-default);
+    }
+
+    .account-main {
+      min-width: 0;
+    }
+
+    .account-institution {
+      overflow: hidden;
+      color: var(--color-secondary);
+      font-size: 11px;
+      font-weight: 800;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .account-name {
+      overflow: hidden;
+      margin-top: 2px;
+      color: #475569;
+      font-size: 10px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .account-type {
+      flex-shrink: 0;
+      padding: 4px 7px;
+      border-radius: 7px;
+      background: var(--color-brand-light);
+      color: var(--color-brand-dark);
+      font-size: 9px;
+      font-weight: 800;
+    }
+
+    .accounts-state {
+      padding: 12px;
+      color: #475569;
+      font-size: 10px;
+      text-align: center;
+    }
+
+    .financehub-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      width: 100%;
+      margin-top: 16px;
+      padding: 10px 12px;
+      border: 1px solid var(--color-secondary);
+      border-radius: 10px;
+      background: var(--color-secondary);
+      color: var(--color-surface-card);
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 800;
+      transition: var(--transition-default);
+    }
+
+    .financehub-btn:hover {
+      background: var(--color-secondary-dark);
+      border-color: var(--color-secondary-dark);
+      box-shadow: var(--shadow-elevated);
+      transform: translateY(-2px);
+    }
+
+    .financehub-btn svg {
+      width: 15px;
+      height: 15px;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
       <div class="brand-title">FinanceHub Sync</div>
+    </div>
+
+    <div id="userSection" hidden>
+      <div class="user-card">
+        <div id="userAvatar" class="user-avatar">?</div>
+        <div style="min-width: 0;">
+          <div id="userName" class="user-name">Usuário Pluggy</div>
+          <div id="userEmail" class="user-email">Sessão identificada</div>
+        </div>
+      </div>
     </div>
 
     <div id="cardContainer" class="card">
@@ -175,6 +333,19 @@
         </button>
       </div>
     </div>
+
+    <div id="accountsSection" hidden>
+      <div class="section-label">Contas conectadas</div>
+      <div id="accountsList" class="accounts-list"></div>
+    </div>
+
+    <button id="openFinanceHubBtn" class="financehub-btn" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M15 18l-6-6 6-6"/>
+        <path d="M9 12h12"/>
+      </svg>
+      Voltar para o FinanceHub
+    </button>
   </div>
 
   <script src="popup.js"></script>
