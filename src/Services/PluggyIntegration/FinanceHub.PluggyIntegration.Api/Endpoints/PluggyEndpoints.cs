@@ -1,4 +1,5 @@
 using FinanceHub.PluggyIntegration.Application.Commands.SyncAllPluggyAccounts;
+using FinanceHub.PluggyIntegration.Application.DTOs;
 using FinanceHub.PluggyIntegration.Application.Interfaces;
 using FinanceHub.PluggyIntegration.Application.Queries.GetPluggyAccounts;
 using FinanceHub.PluggyIntegration.Application.Queries.GetPluggyItems;
@@ -54,7 +55,7 @@ public static class PluggyEndpoints
         .WithName("GetPluggyAccounts")
         .WithSummary("Lista as contas correntes e cartões vinculados às instituições do Meu.Pluggy.");
 
-        group.MapPost("/sync", async (
+        group.MapPost("/sync", (
             string? userId,
             HttpContext httpContext,
             ISyncAllPluggyAccountsCommandHandler handler,
@@ -71,12 +72,32 @@ public static class PluggyEndpoints
                 throw new NullOrEmptyPluggyAccessTokenDomainException();
             }
 
+            var jobId = Guid.NewGuid();
             var command = new SyncAllPluggyAccountsCommand(userId, pluggyToken);
-            var summary = await handler.HandleAsync(command, cancellationToken);
-            return Results.Ok(summary);
+
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await handler.HandleAsync(command, CancellationToken.None);
+                }
+                catch
+                {
+                    // Swallowed in background task execution; logged by handler
+                }
+            });
+
+            var response = new SyncJobAcceptedDto(
+                JobId: jobId,
+                Status: "Processing",
+                Message: "Sincronização em lote iniciada com sucesso em segundo plano.",
+                StartedAtUtc: DateTime.UtcNow
+            );
+
+            return Results.Accepted($"/api/v1/pluggy/sync/jobs/{jobId}", response);
         })
         .WithName("SyncPluggyAccounts")
-        .WithSummary("Dispara a sincronização de todas as contas e transações via Meu.Pluggy.");
+        .WithSummary("Dispara a sincronização assíncrona (202 Accepted) de todas as contas e transações via Meu.Pluggy.");
 
         return app;
     }
