@@ -49,6 +49,7 @@ public static class DependencyInjection
             });
         });
 
+        services.AddScoped(typeof(Messaging.Filters.IdempotentConsumerFilter<>));
         services.AddScoped<IEventPublisher, EventPublisher>();
 
         return services;

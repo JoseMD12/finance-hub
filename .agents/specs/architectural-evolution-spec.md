@@ -106,9 +106,9 @@ src/Services/TransactionAggregator/FinanceHub.TransactionAggregator.Infrastructu
   - [x] Renomear `FinanceHub.UnitTests.csproj` para `FinanceHub.Tests.csproj` em `tests/FinanceHub.Tests/`.
   - [x] Organizar diretórios em `Architecture/`, `Unit/` e `Integration/`.
   - [x] Instalar `NetArchTest.Rules` e implementar suíte de testes de regras Clean Arch & DDD.
-- [ ] **Fase 2: Consumo Idempotente & Outbox/Inbox Pattern**
-  - [ ] Criar entidade/tabela `inbox_processed_messages`.
-  - [ ] Implementar `IdempotentConsumerFilter` no MassTransit.
+- [x] **Fase 2: Consumo Idempotente & Outbox/Inbox Pattern**
+  - [x] Criar entidade/tabela `inbox_processed_messages`.
+  - [x] Implementar `IdempotentConsumerFilter` no MassTransit.
 - [ ] **Fase 3: Resiliência Polly v8 & W3C Tracing**
   - [ ] Registrar pipeline Polly v8 (`AddResilienceHandler`) no `PluggyIntegration`.
   - [ ] Garantir propagação de W3C `traceparent` em chamadas HTTP e RabbitMQ.
