@@ -109,11 +109,11 @@ src/Services/TransactionAggregator/FinanceHub.TransactionAggregator.Infrastructu
 - [x] **Fase 2: Consumo Idempotente & Outbox/Inbox Pattern**
   - [x] Criar entidade/tabela `inbox_processed_messages`.
   - [x] Implementar `IdempotentConsumerFilter` no MassTransit.
-- [ ] **Fase 3: Resiliência Polly v8 & W3C Tracing**
-  - [ ] Registrar pipeline Polly v8 (`AddResilienceHandler`) no `PluggyIntegration`.
-  - [ ] Garantir propagação de W3C `traceparent` em chamadas HTTP e RabbitMQ.
-- [ ] **Fase 4: CQRS Read Models**
-  - [ ] Criar projeção de leitura `UserConsolidatedBalanceReadModel`.
-- [ ] **Fase 5: Segurança, LGPD & Envelope Encryption**
-  - [ ] Implementar `EnvelopeEncryptionService` com AES-256-GCM.
-  - [ ] Configurar redação de PII no Serilog.
+- [x] **Fase 3: Resiliência Polly v8 & W3C Tracing**
+  - [x] Registrar pipeline Polly v8 (`AddResilienceHandler`) no `PluggyIntegration`.
+  - [x] Garantir propagação de W3C `traceparent` em chamadas HTTP e RabbitMQ.
+- [x] **Fase 4: CQRS Read Models**
+  - [x] Criar projeção de leitura `UserConsolidatedBalanceReadModel`.
+- [x] **Fase 5: Segurança, LGPD & Envelope Encryption**
+  - [x] Implementar `EnvelopeEncryptionService` com AES-256-GCM.
+  - [x] Configurar redação de PII no Serilog.
