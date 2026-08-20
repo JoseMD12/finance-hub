@@ -1,0 +1,85 @@
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using FinanceHub.Tests.Infrastructure.Config;
+using DotNet.Testcontainers.Builders;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.Configuration;
+using Testcontainers.PostgreSql;
+using Testcontainers.RabbitMq;
+using Xunit;
+
+namespace FinanceHub.Tests.Infrastructure;
+
+public class CustomWebApplicationFactory<TProgram> : WebApplicationFactory<TProgram>, IAsyncLifetime
+    where TProgram : class
+{
+    private static readonly ContainerSettings Settings = new();
+
+    private readonly PostgreSqlContainer _postgresContainer = new PostgreSqlBuilder()
+        .WithImage(Settings.PostgresImage)
+        .WithDatabase(Settings.PostgresDatabase)
+        .WithUsername(Settings.PostgresUsername)
+        .WithPassword(Settings.PostgresPassword)
+        .WithCleanUp(true)
+        .Build();
+
+    private readonly RabbitMqContainer _rabbitMqContainer = new RabbitMqBuilder()
+        .WithImage(Settings.RabbitMqImage)
+        .WithUsername(Settings.RabbitMqUsername)
+        .WithPassword(Settings.RabbitMqPassword)
+        .WithCleanUp(true)
+        .Build();
+
+    public string PostgresConnectionString => _postgresContainer.GetConnectionString();
+    public string RabbitMqHost => _rabbitMqContainer.Hostname;
+    public string RabbitMqPort => _rabbitMqContainer.GetMappedPublicPort(5672).ToString();
+    public string RabbitMqUsername => Settings.RabbitMqUsername;
+    public string RabbitMqPassword => Settings.RabbitMqPassword;
+
+    protected override void ConfigureWebHost(IWebHostBuilder builder)
+    {
+        builder.UseSetting("ConnectionStrings:TransactionAggregatorDb", PostgresConnectionString);
+        builder.UseSetting("ConnectionStrings:DefaultConnection", PostgresConnectionString);
+        builder.UseSetting("RabbitMQ:Host", RabbitMqHost);
+        builder.UseSetting("RabbitMQ:Port", RabbitMqPort);
+        builder.UseSetting("RabbitMQ:Username", RabbitMqUsername);
+        builder.UseSetting("RabbitMQ:Password", RabbitMqPassword);
+        builder.UseSetting("TRANSACTION_AGGREGATOR_BASE_URL", "http://localhost:5002");
+        builder.UseSetting("PLUGGY_INTEGRATION_BASE_URL", "http://localhost:5056");
+        builder.UseSetting("PLUGGY_USER_TOKEN", "mock-pluggy-token");
+        builder.UseSetting("PLUGGY_USER_API_BASE_URL", "http://mock.pluggy.local");
+        builder.UseSetting("Pluggy:ApiBaseUrl", "http://mock.pluggy.local");
+
+        builder.ConfigureAppConfiguration((_, config) =>
+        {
+            config.AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                { "ConnectionStrings:TransactionAggregatorDb", PostgresConnectionString },
+                { "ConnectionStrings:DefaultConnection", PostgresConnectionString },
+                { "RabbitMQ:Host", RabbitMqHost },
+                { "RabbitMQ:Port", RabbitMqPort },
+                { "RabbitMQ:Username", RabbitMqUsername },
+                { "RabbitMQ:Password", RabbitMqPassword },
+                { "TRANSACTION_AGGREGATOR_BASE_URL", "http://localhost:5002" },
+                { "PLUGGY_INTEGRATION_BASE_URL", "http://localhost:5056" },
+                { "PLUGGY_USER_TOKEN", "mock-pluggy-token" },
+                { "PLUGGY_USER_API_BASE_URL", "http://mock.pluggy.local" },
+                { "Pluggy:ApiBaseUrl", "http://mock.pluggy.local" }
+            });
+        });
+    }
+
+    public async Task InitializeAsync()
+    {
+        await _postgresContainer.StartAsync();
+        await _rabbitMqContainer.StartAsync();
+    }
+
+    async Task IAsyncLifetime.DisposeAsync()
+    {
+        await _postgresContainer.StopAsync();
+        await _rabbitMqContainer.StopAsync();
+        await base.DisposeAsync();
+    }
+}
