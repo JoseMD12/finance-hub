@@ -16,6 +16,7 @@ public static class DependencyInjection
         services.AddScoped<IGetPluggyItemsQueryHandler, GetPluggyItemsQueryHandler>();
         services.AddScoped<IGetPluggyAccountsQueryHandler, GetPluggyAccountsQueryHandler>();
         services.AddScoped<IPluggyAggregationService, PluggyAggregationService>();
+        services.AddSingleton<ISyncJobStore, InMemorySyncJobStore>();
         return services;
     }
 }

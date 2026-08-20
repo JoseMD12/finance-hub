@@ -37,6 +37,52 @@ public static class PluggyGatewayEndpoints
         .RequireAuthorization("ReadScope")
         .WithSummary("Lista as instituições bancárias conectadas via Meu.Pluggy no BFF Gateway.");
 
+        group.MapGet("/accounts", async (
+            HttpContext httpContext,
+            IPluggyIntegrationServiceClient pluggyClient,
+            CancellationToken ct) =>
+        {
+            var pluggyToken = httpContext.Request.Headers[FinanceHubHeaderNames.PluggyAccessToken].ToString();
+            if (string.IsNullOrWhiteSpace(pluggyToken))
+            {
+                return Results.Problem(
+                    title: "Erro de Negócio",
+                    detail: $"O token de acesso do Meu.Pluggy (pluggyAccessToken / {FinanceHubHeaderNames.PluggyAccessToken}) é obrigatório para consultar as contas.",
+                    statusCode: 400,
+                    extensions: new Dictionary<string, object?> { { "errorCode", "NULL_OR_EMPTY_PLUGGY_ACCESS_TOKEN" } }
+                );
+            }
+
+            var accounts = await pluggyClient.GetAccountsAsync(pluggyToken, ct);
+            return Results.Ok(accounts);
+        })
+        .WithName("GetPluggyGatewayAccounts")
+        .AllowAnonymous()
+        .WithSummary("Lista as contas bancárias conectadas via Meu.Pluggy no BFF Gateway.");
+
+        app.MapGet("/api/v1/pluggy/accounts", async (
+            HttpContext httpContext,
+            IPluggyIntegrationServiceClient pluggyClient,
+            CancellationToken ct) =>
+        {
+            var pluggyToken = httpContext.Request.Headers[FinanceHubHeaderNames.PluggyAccessToken].ToString();
+            if (string.IsNullOrWhiteSpace(pluggyToken))
+            {
+                return Results.Problem(
+                    title: "Erro de Negócio",
+                    detail: $"O token de acesso do Meu.Pluggy (pluggyAccessToken / {FinanceHubHeaderNames.PluggyAccessToken}) é obrigatório para consultar as contas.",
+                    statusCode: 400,
+                    extensions: new Dictionary<string, object?> { { "errorCode", "NULL_OR_EMPTY_PLUGGY_ACCESS_TOKEN" } }
+                );
+            }
+
+            var accounts = await pluggyClient.GetAccountsAsync(pluggyToken, ct);
+            return Results.Ok(accounts);
+        })
+        .WithName("GetPluggyDirectAccounts")
+        .AllowAnonymous()
+        .WithSummary("Alias direto para consulta de contas conectadas da extensão via Meu.Pluggy.");
+
         group.MapPost("/items/{itemId}/sync", async (
             string itemId,
             ClaimsPrincipal user,
@@ -84,12 +130,26 @@ public static class PluggyGatewayEndpoints
                               ?? user.FindFirst("sub")?.Value
                               ?? userId;
 
-            var summary = await pluggyClient.TriggerSyncAsync(resolvedUserId, pluggyToken, ct);
-            return Results.Ok(summary);
+            var job = await pluggyClient.TriggerSyncAsync(resolvedUserId, pluggyToken, ct);
+            return job is not null
+                ? Results.Accepted($"/api/v1/gateway/pluggy/sync/jobs/{job.JobId}", job)
+                : Results.StatusCode(500);
         })
         .WithName("TriggerPluggySync")
         .RequireAuthorization("WriteScope")
-        .WithSummary("Dispara a sincronização de todas as contas e transações da Pluggy via BFF Gateway.");
+        .WithSummary("Dispara a sincronização assíncrona (202 Accepted) de todas as contas e transações da Pluggy via BFF Gateway.");
+
+        group.MapGet("/sync/jobs/{jobId:guid}", async (
+            Guid jobId,
+            IPluggyIntegrationServiceClient pluggyClient,
+            CancellationToken ct) =>
+        {
+            var job = await pluggyClient.GetSyncJobStatusAsync(jobId, ct);
+            return job is not null ? Results.Ok(job) : Results.NotFound();
+        })
+        .WithName("GetPluggyGatewaySyncJobStatus")
+        .RequireAuthorization("ReadScope")
+        .WithSummary("Consulta o status e o resultado de um job de sincronização assíncrono no BFF Gateway.");
 
         return app;
     }
