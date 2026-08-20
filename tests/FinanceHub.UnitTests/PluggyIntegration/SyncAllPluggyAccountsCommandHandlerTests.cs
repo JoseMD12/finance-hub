@@ -49,7 +49,7 @@ public class SyncAllPluggyAccountsCommandHandlerTests
     }
 
     [Fact]
-    public async Task HandleAsync_WhenItemsAndAccountsExist_ShouldPassTokenToClientAndReturnSummary()
+    public async Task HandleAsync_WhenItemsAndAccountsExist_ShouldPassTokenToClientAndReturnSummaryAndPublishBatchEvent()
     {
         // Arrange
         const string validToken = "mock-pluggy-valid-token-123";
@@ -86,14 +86,15 @@ public class SyncAllPluggyAccountsCommandHandlerTests
         result.TotalCheckingTransactionsIngested.Should().Be(1);
         result.TotalCardTransactionsIngested.Should().Be(1);
 
-        // Verify MassTransit Published Events
+        // Verify MassTransit Published TransactionsBatchIngested Event
         await _publishEndpoint.Received(1).Publish(
-            Arg.Is<TransactionIngested>(e => e.Source == "Banco Inter" && e.Amount == 97.60m && e.AccountId == "acc-inter-checking" && e.UserId == "user-01"),
-            Arg.Any<CancellationToken>()
-        );
-
-        await _publishEndpoint.Received(1).Publish(
-            Arg.Is<InvoiceItemIngested>(e => e.Source == "Banco Inter" && e.Amount == 40.00m && e.Category == "Alimentação" && e.UserId == "user-01"),
+            Arg.Is<TransactionsBatchIngested>(e =>
+                e.UserId == "user-01" &&
+                e.CheckingTransactions.Count == 1 &&
+                e.CardTransactions.Count == 1 &&
+                e.ChunkIndex == 1 &&
+                e.TotalChunks == 1
+            ),
             Arg.Any<CancellationToken>()
         );
     }
