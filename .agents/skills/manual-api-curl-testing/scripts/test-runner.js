@@ -5,9 +5,9 @@
  * Executes all health checks, domain validation, and Open Finance sync tests in a single command.
  */
 
-const http = require('node:http');
-const https = require('node:https');
-const { URL } = require('node:url');
+import http from 'node:http';
+import https from 'node:https';
+import { URL } from 'node:url';
 
 // Parse input configuration object from CLI argument or environment variables
 function parseConfig() {
@@ -149,12 +149,12 @@ async function runTestSuite() {
     const accountsRes = await makeRequest(`${config.urls.pluggy}/api/v1/pluggy/accounts`, { headers: authHeader });
     record('GET /accounts (Bank & Credit Accounts)', `${config.urls.pluggy}/api/v1/pluggy/accounts`, 200, accountsRes);
 
-    // 3.3 POST Batch Sync
+    // 3.3 POST Batch Sync (Assíncrono - 202 Accepted)
     const syncRes = await makeRequest(`${config.urls.pluggy}/api/v1/pluggy/sync?userId=${encodeURIComponent(config.userId)}`, {
       method: 'POST',
       headers: authHeader
     });
-    record('POST /sync (Full Portfolio Ingestion)', `${config.urls.pluggy}/api/v1/pluggy/sync`, 200, syncRes);
+    record('POST /sync (Full Portfolio Ingestion - 202 Accepted)', `${config.urls.pluggy}/api/v1/pluggy/sync`, 202, syncRes);
 
   } else {
     console.log('⚠️  Skipping token-authenticated tests (No token provided in config).');

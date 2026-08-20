@@ -101,5 +101,12 @@ public class CanonicalTransactionConfiguration : IEntityTypeConfiguration<Canoni
                 .HasColumnName("updated_at_utc")
                 .IsRequired();
         });
+
+        // Optimistic Concurrency Token via xmin system column in PostgreSQL
+        builder.Property<uint>("xmin")
+            .HasColumnName("xmin")
+            .HasColumnType("xid")
+            .ValueGeneratedOnAddOrUpdate()
+            .IsRowVersion();
     }
 }

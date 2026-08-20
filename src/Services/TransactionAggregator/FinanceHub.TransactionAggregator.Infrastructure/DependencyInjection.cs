@@ -40,6 +40,7 @@ public static class DependencyInjection
         {
             busConfig.AddConsumer<Messaging.Consumers.TransactionIngestedConsumer>();
             busConfig.AddConsumer<Messaging.Consumers.InvoiceItemIngestedConsumer>();
+            busConfig.AddConsumer<Messaging.Consumers.TransactionsBatchIngestedConsumer>();
 
             busConfig.AddEntityFrameworkOutbox<TransactionAggregatorDbContext>(outbox =>
             {
@@ -48,6 +49,7 @@ public static class DependencyInjection
             });
         });
 
+        services.AddScoped(typeof(Messaging.Filters.IdempotentConsumerFilter<>));
         services.AddScoped<IEventPublisher, EventPublisher>();
 
         return services;

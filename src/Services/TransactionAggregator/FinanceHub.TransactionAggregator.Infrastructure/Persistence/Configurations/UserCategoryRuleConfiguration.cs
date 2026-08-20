@@ -29,5 +29,12 @@ public class UserCategoryRuleConfiguration : IEntityTypeConfiguration<UserCatego
         builder.HasIndex(x => new { x.UserId, x.Pattern })
             .IsUnique()
             .HasDatabaseName("idx_user_category_rules_user_pattern");
+
+        // Optimistic Concurrency Token via xmin system column in PostgreSQL
+        builder.Property<uint>("xmin")
+            .HasColumnName("xmin")
+            .HasColumnType("xid")
+            .ValueGeneratedOnAddOrUpdate()
+            .IsRowVersion();
     }
 }

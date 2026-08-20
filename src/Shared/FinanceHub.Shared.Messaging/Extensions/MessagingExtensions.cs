@@ -40,6 +40,9 @@ public static class MessagingExtensions
                     h.Password(password);
                 });
 
+                // Global exponential retry policy (5 retries: 1s to 30s) + auto-DLQ (_error & _skipped queues)
+                cfg.UseMessageRetry(r => r.Exponential(5, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(5)));
+
                 cfg.ConfigureEndpoints(context);
             });
         });

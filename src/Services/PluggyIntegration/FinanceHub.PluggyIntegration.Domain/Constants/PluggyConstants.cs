@@ -26,8 +26,13 @@ public static class PluggyConstants
     public static class Resilience
     {
         public const int DefaultTimeoutSeconds = 30;
+        public const int PipelineTimeoutSeconds = 10;
         public const int MaxRetryAttempts = 3;
-        public const int BaseRetryDelayMilliseconds = 500;
+        public const int BaseRetryDelayMilliseconds = 200;
+        public const int CircuitBreakerSamplingSeconds = 30;
+        public const int CircuitBreakerBreakDurationSeconds = 10;
+        public const int CircuitBreakerMinimumThroughput = 5;
+        public const double CircuitBreakerFailureRatio = 0.5;
     }
 
     public static class AccountTypes

@@ -15,6 +15,8 @@ public sealed class SyncAllPluggyAccountsCommandHandler(
     IPublishEndpoint publishEndpoint,
     ILogger<SyncAllPluggyAccountsCommandHandler> logger) : ISyncAllPluggyAccountsCommandHandler
 {
+    private const int ChunkSize = 50;
+
     public async Task<SyncPluggySummaryDto> HandleAsync(SyncAllPluggyAccountsCommand command, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(command.PluggyAccessToken))
@@ -64,7 +66,7 @@ public sealed class SyncAllPluggyAccountsCommandHandler(
             transactionMapper.MapTransactionToEvents(tx, account, sourceName, command.UserId, checkingEvents, cardEvents);
         }
 
-        await PublishEventsAsync(checkingEvents, cardEvents, cancellationToken);
+        await PublishBatchEventsAsync(command.UserId, checkingEvents, cardEvents, cancellationToken);
 
         int totalCheckingTxs = checkingEvents.Count;
         int totalCardTxs = cardEvents.Count;
@@ -81,23 +83,39 @@ public sealed class SyncAllPluggyAccountsCommandHandler(
         );
     }
 
-    private async Task PublishEventsAsync(
+    private async Task PublishBatchEventsAsync(
+        string userId,
         IReadOnlyList<TransactionIngested> checkingEvents,
         IReadOnlyList<InvoiceItemIngested> cardEvents,
         CancellationToken cancellationToken)
     {
-        var publishTasks = new List<Task>(checkingEvents.Count + cardEvents.Count);
-
-        foreach (var checkingEvent in checkingEvents)
+        if (checkingEvents.Count == 0 && cardEvents.Count == 0)
         {
-            publishTasks.Add(publishEndpoint.Publish(checkingEvent, cancellationToken));
+            return;
         }
 
-        foreach (var cardEvent in cardEvents)
-        {
-            publishTasks.Add(publishEndpoint.Publish(cardEvent, cancellationToken));
-        }
+        var batchId = Guid.NewGuid();
+        var checkingChunks = checkingEvents.Chunk(ChunkSize).ToList();
+        var cardChunks = cardEvents.Chunk(ChunkSize).ToList();
+        int totalChunks = Math.Max(checkingChunks.Count, cardChunks.Count);
+        if (totalChunks == 0) totalChunks = 1;
 
-        await Task.WhenAll(publishTasks);
+        for (int i = 0; i < totalChunks; i++)
+        {
+            var checkingChunk = i < checkingChunks.Count ? checkingChunks[i] : Array.Empty<TransactionIngested>();
+            var cardChunk = i < cardChunks.Count ? cardChunks[i] : Array.Empty<InvoiceItemIngested>();
+
+            var batchEvent = new TransactionsBatchIngested(
+                BatchId: batchId,
+                UserId: userId,
+                ChunkIndex: i + 1,
+                TotalChunks: totalChunks,
+                CheckingTransactions: checkingChunk,
+                CardTransactions: cardChunk,
+                OccurredAtUtc: DateTime.UtcNow
+            );
+
+            await publishEndpoint.Publish(batchEvent, cancellationToken);
+        }
     }
 }
