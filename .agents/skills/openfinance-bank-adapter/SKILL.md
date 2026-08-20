@@ -3,15 +3,17 @@ name: openfinance-bank-adapter
 description: Technical guide for adding a new Open Finance bank integration adapter (e.g., Itaú, Banco Inter, Mercado Pago) in FinanceHub (.NET 10), implementing IBankConnector, OAuth2/mTLS authentication, rate limiting, and publishing TransactionIngested events via MassTransit Outbox.
 ---
 
-# Open Finance Bank Adapter Implementation Guide
+> **Histórico Arquitetural & Status**: Este guia representa a especificação histórica para conectores bancários diretos individuais com mTLS ICP-Brasil (`FinanceHub.ItauIntegration`, etc.). Conforme decidido no ADR de Arquitetura ([`.agents/knowledge/system-architecture-and-services.md`](../../knowledge/system-architecture-and-services.md)), a conectividade Open Finance online foi unificada no microsserviço **`FinanceHub.PluggyIntegration`** via Meu.Pluggy.
 
-This guide provides step-by-step instructions for implementing a new bank integration adapter in **FinanceHub** (.NET 10 / C# 13) compliant with Open Finance Brasil standards and FinanceHub microservice architecture rules.
+# Open Finance Bank Adapter Implementation Guide (Histórico)
+
+Este documento registra as diretrizes arquiteturais para referência caso novos conectores proprietários sejam implementados.
 
 ---
 
 ## 1. Overview & Architecture
 
-Bank adapters in FinanceHub encapsulate all external bank communications within dedicated, isolated microservices (`FinanceHub.ItauIntegration`, `FinanceHub.MercadoPagoIntegration`, `FinanceHub.InterIntegration`). They translate proprietary or Open Finance API formats into standardized `TransactionIngested` integration events dispatched via MassTransit / RabbitMQ using the Transactional Outbox Pattern.
+Conectores bancários no FinanceHub encapsulam a comunicação com provedores externos dentro de microsserviços dedicados (`FinanceHub.PluggyIntegration` para Open Finance online e `FinanceHub.FileImporter` para arquivos offline). Eles traduzem payloads proprietários ou Open Finance em eventos padronizados `TransactionIngested` e `InvoiceItemIngested` despachados via MassTransit / RabbitMQ usando o Transactional Outbox Pattern.
 
 ### Core Architecture Rules:
 - **Location**: Adapters reside in their dedicated microservice (e.g., `src/Services/FinanceHub.ItauIntegration/`).

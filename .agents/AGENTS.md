@@ -157,7 +157,7 @@ When generating code or configuring integrations, subagents **must** adhere to:
 ### Commit Messages
 All automated or agent-generated commits must adhere to Conventional Commits:
 `<type>(<scope>): <summary>`
-- Scopes: `auth`, `itau`, `mercadopago`, `inter`, `aggregator`, `gateway`, `web`, `shared`, `harness`.
+- Scopes: `pluggy`, `fileimporter`, `aggregator`, `gateway`, `web`, `shared`, `harness`.
 
 ### Testing Standard
 - Backend: xUnit, FluentAssertions, NSubstitute (80% minimum coverage).
