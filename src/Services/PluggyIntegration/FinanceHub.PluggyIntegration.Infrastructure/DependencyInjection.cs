@@ -5,8 +5,9 @@ using FinanceHub.PluggyIntegration.Infrastructure.Clients;
 using FinanceHub.PluggyIntegration.Infrastructure.Configuration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Http.Resilience;
 using Polly;
-using Polly.Extensions.Http;
+using Polly.CircuitBreaker;
 
 namespace FinanceHub.PluggyIntegration.Infrastructure;
 
@@ -25,24 +26,31 @@ public static class DependencyInjection
             client.BaseAddress = new Uri(baseUrl);
             client.Timeout = TimeSpan.FromSeconds(PluggyConstants.Resilience.DefaultTimeoutSeconds);
         })
-        .AddPolicyHandler(GetRetryPolicy());
+        .AddResilienceHandler("PluggyPipeline", builder =>
+        {
+            builder.AddTimeout(TimeSpan.FromSeconds(PluggyConstants.Resilience.PipelineTimeoutSeconds));
+            builder.AddRetry(new HttpRetryStrategyOptions
+            {
+                MaxRetryAttempts = PluggyConstants.Resilience.MaxRetryAttempts,
+                BackoffType = DelayBackoffType.Exponential,
+                UseJitter = true,
+                Delay = TimeSpan.FromMilliseconds(PluggyConstants.Resilience.BaseRetryDelayMilliseconds),
+                ShouldHandle = new PredicateBuilder<HttpResponseMessage>()
+                    .HandleResult(r => r.StatusCode == HttpStatusCode.TooManyRequests || (int)r.StatusCode >= (int)HttpStatusCode.InternalServerError)
+            });
+            builder.AddCircuitBreaker(new HttpCircuitBreakerStrategyOptions
+            {
+                SamplingDuration = TimeSpan.FromSeconds(PluggyConstants.Resilience.CircuitBreakerSamplingSeconds),
+                MinimumThroughput = PluggyConstants.Resilience.CircuitBreakerMinimumThroughput,
+                FailureRatio = PluggyConstants.Resilience.CircuitBreakerFailureRatio,
+                BreakDuration = TimeSpan.FromSeconds(PluggyConstants.Resilience.CircuitBreakerBreakDurationSeconds),
+                ShouldHandle = new PredicateBuilder<HttpResponseMessage>()
+                    .HandleResult(r => (int)r.StatusCode >= (int)HttpStatusCode.InternalServerError)
+            });
+        });
 
         services.AddScoped<IMeuPluggyClient, MeuPluggyClient>();
 
         return services;
-    }
-
-    private static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy()
-    {
-        return HttpPolicyExtensions
-            .HandleTransientHttpError()
-            .OrResult(msg => msg.StatusCode == HttpStatusCode.TooManyRequests)
-            .WaitAndRetryAsync(
-                PluggyConstants.Resilience.MaxRetryAttempts,
-                retryAttempt => TimeSpan.FromMilliseconds(
-                    PluggyConstants.Resilience.BaseRetryDelayMilliseconds * Math.Pow(2, retryAttempt) 
-                    + Random.Shared.Next(10, 100) // Jitter
-                )
-            );
     }
 }
