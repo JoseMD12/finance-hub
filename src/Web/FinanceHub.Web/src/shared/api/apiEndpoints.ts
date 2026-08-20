@@ -10,7 +10,9 @@ export const API_ENDPOINTS = {
   },
   PLUGGY: {
     SYNC: '/api/v1/gateway/pluggy/sync',
+    SYNC_JOB_STATUS: (jobId: string) => `/api/v1/gateway/pluggy/sync/jobs/${jobId}`,
     ITEMS: '/api/v1/gateway/pluggy/items',
+    ACCOUNTS: '/api/v1/gateway/pluggy/accounts',
   },
   DASHBOARD: {
     SUMMARY: '/api/v1/gateway/dashboard',

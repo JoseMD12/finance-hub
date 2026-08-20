@@ -1,13 +1,10 @@
 import { httpClient } from '@/shared/api/httpClient';
 import { API_ENDPOINTS, API_HEADERS } from '@/shared/api/apiEndpoints';
-import type { PluggyItemDto } from '../types/connections.types';
-export interface PluggySyncSummaryDto {
-  totalItemsSynced: number;
-  totalAccountsSynced: number;
-  totalCheckingTransactionsIngested: number;
-  totalCardTransactionsIngested: number;
-  syncedAtUtc: string;
-}
+import type {
+  PluggyItemDto,
+  SyncJobAcceptedDto,
+  SyncJobStatusDto,
+} from '../types/connections.types';
 
 export const getPluggyItemsApi = async (
   pluggyAccessToken: string,
@@ -29,8 +26,8 @@ export const getPluggyItemsApi = async (
 export const syncPluggyAccountsApi = async (
   pluggyAccessToken: string,
   signal?: AbortSignal
-): Promise<PluggySyncSummaryDto> => {
-  const response = await httpClient.post<PluggySyncSummaryDto>(
+): Promise<SyncJobAcceptedDto> => {
+  const response = await httpClient.post<SyncJobAcceptedDto>(
     API_ENDPOINTS.PLUGGY.SYNC,
     {},
     {
@@ -38,6 +35,20 @@ export const syncPluggyAccountsApi = async (
       headers: {
         [API_HEADERS.PLUGGY_ACCESS_TOKEN]: pluggyAccessToken.trim(),
       },
+    }
+  );
+
+  return response.data;
+};
+
+export const getSyncJobStatusApi = async (
+  jobId: string,
+  signal?: AbortSignal
+): Promise<SyncJobStatusDto> => {
+  const response = await httpClient.get<SyncJobStatusDto>(
+    API_ENDPOINTS.PLUGGY.SYNC_JOB_STATUS(jobId),
+    {
+      signal,
     }
   );
 
