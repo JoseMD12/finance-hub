@@ -10,6 +10,7 @@ public class TransactionAggregatorDbContext : DbContext
     public DbSet<AccountBalance> AccountBalances => Set<AccountBalance>();
     public DbSet<UserCategoryRule> UserCategoryRules => Set<UserCategoryRule>();
     public DbSet<InboxProcessedMessage> InboxProcessedMessages => Set<InboxProcessedMessage>();
+    public DbSet<UserConsolidatedBalanceReadModel> UserConsolidatedBalances => Set<UserConsolidatedBalanceReadModel>();
 
     public TransactionAggregatorDbContext(DbContextOptions<TransactionAggregatorDbContext> options)
         : base(options)
