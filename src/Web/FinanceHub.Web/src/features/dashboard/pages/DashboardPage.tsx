@@ -1,15 +1,19 @@
 import React from 'react';
 import { Card } from '@/shared/components/Card/Card';
 import { formatCurrencyBRL } from '@/shared/utils/formatters';
-import { Landmark, TrendingUp, TrendingDown, ArrowUpRight, Loader2 } from 'lucide-react';
+import { Landmark, TrendingUp, TrendingDown, ArrowUpRight } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { motion, useReducedMotion } from 'framer-motion';
 import { useDashboardQuery } from '../hooks/useDashboardQuery';
 import { IconCircle } from '@/shared/components/IconCircle/IconCircle';
 import { StatusBadge } from '@/shared/components/StatusBadge/StatusBadge';
 import { PageContainer } from '@/shared/components/PageContainer/PageContainer';
+import { GlowCard, NumberScramble } from '@/shared/components/motion';
+import { DashboardSkeleton } from '../components/DashboardSkeleton';
 
 export const DashboardPage: React.FC = () => {
   const { data: dashboard, isLoading, error } = useDashboardQuery();
+  const prefersReduced = useReducedMotion();
 
   const totalBalance = dashboard?.totalBalanceBrl ?? 0;
   const monthlyIncome = dashboard?.monthlyIncomeBrl ?? 0;
@@ -17,18 +21,21 @@ export const DashboardPage: React.FC = () => {
   const accountBalances = dashboard?.accountBalances ?? [];
   const categoryExpenses = dashboard?.categoryExpenses ?? [];
 
+  const getCardMotionProps = (delay: number) => {
+    if (prefersReduced) return {};
+    return {
+      initial: { opacity: 0, y: 16 },
+      animate: { opacity: 1, y: 0 },
+      transition: { duration: 0.35, delay, ease: [0.4, 0, 0.2, 1] as const },
+    };
+  };
+
   return (
     <PageContainer
       title="Visão Geral e Saldos Consolidados"
       description="Monitoramento unificado de patrimônio via Open Finance e ingestão de extratos"
     >
-
-      {isLoading && (
-        <div className="flex items-center justify-center p-12 text-slate-400 gap-2">
-          <Loader2 className="w-5 h-5 animate-spin text-brand" />
-          <span className="text-xs font-semibold">Carregando dados do Dashboard...</span>
-        </div>
-      )}
+      {isLoading && <DashboardSkeleton />}
 
       {error && (
         <Card className="p-4 border-status-danger/30 bg-status-danger-bg text-status-danger text-xs font-semibold">
@@ -39,38 +46,59 @@ export const DashboardPage: React.FC = () => {
       {!isLoading && (
         <>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="flex flex-col gap-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-500">Saldo Consolidado Total</span>
-                <IconCircle icon={Landmark} tone="brand" size="md" />
-              </div>
-              <div className="text-2xl font-extrabold text-brand tracking-tight">
-                {formatCurrencyBRL(totalBalance)}
-              </div>
-              <span className="text-[11px] text-slate-400 font-medium">
-                {accountBalances.length} instituição(ões) vinculada(s)
-              </span>
-            </Card>
-            <Card className="flex flex-col gap-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-500">Receitas do Mês</span>
-                <IconCircle icon={TrendingUp} tone="success" size="md" />
-              </div>
-              <div className="text-2xl font-extrabold text-status-success tracking-tight">
-                + {formatCurrencyBRL(monthlyIncome)}
-              </div>
-              <span className="text-[11px] text-slate-400 font-medium">Entradas consolidadas</span>
-            </Card>
-            <Card className="flex flex-col gap-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-500">Despesas do Mês</span>
-                <IconCircle icon={TrendingDown} tone="danger" size="md" />
-              </div>
-              <div className="text-2xl font-extrabold text-status-danger tracking-tight">
-                - {formatCurrencyBRL(monthlyExpense)}
-              </div>
-              <span className="text-[11px] text-slate-400 font-medium">Lançamentos deduplicados no Ledger</span>
-            </Card>
+            {/* Saldo Total com GlowCard e NumberScramble */}
+            <motion.div {...getCardMotionProps(0)}>
+              <GlowCard glowRgb="224, 86, 151">
+                <Card className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-slate-500">Saldo Consolidado Total</span>
+                    <IconCircle icon={Landmark} tone="brand" size="md" />
+                  </div>
+                  <div className="text-2xl font-black text-brand tracking-tight">
+                    <NumberScramble
+                      value={totalBalance}
+                      format={formatCurrencyBRL}
+                      className="font-display font-black text-brand"
+                    />
+                  </div>
+                  <span className="text-[11px] text-slate-400 font-medium">
+                    {accountBalances.length} instituição(ões) vinculada(s)
+                  </span>
+                </Card>
+              </GlowCard>
+            </motion.div>
+
+            {/* Receitas com GlowCard */}
+            <motion.div {...getCardMotionProps(0.08)}>
+              <GlowCard glowRgb="46, 204, 113">
+                <Card className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-slate-500">Receitas do Mês</span>
+                    <IconCircle icon={TrendingUp} tone="success" size="md" />
+                  </div>
+                  <div className="text-2xl font-black font-display text-status-success tracking-tight">
+                    + {formatCurrencyBRL(monthlyIncome)}
+                  </div>
+                  <span className="text-[11px] text-slate-400 font-medium">Entradas consolidadas</span>
+                </Card>
+              </GlowCard>
+            </motion.div>
+
+            {/* Despesas com GlowCard */}
+            <motion.div {...getCardMotionProps(0.16)}>
+              <GlowCard glowRgb="255, 89, 100">
+                <Card className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-slate-500">Despesas do Mês</span>
+                    <IconCircle icon={TrendingDown} tone="danger" size="md" />
+                  </div>
+                  <div className="text-2xl font-black font-display text-status-danger tracking-tight">
+                    - {formatCurrencyBRL(monthlyExpense)}
+                  </div>
+                  <span className="text-[11px] text-slate-400 font-medium">Lançamentos deduplicados no Ledger</span>
+                </Card>
+              </GlowCard>
+            </motion.div>
           </div>
 
           {/* Main Grid: Banks & Category Donut */}
@@ -104,7 +132,7 @@ export const DashboardPage: React.FC = () => {
                             </StatusBadge>
                           </div>
                         </div>
-                        <span className="text-sm font-extrabold text-slate-800">
+                        <span className="text-sm font-extrabold text-slate-800 tabular-nums">
                           {formatCurrencyBRL(bank.balanceBrl)}
                         </span>
                       </div>
@@ -166,3 +194,4 @@ export const DashboardPage: React.FC = () => {
 };
 
 export default DashboardPage;
+
