@@ -20,6 +20,7 @@ public class IngestTransactionCommandHandlerTests
     private readonly IAccountBalanceRepository _balanceRepo = Substitute.For<IAccountBalanceRepository>();
     private readonly ICategoryResolverPipeline _pipeline = Substitute.For<ICategoryResolverPipeline>();
     private readonly IEventPublisher _eventPublisher = Substitute.For<IEventPublisher>();
+    private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
 
     private readonly IngestTransactionCommandHandler _handler;
     private readonly Guid _categoryId = Guid.NewGuid();
@@ -30,7 +31,7 @@ public class IngestTransactionCommandHandlerTests
             .ResolveCategoryAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns(new CategorizationResult(_categoryId, CategorizationSource.GlobalRule));
 
-        _handler = new IngestTransactionCommandHandler(_txRepo, _balanceRepo, _pipeline, _eventPublisher);
+        _handler = new IngestTransactionCommandHandler(_txRepo, _balanceRepo, _pipeline, _eventPublisher, _unitOfWork);
     }
 
     private static IngestTransactionCommand BuildCommand(
@@ -68,6 +69,7 @@ public class IngestTransactionCommandHandlerTests
                 t.CategoryId == _categoryId),
             Arg.Any<CancellationToken>());
         await _balanceRepo.Received(1).AddOrUpdateAsync(Arg.Any<AccountBalance>(), Arg.Any<CancellationToken>());
+        await _unitOfWork.Received(1).CommitAsync(Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -100,14 +102,36 @@ public class IngestTransactionCommandHandlerTests
         var callOrder = new System.Collections.Generic.List<string>();
         _txRepo.AddAsync(Arg.Any<CanonicalTransaction>(), Arg.Any<CancellationToken>())
             .Returns(_ => { callOrder.Add("AddAsync"); return Task.CompletedTask; });
+        _balanceRepo.AddOrUpdateAsync(Arg.Any<AccountBalance>(), Arg.Any<CancellationToken>())
+            .Returns(_ => { callOrder.Add("AddOrUpdateAsync"); return Task.CompletedTask; });
+        _unitOfWork.CommitAsync(Arg.Any<CancellationToken>())
+            .Returns(_ => { callOrder.Add("CommitAsync"); return Task.FromResult(1); });
         _eventPublisher.PublishAsync(Arg.Any<TransactionNormalized>(), Arg.Any<CancellationToken>())
             .Returns(_ => { callOrder.Add("PublishAsync"); return Task.CompletedTask; });
 
         // Act
         await _handler.Handle(BuildCommand(), CancellationToken.None);
 
-        // Assert — persistence MUST happen before publish
-        callOrder.Should().ContainInOrder("AddAsync", "PublishAsync");
+        // Assert — persistence and commit MUST happen before publish
+        callOrder.Should().ContainInOrder("AddAsync", "AddOrUpdateAsync", "CommitAsync", "PublishAsync");
+    }
+
+    [Fact]
+    public async Task Handle_WhenCommitAsyncThrows_ShouldNotPublishEventAndPropagateException()
+    {
+        // Arrange
+        _txRepo.GetIdByHashAsync(Arg.Any<TransactionHash>(), Arg.Any<CancellationToken>())
+            .Returns((Guid?)null);
+        _unitOfWork.CommitAsync(Arg.Any<CancellationToken>())
+            .ThrowsAsync(new InvalidOperationException("DB commit failure"));
+
+        // Act
+        var act = async () => await _handler.Handle(BuildCommand(), CancellationToken.None);
+
+        // Assert
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("*DB commit failure*");
+        await _eventPublisher.DidNotReceive().PublishAsync(Arg.Any<TransactionNormalized>(), Arg.Any<CancellationToken>());
     }
 
     // ─── Negative / Deduplication Cases ────────────────────────────────────────
@@ -126,6 +150,8 @@ public class IngestTransactionCommandHandlerTests
         // Assert
         resultId.Should().Be(existingId);
         await _txRepo.DidNotReceive().AddAsync(Arg.Any<CanonicalTransaction>(), Arg.Any<CancellationToken>());
+        await _balanceRepo.DidNotReceive().AddOrUpdateAsync(Arg.Any<AccountBalance>(), Arg.Any<CancellationToken>());
+        await _unitOfWork.DidNotReceive().CommitAsync(Arg.Any<CancellationToken>());
         await _eventPublisher.DidNotReceive().PublishAsync(Arg.Any<TransactionNormalized>(), Arg.Any<CancellationToken>());
     }
 

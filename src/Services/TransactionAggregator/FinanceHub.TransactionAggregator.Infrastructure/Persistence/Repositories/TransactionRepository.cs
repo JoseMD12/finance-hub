@@ -43,13 +43,12 @@ public class TransactionRepository : ITransactionRepository
     public async Task AddAsync(CanonicalTransaction transaction, CancellationToken cancellationToken)
     {
         await _context.Transactions.AddAsync(transaction, cancellationToken);
-        await _context.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task UpdateAsync(CanonicalTransaction transaction, CancellationToken cancellationToken)
+    public Task UpdateAsync(CanonicalTransaction transaction, CancellationToken cancellationToken)
     {
         _context.Transactions.Update(transaction);
-        await _context.SaveChangesAsync(cancellationToken);
+        return Task.CompletedTask;
     }
 
     public async Task<IEnumerable<TransactionDto>> GetProjectedByUserIdAsync(string userId, int page, int pageSize, CancellationToken cancellationToken)
