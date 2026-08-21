@@ -82,8 +82,12 @@ export const CategoryTagPopover: React.FC<CategoryTagPopoverProps> = ({
       />
 
       {isOpen && (
-        <div className="absolute left-0 top-full mt-2 z-50 w-72 p-3 bg-surface-card rounded-xl shadow-elevated border border-border-subtle flex flex-col gap-3 animate-in fade-in zoom-in-95 duration-150">
-          <div className="flex items-center justify-between border-b border-border-subtle pb-2">
+        <div
+          role="dialog"
+          aria-label="Alterar categoria da transação"
+          className="absolute left-0 top-full mt-2 z-50 w-72 p-3.5 bg-surface-card rounded-2xl shadow-elevated border border-border-subtle flex flex-col gap-3 animate-in fade-in zoom-in-95 duration-150"
+        >
+          <div className="flex items-center justify-between border-b border-border-subtle pb-2.5">
             <span className="text-xs font-bold text-secondary flex items-center gap-1.5">
               <Tag className="w-3.5 h-3.5 text-brand" />
               Alterar Categoria
@@ -95,24 +99,25 @@ export const CategoryTagPopover: React.FC<CategoryTagPopoverProps> = ({
 
           {/* Busca de categorias */}
           <div className="relative">
-            <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
             <input
               type="text"
               placeholder="Buscar categoria..."
               value={searchTerm}
+              aria-label="Filtrar categorias"
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-border-subtle bg-surface-ground text-slate-800 focus:outline-none focus:border-brand transition-colors"
+              className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-border-subtle bg-surface-ground text-slate-800 focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 transition-all"
             />
           </div>
 
-          {/* Lista de categorias */}
-          <div className="max-h-48 overflow-y-auto flex flex-col gap-1 pr-1">
+          {/* Lista de categorias com scroll customizado */}
+          <div className="max-h-52 overflow-y-auto flex flex-col gap-0.5 pr-1 divide-y divide-slate-100/50">
             {isLoading && (
-              <div className="py-4 text-center text-xs text-slate-400">Carregando catálogo...</div>
+              <div className="py-6 text-center text-xs text-slate-400">Carregando catálogo...</div>
             )}
 
             {!isLoading && filteredCategories.length === 0 && (
-              <div className="py-4 text-center text-xs text-slate-400">Nenhuma categoria encontrada</div>
+              <div className="py-6 text-center text-xs text-slate-400">Nenhuma categoria encontrada</div>
             )}
 
             {!isLoading &&
@@ -125,13 +130,16 @@ export const CategoryTagPopover: React.FC<CategoryTagPopoverProps> = ({
                     key={category.id}
                     type="button"
                     onClick={() => handleSelectCategory(category.id)}
-                    className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium text-left transition-colors cursor-pointer ${
+                    className={`flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-medium text-left transition-all cursor-pointer ${
                       isSelected
-                        ? 'bg-brand-light text-brand font-bold'
-                        : 'hover:bg-slate-100 text-slate-700'
-                    } ${isSub ? 'pl-5 text-slate-600' : ''}`}
+                        ? 'bg-brand-light text-brand-dark font-bold shadow-xs'
+                        : 'hover:bg-slate-100/80 text-slate-700 hover:text-slate-900'
+                    } ${isSub ? 'pl-6 text-[11px] text-slate-500' : ''}`}
                   >
-                    <span className="truncate">{category.name}</span>
+                    <span className="truncate flex items-center gap-1.5">
+                      {isSub && <span className="text-slate-300 select-none">└</span>}
+                      {category.name}
+                    </span>
                     {isSelected && <Check className="w-3.5 h-3.5 text-brand shrink-0" />}
                   </button>
                 );
@@ -140,12 +148,12 @@ export const CategoryTagPopover: React.FC<CategoryTagPopoverProps> = ({
 
           {/* Opção de Regra Customizada */}
           <div className="pt-2 border-t border-border-subtle">
-            <label className="flex items-center gap-2 text-[11px] text-slate-600 cursor-pointer select-none">
+            <label className="flex items-center gap-2 text-[11px] text-slate-600 hover:text-slate-800 cursor-pointer select-none">
               <input
                 type="checkbox"
                 checked={createCustomRule}
                 onChange={(e) => setCreateCustomRule(e.target.checked)}
-                className="rounded border-slate-300 text-brand focus:ring-brand"
+                className="rounded border-slate-300 text-brand focus:ring-brand cursor-pointer"
               />
               <span>Aplicar para transações similares futuras</span>
             </label>

@@ -45,6 +45,13 @@ export const TransactionsPage: React.FC = () => {
             Controle de fluxo de caixa e categorização inteligente
           </p>
         </div>
+        {!isLoading && totalItems > 0 && (
+          <div className="flex items-center gap-2">
+            <span className="px-3 py-1.5 rounded-xl bg-surface-card border border-border-subtle text-xs font-semibold text-slate-600 shadow-sm">
+              <strong className="text-secondary tabular-nums">{totalItems}</strong> lançamentos registrados
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Resumo do Período */}
@@ -82,48 +89,75 @@ export const TransactionsPage: React.FC = () => {
       >
         {selectedTransaction && (
           <div className="flex flex-col gap-4 text-xs">
-            <div className="p-4 rounded-xl bg-surface-ground border border-border-subtle flex flex-col gap-1">
-              <span className="text-slate-400 font-semibold">Descrição do Lançamento</span>
-              <span className="text-base font-bold text-secondary">{selectedTransaction.description}</span>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-3 rounded-xl bg-surface-ground border border-border-subtle flex flex-col gap-1">
-                <span className="text-slate-400 font-semibold">Valor Consolidado</span>
+            {/* Card Principal de Destaque */}
+            <div className="p-4 rounded-2xl bg-surface-ground border border-border-subtle flex flex-col gap-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex flex-col">
+                  <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                    Lançamento
+                  </span>
+                  <span className="text-base font-bold text-secondary">
+                    {selectedTransaction.description}
+                  </span>
+                </div>
                 <span
-                  className={
+                  className={`text-base font-black tabular-nums tracking-tight px-3 py-1 rounded-xl border ${
                     selectedTransaction.type === 'Credit'
-                      ? 'text-sm font-extrabold text-status-success'
-                      : 'text-sm font-extrabold text-status-danger'
-                  }
+                      ? 'bg-status-success-bg text-status-success border-status-success/20'
+                      : 'bg-status-danger-bg text-status-danger border-status-danger/20'
+                  }`}
                 >
                   {selectedTransaction.type === 'Credit' ? '+ ' : '- '}
                   {formatCurrencyBRL(selectedTransaction.amount)}
                 </span>
               </div>
 
+              {selectedTransaction.merchantName && (
+                <div className="text-[11px] text-slate-500 font-medium">
+                  Estabelecimento: <strong className="text-slate-700">{selectedTransaction.merchantName}</strong>
+                </div>
+              )}
+            </div>
+
+            {/* Grid de Metadados */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="p-3 rounded-xl bg-surface-ground border border-border-subtle flex flex-col gap-1">
                 <span className="text-slate-400 font-semibold">Data da Transação</span>
-                <span className="text-sm font-bold text-slate-800">
+                <span className="text-sm font-bold text-slate-800 tabular-nums">
                   {formatDateBR(selectedTransaction.transactionDateUtc)}
                 </span>
               </div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-4">
               <div className="p-3 rounded-xl bg-surface-ground border border-border-subtle flex flex-col gap-1">
                 <span className="text-slate-400 font-semibold">Instituição e Conta</span>
                 <span className="text-sm font-bold text-slate-800">
-                  {selectedTransaction.institutionId.toUpperCase()} • {maskSensitiveAccount(selectedTransaction.accountNumber)}
+                  {selectedTransaction.institutionId.toUpperCase()} • Conta {maskSensitiveAccount(selectedTransaction.accountNumber)}
                 </span>
               </div>
 
               <div className="p-3 rounded-xl bg-surface-ground border border-border-subtle flex flex-col gap-1">
                 <span className="text-slate-400 font-semibold">Canal de Pagamento</span>
-                <span className="text-sm font-bold text-slate-800">
-                  {selectedTransaction.channel}
+                <span className="text-sm font-bold text-slate-800 font-mono">
+                  {selectedTransaction.channel || 'Geral'}
                 </span>
               </div>
+
+              <div className="p-3 rounded-xl bg-surface-ground border border-border-subtle flex flex-col gap-1">
+                <span className="text-slate-400 font-semibold">Origem da Categorização</span>
+                <span className="text-sm font-bold text-slate-800">
+                  {selectedTransaction.isManuallyCategorized
+                    ? 'Categorizado Manualmente'
+                    : selectedTransaction.categorizationSource || 'Regra Automática'}
+                </span>
+              </div>
+            </div>
+
+            {/* ID Canônico do Ledger */}
+            <div className="p-3 rounded-xl bg-surface-ground border border-border-subtle flex flex-col gap-1">
+              <span className="text-slate-400 font-semibold">ID Canônico no Ledger</span>
+              <span className="text-[11px] font-mono text-slate-600 break-all select-all">
+                {selectedTransaction.id}
+              </span>
             </div>
           </div>
         )}
