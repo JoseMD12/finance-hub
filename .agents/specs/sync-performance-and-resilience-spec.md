@@ -154,3 +154,70 @@ public record GatewaySyncJobStatusDto(
   - [ ] Atualizar testes unitários em `FinanceHub.Tests` para validar o fluxo assíncrono e o status do job.
   - [ ] Atualizar testes de frontend em `FinanceHub.Web`.
   - [ ] Executar `dotnet test`, `npm test` e testar via script manual de API curl.
+
+---
+
+## 5. 🛡️ Melhorias de Qualidade e Resiliência Arquitetural
+
+### 5.1 Item A — Unit of Work no `IngestTransactionCommandHandler` (CRÍTICO)
+- **Problema:** O handler `IngestTransactionCommandHandler` chamava `_transactionRepository.AddAsync(transaction)` e `_accountBalanceRepository.AddOrUpdateAsync(balance)` sem `SaveChanges` compartilhado/atômico entre os repositórios. Falha na atualização do saldo deixava transação persistida com saldo inconsistente, antes ou durante a publicação de `TransactionNormalized`.
+- **Solução Arquitetural:**
+  1. Abstração `IUnitOfWork` na camada `Application` (`FinanceHub.TransactionAggregator.Application.Common.Interfaces`) com `Task<int> CommitAsync(CancellationToken cancellationToken = default)`.
+  2. Implementação `UnitOfWork` em `Infrastructure.Persistence`, encapsulando `TransactionAggregatorDbContext` e delegando para `SaveChangesAsync`.
+  3. Registro de `IUnitOfWork` no DI em `DependencyInjection.cs` da Infrastructure.
+  4. Refatoração do `IngestTransactionCommandHandler` para:
+     - Adicionar entidades nos repositórios (sem `SaveChanges` isolado).
+     - Executar `await _unitOfWork.CommitAsync(cancellationToken)` **uma única vez**, garantindo atomicidade.
+     - Publicar `TransactionNormalized` somente após o commit bem-sucedido.
+  5. Testes unitários com NSubstitute garantindo que se `CommitAsync` lançar exceção, `Publish` **nunca** é executado.
+
+### 5.2 Item B — Interface `IIdempotentEvent` nos Contratos de Mensageria (ALTO)
+- **Problema:** O `IdempotentConsumerFilter<T>` extraía o hash de idempotência via reflection dinâmica (`Hash`, `MessageHash`, `BatchId`), tornando o contrato frágil em tempo de compilação.
+- **Solução Arquitetural:**
+  1. Criar interface fortemente tipada `IIdempotentEvent` derivada de `IFinanceHubEvent`:
+     ```csharp
+     namespace FinanceHub.Shared.Messaging.Events;
+
+     public interface IIdempotentEvent : IFinanceHubEvent
+     {
+         string MessageHash { get; }
+     }
+     ```
+  2. Implementar `IIdempotentEvent` nos eventos que requerem deduplicação (`TransactionsBatchIngested`, `TransactionIngested`, `InvoiceItemIngested`).
+  3. Refatorar `IdempotentConsumerFilter<T>` com constraint `where T : class, IIdempotentEvent`, acessando `context.Message.MessageHash` diretamente com zero reflection.
+  4. Atualizar os testes unitários de `IdempotentConsumerFilterTests` para validar a nova tipagem estática.
+
+### 5.3 Item C — Instrumentação de EF Core e MassTransit no `Shared.Observability` (ALTO)
+- **Problema:** Queries de banco de dados (EF Core) e spans do MassTransit não eram instrumentados no OpenTelemetry, limitando o rastreamento ponta a ponta no Jaeger.
+- **Solução Arquitetural:**
+  1. Adicionar pacote `OpenTelemetry.Instrumentation.EntityFrameworkCore` no `FinanceHub.Shared.Observability.csproj`.
+  2. Configurar tracing em `ObservabilityExtensions.cs`:
+     - `AddEntityFrameworkCoreInstrumentation(options => options.SetDbStatementForText = true)` para rastrear comandos SQL.
+     - `AddSource("MassTransit")` para capturar traces de envio e consumo de mensagens do MassTransit.
+  3. Atualizar `ObservabilityTests.cs` validando o registro das fontes de telemetria no pipeline.
+
+### 5.4 Item D — Sanitização do Body de Erro no `PluggyHttpExecutor` (MÉDIO)
+- **Problema:** Respostas de erro da API Meu.Pluggy eram logadas na íntegra, potencialmente expondo PIIs ou tokens no console/logs.
+- **Solução Arquitetural:**
+  1. Truncar o `errorBody` em no máximo 500 caracteres antes do log, anexando `"..."` quando truncado:
+     ```csharp
+     var safeError = errorBody?.Length > 500 ? errorBody[..500] + "..." : errorBody;
+     logger.LogError("Erro na comunicação com Pluggy API: {StatusCode} - {Error}", response.StatusCode, safeError);
+     ```
+  2. Implementar testes unitários em `MeuPluggyClientTests.cs` ou `PluggyHttpExecutorTests.cs` garantindo que strings maiores que 500 caracteres são sanitizadas e truncadas.
+
+### 5.5 Item E — Guard de Ambiente no Endpoint `/dev-token` (BAIXO)
+- **Problema:** O endpoint de teste `POST /api/v1/gateway/auth/dev-token` ficava exposto incondicionalmente em todos os ambientes sem verificação de `IsDevelopment()`.
+- **Solução Arquitetural:**
+  1. Validar `IWebHostEnvironment.IsDevelopment()` no handler ou registro condicional do endpoint.
+  2. Retornar `Results.NotFound()` caso executado fora do ambiente de desenvolvimento.
+  3. Adicionar testes unitários garantindo que ambientes que não sejam Development recebam `404 Not Found`.
+
+### 5.6 Item F — Persistir `OriginalText` da `SanitizedDescription` (BAIXO)
+- **Problema:** Apenas `CleanText` da `SanitizedDescription` era persistido na tabela `canonical_transactions`, descartando o texto original do extrato (`OriginalText`) e inviabilizando re-sanitizações futuras.
+- **Solução Arquitetural:**
+  1. Configurar `CanonicalTransactionConfiguration.cs` com `OwnsOne` para persistir:
+     - `OriginalText` -> coluna `original_description` (`varchar(512)`).
+     - `CleanText` -> coluna `description` (`varchar(255)`).
+  2. Gerar migration do EF Core (`AddOriginalDescriptionColumn`) para atualizar o schema do PostgreSQL.
+  3. Atualizar testes unitários em `ValueObjectsTests.cs` para validar a persistência e integridade de `SanitizedDescription`.
