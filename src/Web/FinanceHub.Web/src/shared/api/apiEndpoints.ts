@@ -19,6 +19,7 @@ export const API_ENDPOINTS = {
   },
   TRANSACTIONS: {
     LIST: '/api/v1/gateway/transactions',
+    CATEGORIES: '/api/v1/gateway/transactions/categories',
     CATEGORIZE: (id: string) => `/api/v1/gateway/transactions/${id}/category`,
   },
 } as const;
