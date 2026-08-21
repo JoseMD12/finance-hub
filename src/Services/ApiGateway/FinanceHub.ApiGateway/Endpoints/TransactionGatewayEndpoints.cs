@@ -74,7 +74,7 @@ public static class TransactionGatewayEndpoints
                 return Results.Unauthorized();
             }
 
-            await transactionClient.CategorizeTransactionAsync(id, userId, request.CategoryId, request.CreateCustomRule, ct);
+            await transactionClient.CategorizeTransactionAsync(id, userId, request.CategoryId, request.CreateCustomRule, request.ApplyToPastTransactions, ct);
             return Results.NoContent();
         })
         .WithName("CategorizeGatewayTransaction")
@@ -85,5 +85,5 @@ public static class TransactionGatewayEndpoints
         return endpoints;
     }
 
-    public record CategorizeRequest(Guid CategoryId, bool CreateCustomRule);
+    public record CategorizeRequest(Guid CategoryId, bool CreateCustomRule, bool ApplyToPastTransactions = false);
 }

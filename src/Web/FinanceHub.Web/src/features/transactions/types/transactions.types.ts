@@ -61,4 +61,5 @@ export interface CategorizeTransactionPayload {
   readonly transactionId: string;
   readonly categoryId: string;
   readonly createCustomRule: boolean;
+  readonly applyToPastTransactions?: boolean;
 }

@@ -17,6 +17,7 @@ export const CategoryTagPopover: React.FC<CategoryTagPopoverProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [createCustomRule, setCreateCustomRule] = useState(false);
+  const [applyToPastTransactions, setApplyToPastTransactions] = useState(false);
   const [expandedParentIds, setExpandedParentIds] = useState<Set<string>>(new Set());
   const popoverRef = useRef<HTMLDivElement>(null);
 
@@ -83,6 +84,7 @@ export const CategoryTagPopover: React.FC<CategoryTagPopoverProps> = ({
       transactionId,
       categoryId,
       createCustomRule,
+      applyToPastTransactions,
     });
 
     setIsOpen(false);
@@ -241,8 +243,8 @@ export const CategoryTagPopover: React.FC<CategoryTagPopoverProps> = ({
               })}
           </div>
 
-          {/* Opção de Regra Customizada */}
-          <div className="pt-2 border-t border-border-subtle">
+          {/* Opções de Automação de Categoria */}
+          <div className="pt-2 border-t border-border-subtle flex flex-col gap-1.5">
             <label className="flex items-center gap-2 text-[11px] text-slate-600 hover:text-slate-800 cursor-pointer select-none">
               <input
                 type="checkbox"
@@ -250,7 +252,17 @@ export const CategoryTagPopover: React.FC<CategoryTagPopoverProps> = ({
                 onChange={(e) => setCreateCustomRule(e.target.checked)}
                 className="rounded border-slate-300 text-brand focus:ring-brand cursor-pointer"
               />
-              <span>Aplicar para transações similares futuras</span>
+              <span>Criar regra para transações futuras similares</span>
+            </label>
+
+            <label className="flex items-center gap-2 text-[11px] text-slate-600 hover:text-slate-800 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={applyToPastTransactions}
+                onChange={(e) => setApplyToPastTransactions(e.target.checked)}
+                className="rounded border-slate-300 text-brand focus:ring-brand cursor-pointer"
+              />
+              <span>Aplicar alteração em lançamentos passados similares</span>
             </label>
           </div>
         </div>

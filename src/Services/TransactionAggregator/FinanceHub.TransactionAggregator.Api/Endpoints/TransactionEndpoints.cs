@@ -74,7 +74,8 @@ public static class TransactionEndpoints
                 id,
                 request.UserId,
                 request.NewCategoryId,
-                request.CreateCustomRule);
+                request.CreateCustomRule,
+                request.ApplyToPastTransactions);
 
             await handler.Handle(command, cancellationToken);
             return Results.NoContent();
@@ -90,4 +91,5 @@ public static class TransactionEndpoints
 public record CategorizeTransactionRequest(
     string UserId,
     Guid NewCategoryId,
-    bool CreateCustomRule);
+    bool CreateCustomRule,
+    bool ApplyToPastTransactions = false);

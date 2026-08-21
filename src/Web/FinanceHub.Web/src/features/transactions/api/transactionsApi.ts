@@ -31,5 +31,6 @@ export const categorizeTransactionApi = async (
   await httpClient.patch(API_ENDPOINTS.TRANSACTIONS.CATEGORIZE(payload.transactionId), {
     categoryId: payload.categoryId,
     createCustomRule: payload.createCustomRule,
+    applyToPastTransactions: payload.applyToPastTransactions ?? false,
   });
 };

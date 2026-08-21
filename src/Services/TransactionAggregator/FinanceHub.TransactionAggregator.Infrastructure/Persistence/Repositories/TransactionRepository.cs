@@ -193,4 +193,22 @@ public class TransactionRepository : ITransactionRepository
 
         return Expression.Lambda<Func<CanonicalTransaction, bool>>(combined ?? Expression.Constant(true), parameter);
     }
+
+    public async Task UpdateCategoryForPatternAsync(string userId, string pattern, Guid newCategoryId, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(pattern))
+        {
+            return;
+        }
+
+        var patternLower = pattern.Trim().ToLowerInvariant();
+        var transactionsToUpdate = await _context.Transactions
+            .Where(t => t.UserId == userId && t.Description.CleanText.ToLower().Contains(patternLower))
+            .ToListAsync(cancellationToken);
+
+        foreach (var tx in transactionsToUpdate)
+        {
+            tx.CategorizeManually(newCategoryId);
+        }
+    }
 }

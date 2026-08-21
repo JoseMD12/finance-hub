@@ -91,14 +91,13 @@ public class TransactionAggregatorServiceClient : ITransactionAggregatorServiceC
         return categories ?? Enumerable.Empty<GatewayCategoryDto>();
     }
 
-    public async Task CategorizeTransactionAsync(Guid transactionId, string userId, Guid categoryId, bool createCustomRule = false, CancellationToken ct = default)
+    public async Task CategorizeTransactionAsync(Guid transactionId, string userId, Guid categoryId, bool createCustomRule = false, bool applyToPastTransactions = false, CancellationToken ct = default)
     {
-        var payload = new { UserId = userId, NewCategoryId = categoryId, CreateCustomRule = createCustomRule };
+        var payload = new { UserId = userId, NewCategoryId = categoryId, CreateCustomRule = createCustomRule, ApplyToPastTransactions = applyToPastTransactions };
         using var request = new HttpRequestMessage(HttpMethod.Patch, $"/api/v1/transactions/{transactionId}/categorize")
         {
             Content = JsonContent.Create(payload)
         };
-
         await _httpClient.SendOrThrowAsync(request, ServiceName, _logger, null, ct);
     }
 
