@@ -1,3 +1,4 @@
+using FinanceHub.Shared.Messaging.Events;
 using FinanceHub.TransactionAggregator.Domain.Entities;
 using FinanceHub.TransactionAggregator.Infrastructure.Persistence;
 using MassTransit;
@@ -6,7 +7,7 @@ using Microsoft.Extensions.Logging;
 
 namespace FinanceHub.TransactionAggregator.Infrastructure.Messaging.Filters;
 
-public class IdempotentConsumerFilter<T> : IFilter<ConsumeContext<T>> where T : class
+public class IdempotentConsumerFilter<T> : IFilter<ConsumeContext<T>> where T : class, IIdempotentEvent
 {
     private readonly TransactionAggregatorDbContext _dbContext;
     private readonly ILogger<IdempotentConsumerFilter<T>> _logger;
@@ -24,7 +25,7 @@ public class IdempotentConsumerFilter<T> : IFilter<ConsumeContext<T>> where T : 
 
     public async Task Send(ConsumeContext<T> context, IPipe<ConsumeContext<T>> next)
     {
-        var messageHash = ExtractMessageHash(context.Message);
+        var messageHash = context.Message.MessageHash;
         if (string.IsNullOrWhiteSpace(messageHash))
         {
             await next.Send(context);
@@ -51,20 +52,5 @@ public class IdempotentConsumerFilter<T> : IFilter<ConsumeContext<T>> where T : 
         {
             // Ignora violação de chave concorrente
         }
-    }
-
-    private static string? ExtractMessageHash(T message)
-    {
-        var prop = typeof(T).GetProperty("Hash")
-                   ?? typeof(T).GetProperty("MessageHash")
-                   ?? typeof(T).GetProperty("BatchId");
-
-        if (prop != null)
-        {
-            var val = prop.GetValue(message);
-            if (val != null) return val.ToString();
-        }
-
-        return null;
     }
 }
