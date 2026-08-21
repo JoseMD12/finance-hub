@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
+import { LayoutGroup } from 'framer-motion';
 import {
   ArrowLeftRight,
   Landmark,
@@ -11,6 +12,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/shared/utils/cn';
 import { IconCircle } from '@/shared/components/IconCircle/IconCircle';
+import { NavActiveIndicator } from '@/shared/components/motion';
 
 export interface SidebarProps {
   initialCollapsed?: boolean;
@@ -83,37 +85,51 @@ export const Sidebar: React.FC<SidebarProps> = ({ initialCollapsed = false }) =>
           )}
         </div>
 
-        {/* Navigation Items (Fidelidade ao Side Bar.pdf com Conexões preservado) */}
-        <nav className="flex flex-col gap-2">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end={item.to === '/'}
-                title={isCollapsed ? item.label : undefined}
-                className={({ isActive }) =>
-                  cn(
-                    'flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-semibold transition-all duration-200 group',
-                    isActive
-                      ? 'bg-brand text-white shadow-brand font-bold'
-                      : 'text-slate-700 hover:bg-surface-ground hover:text-slate-900',
-                    isCollapsed && 'justify-center px-0 py-3'
-                  )
-                }
-              >
-                <Icon
+        {/* Navigation Items with Layout Animation */}
+        <LayoutGroup>
+          <nav className="flex flex-col gap-2">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end={item.to === '/'}
+                  title={isCollapsed ? item.label : undefined}
                   className={cn(
-                    'w-5 h-5 flex-shrink-0 transition-transform duration-200 group-hover:scale-110',
-                    isCollapsed && 'w-5 h-5'
+                    'relative flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-semibold transition-colors duration-200 group select-none',
+                    isCollapsed && 'justify-center px-0 py-3'
                   )}
-                />
-                {!isCollapsed && <span className="truncate">{item.label}</span>}
-              </NavLink>
-            );
-          })}
-        </nav>
+                >
+                  {({ isActive }) => (
+                    <>
+                      {isActive && (
+                        <NavActiveIndicator layoutId="fh-nav-active-pill" />
+                      )}
+                      <Icon
+                        className={cn(
+                          'w-5 h-5 flex-shrink-0 transition-transform duration-200 group-hover:scale-110 relative z-10',
+                          isActive ? 'text-white' : 'text-slate-600 group-hover:text-slate-900',
+                          isCollapsed && 'w-5 h-5'
+                        )}
+                      />
+                      {!isCollapsed && (
+                        <span
+                          className={cn(
+                            'truncate relative z-10 transition-colors',
+                            isActive ? 'text-white font-bold' : 'text-slate-700 group-hover:text-slate-900'
+                          )}
+                        >
+                          {item.label}
+                        </span>
+                      )}
+                    </>
+                  )}
+                </NavLink>
+              );
+            })}
+          </nav>
+        </LayoutGroup>
       </div>
 
       {/* Footer / Collapsed Logout Option */}
