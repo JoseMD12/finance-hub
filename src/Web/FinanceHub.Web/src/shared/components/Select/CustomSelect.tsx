@@ -89,7 +89,7 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
 
   return (
     <div className={cn('flex flex-col gap-1.5 w-full', className)} ref={containerRef}>
-      {label && <label className="text-xs font-semibold text-slate-700">{label}</label>}
+      {label && <label className="text-xs font-semibold text-slate-700 pl-1">{label}</label>}
       <div className="relative w-full">
         <button
           type="button"

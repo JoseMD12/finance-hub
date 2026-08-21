@@ -49,6 +49,38 @@ export function formatDateTimeBR(dateString: string | Date | null | undefined): 
     timeStyle: 'short',
   }).format(date);
 }
+
+/**
+ * Formata apenas a hora e minutos no formato HH:MM (fuso América/São Paulo).
+ */
+export function formatTimeBR(dateString: string | Date | null | undefined): string {
+  if (!dateString) return '--:--';
+  const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
+  if (Number.isNaN(date.getTime())) return '--:--';
+
+  return new Intl.DateTimeFormat('pt-BR', {
+    timeZone: 'America/Sao_Paulo',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date);
+}
+
+/**
+ * Traduz o canal/meio de pagamento para português padronizado ("Pix", "Crédito", "Débito", "Outro").
+ */
+export function formatPaymentMethod(channel: string | null | undefined): string {
+  if (!channel) return 'Outro';
+  const normalized = channel
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
+
+  if (normalized.includes('pix')) return 'Pix';
+  if (normalized.includes('credit') || normalized.includes('credito')) return 'Crédito';
+  if (normalized.includes('debit') || normalized.includes('debito')) return 'Débito';
+  return 'Outro';
+}
 /**
  * Mascara CPF de acordo com a LGPD (ex: "123.456.789-00" -> "***.456.789-**").
  */
