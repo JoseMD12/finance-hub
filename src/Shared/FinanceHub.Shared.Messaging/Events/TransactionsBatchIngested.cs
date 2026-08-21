@@ -12,7 +12,7 @@ public record TransactionsBatchIngested(
     IReadOnlyList<TransactionIngested> CheckingTransactions,
     IReadOnlyList<InvoiceItemIngested> CardTransactions,
     DateTime OccurredAtUtc
-) : IFinanceHubEvent, IIdempotentEvent
+) : IIdempotentEvent
 {
     public string MessageHash => BatchId.ToString();
 }
