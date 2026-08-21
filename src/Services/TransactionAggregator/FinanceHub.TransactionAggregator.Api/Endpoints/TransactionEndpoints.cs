@@ -1,5 +1,7 @@
+using System;
 using FinanceHub.TransactionAggregator.Application.Commands.CategorizeTransaction;
 using FinanceHub.TransactionAggregator.Application.Commands.IngestTransaction;
+using FinanceHub.TransactionAggregator.Application.DTOs;
 using FinanceHub.TransactionAggregator.Application.Queries.GetConsolidatedBalance;
 using FinanceHub.TransactionAggregator.Application.Queries.GetTransactions;
 using Microsoft.AspNetCore.Builder;
@@ -31,15 +33,32 @@ public static class TransactionEndpoints
             string userId,
             int? page,
             int? pageSize,
+            DateTime? startDate,
+            DateTime? endDate,
+            string? institutionId,
+            Guid? categoryId,
+            string? type,
+            string? search,
             IGetTransactionsQueryHandler handler,
             CancellationToken cancellationToken) =>
         {
-            var query = new GetTransactionsQuery(userId, page ?? 1, pageSize ?? 20);
+            var filter = new TransactionFilterDto(
+                userId,
+                page ?? 1,
+                pageSize ?? 20,
+                startDate,
+                endDate,
+                institutionId,
+                categoryId,
+                type,
+                search);
+
+            var query = new GetTransactionsQuery(filter);
             var result = await handler.Handle(query, cancellationToken);
             return Results.Ok(result);
         })
         .WithName("GetTransactions")
-        .Produces(StatusCodes.Status200OK);
+        .Produces<PagedTransactionsResponseDto>(StatusCodes.Status200OK);
 
         group.MapGet("/balances/user/{userId}", async (
             string userId,

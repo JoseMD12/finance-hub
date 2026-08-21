@@ -1,8 +1,7 @@
+using System;
 using System.Security.Claims;
-
 using FinanceHub.ApiGateway.Clients;
 using FinanceHub.ApiGateway.DTOs;
-
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -21,6 +20,12 @@ public static class TransactionGatewayEndpoints
             ClaimsPrincipal user,
             int? page,
             int? pageSize,
+            DateTime? startDate,
+            DateTime? endDate,
+            string? institutionId,
+            Guid? categoryId,
+            string? type,
+            string? search,
             ITransactionAggregatorServiceClient transactionClient,
             CancellationToken ct) =>
         {
@@ -32,11 +37,33 @@ public static class TransactionGatewayEndpoints
                 return Results.Unauthorized();
             }
 
-            var transactions = await transactionClient.GetTransactionsAsync(userId, page ?? 1, pageSize ?? 20, ct);
-            return Results.Ok(transactions);
+            var filter = new GatewayTransactionFilterDto(
+                userId,
+                page ?? 1,
+                pageSize ?? 20,
+                startDate,
+                endDate,
+                institutionId,
+                categoryId,
+                type,
+                search);
+
+            var result = await transactionClient.GetTransactionsAsync(filter, ct);
+            return Results.Ok(result);
         })
         .WithName("GetGatewayTransactions")
-        .Produces<IEnumerable<GatewayTransactionDto>>(StatusCodes.Status200OK)
+        .Produces<PagedGatewayTransactionsDto>(StatusCodes.Status200OK)
+        .ProducesProblem(StatusCodes.Status401Unauthorized);
+
+        group.MapGet("/categories", async (
+            ITransactionAggregatorServiceClient transactionClient,
+            CancellationToken ct) =>
+        {
+            var categories = await transactionClient.GetCategoriesAsync(ct);
+            return Results.Ok(categories);
+        })
+        .WithName("GetGatewayCategories")
+        .Produces<IEnumerable<GatewayCategoryDto>>(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status401Unauthorized);
 
         group.MapPatch("/{id:guid}/category", async (

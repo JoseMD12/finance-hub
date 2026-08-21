@@ -4,6 +4,7 @@ using FinanceHub.Shared.Observability;
 using FinanceHub.TransactionAggregator.Api;
 using FinanceHub.TransactionAggregator.Api.Endpoints;
 using FinanceHub.TransactionAggregator.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
 
 Env.TraversePath().Load();
 
@@ -23,7 +24,13 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<TransactionAggregatorDbContext>();
-    dbContext.Database.EnsureCreated();
+    dbContext.Database.Migrate();
+
+    if (!dbContext.Categories.Any())
+    {
+        dbContext.Categories.AddRange(CategorySeedData.GetDefaultCategories());
+        dbContext.SaveChanges();
+    }
 }
 
 app.UseExceptionHandler();
@@ -39,6 +46,7 @@ app.MapGet("/health", () => Results.Ok(new
 })).WithName("GetHealth");
 
 app.MapTransactionEndpoints();
+app.MapCategoryEndpoints();
 
 await app.RunAsync();
 
