@@ -102,6 +102,20 @@ public class ValueObjectsTests
     }
 
     [Fact]
+    public void SanitizedDescription_Creation_ShouldPreserveOriginalText()
+    {
+        // Arrange
+        var raw = "TED*Tranf Pix Fulano";
+
+        // Act
+        var sanitized = SanitizedDescription.Create(raw);
+
+        // Assert
+        sanitized.OriginalText.Should().Be(raw);
+        sanitized.CleanText.Should().Be("Tranf Pix Fulano");
+    }
+
+    [Fact]
     public void AccountIdentifier_Creation_WithValidValues_ShouldSucceed()
     {
         // Act

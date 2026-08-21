@@ -57,11 +57,17 @@ public class CanonicalTransactionConfiguration : IEntityTypeConfiguration<Canoni
             .HasConversion<int>()
             .IsRequired();
 
-        builder.Property(x => x.Description)
-            .HasConversion(d => d.CleanText, v => SanitizedDescription.Create(v))
-            .HasColumnName("description")
-            .IsRequired()
-            .HasMaxLength(255);
+        builder.OwnsOne(x => x.Description, desc =>
+        {
+            desc.Property(d => d.OriginalText)
+                .HasColumnName("original_description")
+                .HasMaxLength(512);
+
+            desc.Property(d => d.CleanText)
+                .HasColumnName("description")
+                .IsRequired()
+                .HasMaxLength(255);
+        });
 
         builder.Property(x => x.CategoryId)
             .IsRequired();
