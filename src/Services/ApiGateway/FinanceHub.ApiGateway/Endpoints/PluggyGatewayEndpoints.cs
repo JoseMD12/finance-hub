@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Security.Claims;
 using FinanceHub.ApiGateway.Clients;
 using FinanceHub.Shared.Messaging.Constants;
@@ -25,7 +26,7 @@ public static class PluggyGatewayEndpoints
         {
             if (!TryGetPluggyToken(httpContext, "consultar as instituições", out var pluggyToken, out var errorResult))
             {
-                return errorResult!;
+                return errorResult;
             }
 
             var items = await pluggyClient.GetItemsAsync(pluggyToken, ct);
@@ -54,7 +55,7 @@ public static class PluggyGatewayEndpoints
         {
             if (!TryGetPluggyToken(httpContext, "ressincronizar a instituição", out var pluggyToken, out var errorResult))
             {
-                return errorResult!;
+                return errorResult;
             }
 
             var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value
@@ -75,7 +76,7 @@ public static class PluggyGatewayEndpoints
         {
             if (!TryGetPluggyToken(httpContext, "realizar a sincronização", out var pluggyToken, out var errorResult))
             {
-                return errorResult!;
+                return errorResult;
             }
 
             var resolvedUserId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value
@@ -106,7 +107,11 @@ public static class PluggyGatewayEndpoints
         return app;
     }
 
-    private static bool TryGetPluggyToken(HttpContext httpContext, string actionContext, out string token, out IResult? errorResult)
+    private static bool TryGetPluggyToken(
+        HttpContext httpContext,
+        string actionContext,
+        out string token,
+        [NotNullWhen(false)] out IResult? errorResult)
     {
         token = httpContext.Request.Headers[FinanceHubHeaderNames.PluggyAccessToken].ToString();
         if (string.IsNullOrWhiteSpace(token))
@@ -131,7 +136,7 @@ public static class PluggyGatewayEndpoints
     {
         if (!TryGetPluggyToken(httpContext, "consultar as contas", out var pluggyToken, out var errorResult))
         {
-            return errorResult!;
+            return errorResult;
         }
 
         var accounts = await pluggyClient.GetAccountsAsync(pluggyToken, ct);
