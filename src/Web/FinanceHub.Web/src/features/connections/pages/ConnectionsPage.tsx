@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
 import { usePluggyToken } from '../hooks/usePluggyToken';
 import { useSyncPluggyMutation } from '../hooks/useSyncPluggyMutation';
 import { useConnectedInstitutionsQuery } from '../hooks/useConnectedInstitutionsQuery';
@@ -11,6 +12,7 @@ import { Skeleton } from '@/shared/components/Skeleton/Skeleton';
 import { PageContainer } from '@/shared/components/PageContainer/PageContainer';
 
 export const ConnectionsPage: React.FC = () => {
+  const prefersReduced = useReducedMotion();
   const { token, hasToken, lastSync, saveToken, saveLastSync, clearToken } = usePluggyToken();
   const { data: items, isLoading: isLoadingItems } = useConnectedInstitutionsQuery(token);
   const autoSyncTokenRef = useRef<string | null>(null);
@@ -60,11 +62,15 @@ export const ConnectionsPage: React.FC = () => {
     if (hasInstitutions) {
       return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {connectedItems.map((item) => (
-            <ConnectionCard
+          {connectedItems.map((item, index) => (
+            <motion.div
               key={item.id}
-              item={item}
-            />
+              initial={prefersReduced ? undefined : { opacity: 0, y: 12 }}
+              animate={prefersReduced ? undefined : { opacity: 1, y: 0 }}
+              transition={prefersReduced ? undefined : { delay: index * 0.08, duration: 0.3 }}
+            >
+              <ConnectionCard item={item} />
+            </motion.div>
           ))}
         </div>
       );
