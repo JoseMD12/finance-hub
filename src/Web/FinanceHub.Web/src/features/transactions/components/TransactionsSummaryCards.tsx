@@ -51,57 +51,60 @@ export const TransactionsSummaryCards: React.FC<TransactionsSummaryCardsProps> =
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       {/* Entradas */}
       <motion.div {...getMotionProps(0)}>
-        <GlowCard glowRgb="46, 204, 113">
-          <Card className="p-4 flex items-center justify-between bg-surface-card border border-border-subtle hover:border-slate-300 hover:shadow-elevated transition-all duration-200">
-            <div className="flex flex-col gap-1">
-              <span className="text-xs font-semibold text-slate-500">Total de Entradas</span>
-              <span className="text-lg font-black font-display text-status-success tabular-nums tracking-tight">
-                + {formatCurrencyBRL(income)}
-              </span>
-            </div>
-            <div className="w-10 h-10 rounded-xl bg-status-success-bg flex items-center justify-center text-status-success ring-1 ring-status-success/20">
-              <ArrowUpRight className="w-5 h-5" aria-hidden="true" />
-            </div>
-          </Card>
+        <GlowCard
+          glowRgb="46, 204, 113"
+          className="p-4 flex items-center justify-between hover:border-slate-300 hover:shadow-elevated transition-all duration-200"
+        >
+          <div className="flex flex-col gap-1">
+            <span className="text-xs font-semibold text-slate-500">Total de Entradas</span>
+            <span className="text-lg font-black font-display text-status-success tabular-nums tracking-tight">
+              + {formatCurrencyBRL(income)}
+            </span>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-status-success-bg flex items-center justify-center text-status-success ring-1 ring-status-success/20">
+            <ArrowUpRight className="w-5 h-5" aria-hidden="true" />
+          </div>
         </GlowCard>
       </motion.div>
 
       {/* Saídas */}
       <motion.div {...getMotionProps(0.06)}>
-        <GlowCard glowRgb="255, 89, 100">
-          <Card className="p-4 flex items-center justify-between bg-surface-card border border-border-subtle hover:border-slate-300 hover:shadow-elevated transition-all duration-200">
-            <div className="flex flex-col gap-1">
-              <span className="text-xs font-semibold text-slate-500">Total de Saídas</span>
-              <span className="text-lg font-black font-display text-status-danger tabular-nums tracking-tight">
-                - {formatCurrencyBRL(expense)}
-              </span>
-            </div>
-            <div className="w-10 h-10 rounded-xl bg-status-danger-bg flex items-center justify-center text-status-danger ring-1 ring-status-danger/20">
-              <ArrowDownRight className="w-5 h-5" aria-hidden="true" />
-            </div>
-          </Card>
+        <GlowCard
+          glowRgb="255, 89, 100"
+          className="p-4 flex items-center justify-between hover:border-slate-300 hover:shadow-elevated transition-all duration-200"
+        >
+          <div className="flex flex-col gap-1">
+            <span className="text-xs font-semibold text-slate-500">Total de Saídas</span>
+            <span className="text-lg font-black font-display text-status-danger tabular-nums tracking-tight">
+              - {formatCurrencyBRL(expense)}
+            </span>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-status-danger-bg flex items-center justify-center text-status-danger ring-1 ring-status-danger/20">
+            <ArrowDownRight className="w-5 h-5" aria-hidden="true" />
+          </div>
         </GlowCard>
       </motion.div>
 
       {/* Saldo Líquido do Período */}
       <motion.div {...getMotionProps(0.12)}>
-        <GlowCard glowRgb="224, 86, 151">
-          <Card className="p-4 flex items-center justify-between bg-surface-card border border-border-subtle hover:border-slate-300 hover:shadow-elevated transition-all duration-200">
-            <div className="flex flex-col gap-1">
-              <span className="text-xs font-semibold text-slate-500">Saldo Líquido</span>
-              <span
-                className={`text-lg font-black font-display tabular-nums tracking-tight ${
-                  net >= 0 ? 'text-brand-dark' : 'text-status-danger'
-                }`}
-              >
-                {net >= 0 ? '+ ' : '- '}
-                {formatCurrencyBRL(Math.abs(net))}
-              </span>
-            </div>
-            <div className="w-10 h-10 rounded-xl bg-brand-light flex items-center justify-center text-brand ring-1 ring-brand/20">
-              <Wallet className="w-5 h-5" aria-hidden="true" />
-            </div>
-          </Card>
+        <GlowCard
+          glowRgb="224, 86, 151"
+          className="p-4 flex items-center justify-between hover:border-slate-300 hover:shadow-elevated transition-all duration-200"
+        >
+          <div className="flex flex-col gap-1">
+            <span className="text-xs font-semibold text-slate-500">Saldo Líquido</span>
+            <span
+              className={`text-lg font-black font-display tabular-nums tracking-tight ${
+                net >= 0 ? 'text-brand-dark' : 'text-status-danger'
+              }`}
+            >
+              {net >= 0 ? '+ ' : '- '}
+              {formatCurrencyBRL(Math.abs(net))}
+            </span>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-brand-light flex items-center justify-center text-brand ring-1 ring-brand/20">
+            <Wallet className="w-5 h-5" aria-hidden="true" />
+          </div>
         </GlowCard>
       </motion.div>
     </div>

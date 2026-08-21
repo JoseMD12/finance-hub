@@ -141,9 +141,9 @@ body {
 .glow-card::before {
   content: '';
   position: absolute;
-  inset: 0;
+  inset: -1px;
   border-radius: inherit;
-  padding: 1.5px;
+  padding: 1px;
   background: radial-gradient(
     320px circle at var(--mouse-x, -999px) var(--mouse-y, -999px),
     rgba(var(--glow-rgb, 224, 86, 151), 0.75),
@@ -162,7 +162,7 @@ body {
 .glow-card::after {
   content: '';
   position: absolute;
-  inset: 1px;
+  inset: 0;
   border-radius: inherit;
   background: radial-gradient(
     380px circle at var(--mouse-x, -999px) var(--mouse-y, -999px),

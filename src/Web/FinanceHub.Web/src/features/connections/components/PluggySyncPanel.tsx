@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Card } from '@/shared/components/Card/Card';
 import { Button } from '@/shared/components/Button/Button';
 import { KeyRound, ExternalLink, RefreshCw, CheckCircle2, AlertCircle, XCircle, Puzzle } from 'lucide-react';
 import { CONNECTIONS_DEFAULTS } from '../constants/connectionsConstants';
@@ -48,9 +47,8 @@ export const PluggySyncPanel: React.FC<PluggySyncPanelProps> = ({
   const hasToken = Boolean(token.trim());
 
   return (
-    <GlowCard glowRgb="224, 86, 151">
-      <Card className="flex flex-col gap-3.5 border-slate-200 py-4 px-4 md:px-5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <GlowCard glowRgb="224, 86, 151" className="flex flex-col gap-3.5 border-slate-200 py-4 px-4 md:px-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
             <IconCircle icon={KeyRound} tone="brand" size="sm" />
             <div className="flex items-center gap-2">
@@ -138,7 +136,6 @@ export const PluggySyncPanel: React.FC<PluggySyncPanelProps> = ({
             </Button>
           </MagneticButton>
         </div>
-      </Card>
     </GlowCard>
   );
 };

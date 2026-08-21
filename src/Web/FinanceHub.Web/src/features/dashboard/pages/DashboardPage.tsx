@@ -48,55 +48,49 @@ export const DashboardPage: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Saldo Total com GlowCard e NumberScramble */}
             <motion.div {...getCardMotionProps(0)}>
-              <GlowCard glowRgb="224, 86, 151">
-                <Card className="flex flex-col gap-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-slate-500">Saldo Consolidado Total</span>
-                    <IconCircle icon={Landmark} tone="brand" size="md" />
-                  </div>
-                  <div className="text-2xl font-black text-brand tracking-tight">
-                    <NumberScramble
-                      value={totalBalance}
-                      format={formatCurrencyBRL}
-                      className="font-display font-black text-brand"
-                    />
-                  </div>
-                  <span className="text-[11px] text-slate-400 font-medium">
-                    {accountBalances.length} instituição(ões) vinculada(s)
-                  </span>
-                </Card>
+              <GlowCard glowRgb="224, 86, 151" className="flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-slate-500">Saldo Consolidado Total</span>
+                  <IconCircle icon={Landmark} tone="brand" size="md" />
+                </div>
+                <div className="text-2xl font-black text-brand tracking-tight">
+                  <NumberScramble
+                    value={totalBalance}
+                    format={formatCurrencyBRL}
+                    className="font-display font-black text-brand"
+                  />
+                </div>
+                <span className="text-[11px] text-slate-400 font-medium">
+                  {accountBalances.length} instituição(ões) vinculada(s)
+                </span>
               </GlowCard>
             </motion.div>
 
             {/* Receitas com GlowCard */}
             <motion.div {...getCardMotionProps(0.08)}>
-              <GlowCard glowRgb="46, 204, 113">
-                <Card className="flex flex-col gap-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-slate-500">Receitas do Mês</span>
-                    <IconCircle icon={TrendingUp} tone="success" size="md" />
-                  </div>
-                  <div className="text-2xl font-black font-display text-status-success tracking-tight">
-                    + {formatCurrencyBRL(monthlyIncome)}
-                  </div>
-                  <span className="text-[11px] text-slate-400 font-medium">Entradas consolidadas</span>
-                </Card>
+              <GlowCard glowRgb="46, 204, 113" className="flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-slate-500">Receitas do Mês</span>
+                  <IconCircle icon={TrendingUp} tone="success" size="md" />
+                </div>
+                <div className="text-2xl font-black font-display text-status-success tracking-tight">
+                  + {formatCurrencyBRL(monthlyIncome)}
+                </div>
+                <span className="text-[11px] text-slate-400 font-medium">Entradas consolidadas</span>
               </GlowCard>
             </motion.div>
 
             {/* Despesas com GlowCard */}
             <motion.div {...getCardMotionProps(0.16)}>
-              <GlowCard glowRgb="255, 89, 100">
-                <Card className="flex flex-col gap-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-slate-500">Despesas do Mês</span>
-                    <IconCircle icon={TrendingDown} tone="danger" size="md" />
-                  </div>
-                  <div className="text-2xl font-black font-display text-status-danger tracking-tight">
-                    - {formatCurrencyBRL(monthlyExpense)}
-                  </div>
-                  <span className="text-[11px] text-slate-400 font-medium">Lançamentos deduplicados no Ledger</span>
-                </Card>
+              <GlowCard glowRgb="255, 89, 100" className="flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-slate-500">Despesas do Mês</span>
+                  <IconCircle icon={TrendingDown} tone="danger" size="md" />
+                </div>
+                <div className="text-2xl font-black font-display text-status-danger tracking-tight">
+                  - {formatCurrencyBRL(monthlyExpense)}
+                </div>
+                <span className="text-[11px] text-slate-400 font-medium">Lançamentos deduplicados no Ledger</span>
               </GlowCard>
             </motion.div>
           </div>
