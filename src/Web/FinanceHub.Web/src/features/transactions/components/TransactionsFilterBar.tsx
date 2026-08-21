@@ -1,6 +1,7 @@
 import React from 'react';
 import { Search, RotateCcw, X, SlidersHorizontal, Calendar } from 'lucide-react';
 import { CustomSelect } from '@/shared/components/Select/CustomSelect';
+import { CategoryFilterSelect } from './CategoryFilterSelect';
 import { cn } from '@/shared/utils/cn';
 import { useCategoriesQuery } from '../hooks/useCategoriesQuery';
 import type { TransactionFilterParams } from '../types/transactions.types';
@@ -39,17 +40,15 @@ export const TransactionsFilterBar: React.FC<TransactionsFilterBarProps> = ({
     { value: 'Credit', label: 'Entradas / Receitas' },
   ];
 
-  const categoryOptions = React.useMemo(() => {
-    const opts = [{ value: '', label: 'Todas as Categorias' }];
+  const allCategories = React.useMemo(() => {
+    const list: { id: string; name: string }[] = [];
     categories.forEach((cat) => {
-      opts.push({ value: cat.id, label: cat.name });
+      list.push({ id: cat.id, name: cat.name });
       if (cat.subcategories) {
-        cat.subcategories.forEach((sub) => {
-          opts.push({ value: sub.id, label: `  • ${sub.name}` });
-        });
+        cat.subcategories.forEach((sub) => list.push({ id: sub.id, name: sub.name }));
       }
     });
-    return opts;
+    return list;
   }, [categories]);
 
   const activeFiltersCount =
@@ -63,9 +62,9 @@ export const TransactionsFilterBar: React.FC<TransactionsFilterBarProps> = ({
     (o) => o.value === filters.institutionId
   )?.label;
   const selectedTypeLabel = typeOptions.find((o) => o.value === filters.type)?.label;
-  const selectedCategoryLabel = categoryOptions.find(
-    (o) => o.value === filters.categoryId
-  )?.label?.trim();
+  const selectedCategoryLabel = allCategories.find(
+    (o) => o.id === filters.categoryId
+  )?.name;
 
   const handleToggleDatePreset = (days: number) => {
     if (filters.datePreset === days) {
@@ -132,10 +131,9 @@ export const TransactionsFilterBar: React.FC<TransactionsFilterBarProps> = ({
 
         {/* Filtro Categoria */}
         <div>
-          <CustomSelect
-            options={categoryOptions}
+          <CategoryFilterSelect
             value={filters.categoryId ?? ''}
-            onChange={(val) => onFilterChange({ categoryId: val || undefined, page: 1 })}
+            onChange={(val) => onFilterChange({ categoryId: val, page: 1 })}
             label="Categoria"
           />
         </div>

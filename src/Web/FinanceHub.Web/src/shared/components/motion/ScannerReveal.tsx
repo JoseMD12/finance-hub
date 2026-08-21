@@ -1,16 +1,112 @@
-import React, { type ReactNode } from 'react';
-import { motion, useReducedMotion, type Variants } from 'framer-motion';
+import React, { useRef, type ReactNode } from 'react';
+import { motion, useInView, useReducedMotion, type Variants } from 'framer-motion';
+import { cn } from '../../utils/cn';
 
 export interface ScannerRevealProps {
   children: ReactNode;
-  staggerMs?: number; // default: 80ms
+  staggerMs?: number; // default: 60ms
   className?: string;
   as?: 'div' | 'tbody' | 'ul';
 }
 
+interface ScannerItemProps {
+  children: ReactNode;
+  index: number;
+  staggerMs: number;
+  as: 'div' | 'tbody' | 'ul';
+  className?: string;
+  itemProps?: Record<string, unknown>;
+}
+
+const itemVariants: Variants = {
+  hidden: { opacity: 0, y: 6 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.35,
+      ease: [0.25, 1, 0.5, 1],
+    },
+  },
+};
+
+const ScannerItem = ({
+  children,
+  index,
+  staggerMs,
+  as,
+  className,
+  itemProps = {},
+}: ScannerItemProps) => {
+  const ref = useRef<HTMLTableRowElement | HTMLLIElement | HTMLDivElement>(null);
+  const isInView = useInView(ref, {
+    once: true,
+    amount: 0.1,
+    margin: '0px 0px -20px 0px',
+  });
+
+  const delayMs = Math.min(index * staggerMs, 400);
+  const itemStyle = (itemProps.style as React.CSSProperties) || {};
+
+  if (as === 'tbody') {
+    return (
+      <motion.tr
+        ref={ref as React.RefObject<HTMLTableRowElement>}
+        variants={itemVariants}
+        initial="hidden"
+        animate={isInView ? 'visible' : 'hidden'}
+        className={cn('scanner-item', isInView && 'scanner-active', className)}
+        style={{
+          ...itemStyle,
+          animationDelay: `${delayMs}ms`,
+        }}
+        {...itemProps}
+      >
+        {children}
+      </motion.tr>
+    );
+  }
+
+  if (as === 'ul') {
+    return (
+      <motion.li
+        ref={ref as React.RefObject<HTMLLIElement>}
+        variants={itemVariants}
+        initial="hidden"
+        animate={isInView ? 'visible' : 'hidden'}
+        className={cn('scanner-item', isInView && 'scanner-active', className)}
+        style={{
+          ...itemStyle,
+          animationDelay: `${delayMs}ms`,
+        }}
+        {...itemProps}
+      >
+        {children}
+      </motion.li>
+    );
+  }
+
+  return (
+    <motion.div
+      ref={ref as React.RefObject<HTMLDivElement>}
+      variants={itemVariants}
+      initial="hidden"
+      animate={isInView ? 'visible' : 'hidden'}
+      className={cn('scanner-item', isInView && 'scanner-active', className)}
+      style={{
+        ...itemStyle,
+        animationDelay: `${delayMs}ms`,
+      }}
+      {...itemProps}
+    >
+      {children}
+    </motion.div>
+  );
+};
+
 export const ScannerReveal = ({
   children,
-  staggerMs = 80,
+  staggerMs = 60,
   className,
   as = 'div',
 }: ScannerRevealProps) => {
@@ -26,71 +122,108 @@ export const ScannerReveal = ({
     return <div className={className}>{children}</div>;
   }
 
-  const containerVariants: Variants = {
-    hidden: {},
-    visible: {
-      transition: {
-        staggerChildren: staggerMs / 1000,
-      },
-    },
-  };
-
-  const itemVariants: Variants = {
-    hidden: { opacity: 0, y: 8 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] as const },
-    },
-  };
-
   const items = React.Children.toArray(children);
 
   if (as === 'tbody') {
     return (
-      <motion.tbody
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-        className={className}
-      >
-        {items.map((child, index) => (
-          <motion.tr
-            key={index}
-            variants={itemVariants}
-            className="scanner-item"
-            style={{
-              animationDelay: `${index * staggerMs}ms`,
-            }}
-          >
-            {React.isValidElement(child) ? (child.props as { children?: ReactNode }).children : child}
-          </motion.tr>
-        ))}
-      </motion.tbody>
+      <tbody className={className}>
+        {items.map((child, index) => {
+          if (!React.isValidElement(child)) {
+            return child;
+          }
+
+          const {
+            children: childContent,
+            className: childClassName,
+            ...restProps
+          } = (child.props as {
+            children?: ReactNode;
+            className?: string;
+            [key: string]: unknown;
+          }) || {};
+
+          return (
+            <ScannerItem
+              key={child.key ?? index}
+              index={index}
+              staggerMs={staggerMs}
+              as="tbody"
+              className={childClassName}
+              itemProps={restProps}
+            >
+              {childContent}
+            </ScannerItem>
+          );
+        })}
+      </tbody>
     );
   }
 
-  const ContainerComponent = as === 'ul' ? motion.ul : motion.div;
+  if (as === 'ul') {
+    return (
+      <ul className={className}>
+        {items.map((child, index) => {
+          if (!React.isValidElement(child)) {
+            return child;
+          }
+
+          const {
+            children: childContent,
+            className: childClassName,
+            ...restProps
+          } = (child.props as {
+            children?: ReactNode;
+            className?: string;
+            [key: string]: unknown;
+          }) || {};
+
+          return (
+            <ScannerItem
+              key={child.key ?? index}
+              index={index}
+              staggerMs={staggerMs}
+              as="ul"
+              className={childClassName}
+              itemProps={restProps}
+            >
+              {childContent}
+            </ScannerItem>
+          );
+        })}
+      </ul>
+    );
+  }
 
   return (
-    <ContainerComponent
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-      className={className}
-    >
-      {items.map((child, index) => (
-        <motion.div
-          key={index}
-          variants={itemVariants}
-          className="scanner-item"
-          style={{
-            animationDelay: `${index * staggerMs}ms`,
-          }}
-        >
-          {child}
-        </motion.div>
-      ))}
-    </ContainerComponent>
+    <div className={className}>
+      {items.map((child, index) => {
+        if (!React.isValidElement(child)) {
+          return child;
+        }
+
+        const {
+          children: childContent,
+          className: childClassName,
+          ...restProps
+        } = (child.props as {
+          children?: ReactNode;
+          className?: string;
+          [key: string]: unknown;
+        }) || {};
+
+        return (
+          <ScannerItem
+            key={child.key ?? index}
+            index={index}
+            staggerMs={staggerMs}
+            as="div"
+            className={childClassName}
+            itemProps={restProps}
+          >
+            {childContent}
+          </ScannerItem>
+        );
+      })}
+    </div>
   );
 };

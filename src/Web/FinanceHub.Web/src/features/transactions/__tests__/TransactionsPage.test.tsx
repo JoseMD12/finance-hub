@@ -115,4 +115,43 @@ describe('TransactionsPage', () => {
     expect(screen.getByText('Meio de Pagamento')).toBeInTheDocument();
     expect(screen.getAllByText('Pix').length).toBeGreaterThan(0);
   });
+
+  it('deve abrir o dropdown hierárquico de categoria na barra de filtros', async () => {
+    const user = userEvent.setup();
+    const queryClient = createTestQueryClient();
+    render(
+      <QueryClientProvider client={queryClient}>
+        <TransactionsPage />
+      </QueryClientProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Todas as Categorias')).toBeInTheDocument();
+    });
+
+    const categorySelectTrigger = screen.getByRole('button', { name: 'Categoria' });
+    await user.click(categorySelectTrigger);
+
+    expect(screen.getByPlaceholderText('Buscar categoria ou subcategoria...')).toBeInTheDocument();
+  });
+
+  it('deve abrir o popover de alteração de categoria inline na tabela', async () => {
+    const user = userEvent.setup();
+    const queryClient = createTestQueryClient();
+    render(
+      <QueryClientProvider client={queryClient}>
+        <TransactionsPage />
+      </QueryClientProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Supermercado Silva')).toBeInTheDocument();
+    });
+
+    const categoryTag = screen.getByRole('button', { name: /categoria: alimentação/i });
+    await user.click(categoryTag);
+
+    expect(screen.getByText('Alterar Categoria')).toBeInTheDocument();
+    expect(screen.getByLabelText('Alterar categoria da transação')).toBeInTheDocument();
+  });
 });

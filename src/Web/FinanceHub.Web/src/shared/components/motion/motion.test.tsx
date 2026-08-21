@@ -74,15 +74,34 @@ describe('Motion Components Suite', () => {
     expect(screen.getByText('Item 2')).toBeInTheDocument();
   });
 
-  it('renders ScannerReveal as tbody with rows', () => {
+  it('renders ScannerReveal as tbody with rows and preserves attributes', () => {
     render(
       <table>
-        <ScannerReveal as="tbody">
-          <tr><td>Row 1</td></tr>
+        <ScannerReveal as="tbody" className="custom-tbody">
+          <tr className="custom-row-class" data-testid="test-row">
+            <td>Row 1</td>
+          </tr>
         </ScannerReveal>
       </table>
     );
 
+    const row = screen.getByTestId('test-row');
+    expect(row).toBeInTheDocument();
+    expect(row).toHaveClass('custom-row-class');
+    expect(row).toHaveClass('scanner-item');
     expect(screen.getByText('Row 1')).toBeInTheDocument();
+  });
+
+  it('renders ScannerReveal as ul with items', () => {
+    render(
+      <ScannerReveal as="ul" className="custom-ul">
+        <li data-testid="list-item">List Item 1</li>
+      </ScannerReveal>
+    );
+
+    const item = screen.getByTestId('list-item');
+    expect(item).toBeInTheDocument();
+    expect(item).toHaveClass('scanner-item');
+    expect(screen.getByText('List Item 1')).toBeInTheDocument();
   });
 });
