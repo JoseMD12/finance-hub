@@ -1,5 +1,6 @@
 using FinanceHub.TransactionAggregator.Application.Commands.CategorizeTransaction;
 using FinanceHub.TransactionAggregator.Application.Commands.IngestTransaction;
+using FinanceHub.TransactionAggregator.Application.Queries.GetCategories;
 using FinanceHub.TransactionAggregator.Application.Queries.GetConsolidatedBalance;
 using FinanceHub.TransactionAggregator.Application.Queries.GetTransactions;
 using FinanceHub.TransactionAggregator.Application.Services.Categorization;
@@ -21,6 +22,7 @@ public static class DependencyInjection
         services.AddScoped<IIngestTransactionCommandHandler, IngestTransactionCommandHandler>();
         services.AddScoped<ICategorizeTransactionCommandHandler, CategorizeTransactionCommandHandler>();
         services.AddScoped<IGetTransactionsQueryHandler, GetTransactionsQueryHandler>();
+        services.AddScoped<IGetCategoriesQueryHandler, GetCategoriesQueryHandler>();
         services.AddScoped<IGetConsolidatedBalanceQueryHandler, GetConsolidatedBalanceQueryHandler>();
 
         return services;

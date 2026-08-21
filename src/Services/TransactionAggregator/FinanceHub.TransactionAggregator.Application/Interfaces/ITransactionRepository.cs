@@ -17,4 +17,5 @@ public interface ITransactionRepository
     Task UpdateAsync(CanonicalTransaction transaction, CancellationToken cancellationToken);
     Task<IEnumerable<TransactionDto>> GetProjectedByUserIdAsync(string userId, int page, int pageSize, CancellationToken cancellationToken);
     Task<IEnumerable<CanonicalTransaction>> GetByUserIdAsync(string userId, int page, int pageSize, CancellationToken cancellationToken);
+    Task<PagedTransactionsResponseDto> QueryPagedByFilterAsync(TransactionFilterDto filter, CancellationToken cancellationToken);
 }
