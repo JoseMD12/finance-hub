@@ -23,15 +23,9 @@ public static class PluggyGatewayEndpoints
             IPluggyIntegrationServiceClient pluggyClient,
             CancellationToken ct) =>
         {
-            var pluggyToken = httpContext.Request.Headers[FinanceHubHeaderNames.PluggyAccessToken].ToString();
-            if (string.IsNullOrWhiteSpace(pluggyToken))
+            if (!TryGetPluggyToken(httpContext, "consultar as instituições", out var pluggyToken, out var errorResult))
             {
-                return Results.Problem(
-                    title: BusinessErrorTitle,
-                    detail: $"O token de acesso do Meu.Pluggy (pluggyAccessToken / {FinanceHubHeaderNames.PluggyAccessToken}) é obrigatório para consultar as instituições.",
-                    statusCode: 400,
-                    extensions: new Dictionary<string, object?> { { ErrorCodeKey, NullOrEmptyPluggyAccessTokenErrorCode } }
-                );
+                return errorResult!;
             }
 
             var items = await pluggyClient.GetItemsAsync(pluggyToken, ct);
@@ -41,51 +35,15 @@ public static class PluggyGatewayEndpoints
         .RequireAuthorization("ReadScope")
         .WithSummary("Lista as instituições bancárias conectadas via Meu.Pluggy no BFF Gateway.");
 
-        group.MapGet("/accounts", async (
-            HttpContext httpContext,
-            IPluggyIntegrationServiceClient pluggyClient,
-            CancellationToken ct) =>
-        {
-            var pluggyToken = httpContext.Request.Headers[FinanceHubHeaderNames.PluggyAccessToken].ToString();
-            if (string.IsNullOrWhiteSpace(pluggyToken))
-            {
-                return Results.Problem(
-                    title: BusinessErrorTitle,
-                    detail: $"O token de acesso do Meu.Pluggy (pluggyAccessToken / {FinanceHubHeaderNames.PluggyAccessToken}) é obrigatório para consultar as contas.",
-                    statusCode: 400,
-                    extensions: new Dictionary<string, object?> { { ErrorCodeKey, NullOrEmptyPluggyAccessTokenErrorCode } }
-                );
-            }
+        group.MapGet("/accounts", GetAccountsHandler)
+            .WithName("GetPluggyGatewayAccounts")
+            .AllowAnonymous()
+            .WithSummary("Lista as contas bancárias conectadas via Meu.Pluggy no BFF Gateway.");
 
-            var accounts = await pluggyClient.GetAccountsAsync(pluggyToken, ct);
-            return Results.Ok(accounts);
-        })
-        .WithName("GetPluggyGatewayAccounts")
-        .AllowAnonymous()
-        .WithSummary("Lista as contas bancárias conectadas via Meu.Pluggy no BFF Gateway.");
-
-        app.MapGet("/api/v1/pluggy/accounts", async (
-            HttpContext httpContext,
-            IPluggyIntegrationServiceClient pluggyClient,
-            CancellationToken ct) =>
-        {
-            var pluggyToken = httpContext.Request.Headers[FinanceHubHeaderNames.PluggyAccessToken].ToString();
-            if (string.IsNullOrWhiteSpace(pluggyToken))
-            {
-                return Results.Problem(
-                    title: BusinessErrorTitle,
-                    detail: $"O token de acesso do Meu.Pluggy (pluggyAccessToken / {FinanceHubHeaderNames.PluggyAccessToken}) é obrigatório para consultar as contas.",
-                    statusCode: 400,
-                    extensions: new Dictionary<string, object?> { { ErrorCodeKey, NullOrEmptyPluggyAccessTokenErrorCode } }
-                );
-            }
-
-            var accounts = await pluggyClient.GetAccountsAsync(pluggyToken, ct);
-            return Results.Ok(accounts);
-        })
-        .WithName("GetPluggyDirectAccounts")
-        .AllowAnonymous()
-        .WithSummary("Alias direto para consulta de contas conectadas da extensão via Meu.Pluggy.");
+        app.MapGet("/api/v1/pluggy/accounts", GetAccountsHandler)
+            .WithName("GetPluggyDirectAccounts")
+            .AllowAnonymous()
+            .WithSummary("Alias direto para consulta de contas conectadas da extensão via Meu.Pluggy.");
 
         group.MapPost("/items/{itemId}/sync", async (
             string itemId,
@@ -94,13 +52,9 @@ public static class PluggyGatewayEndpoints
             IPluggyIntegrationServiceClient pluggyClient,
             CancellationToken ct) =>
         {
-            var pluggyToken = httpContext.Request.Headers[FinanceHub.Shared.Messaging.Constants.FinanceHubHeaderNames.PluggyAccessToken].ToString();
-            if (string.IsNullOrWhiteSpace(pluggyToken))
+            if (!TryGetPluggyToken(httpContext, "ressincronizar a instituição", out var pluggyToken, out var errorResult))
             {
-                return Results.Problem(
-                    title: BusinessErrorTitle,
-                    detail: "O token de acesso do Meu.Pluggy é obrigatório para ressincronizar a instituição.",
-                    statusCode: 400);
+                return errorResult!;
             }
 
             var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value
@@ -119,15 +73,9 @@ public static class PluggyGatewayEndpoints
             IPluggyIntegrationServiceClient pluggyClient,
             CancellationToken ct) =>
         {
-            var pluggyToken = httpContext.Request.Headers[FinanceHubHeaderNames.PluggyAccessToken].ToString();
-            if (string.IsNullOrWhiteSpace(pluggyToken))
+            if (!TryGetPluggyToken(httpContext, "realizar a sincronização", out var pluggyToken, out var errorResult))
             {
-                return Results.Problem(
-                    title: BusinessErrorTitle,
-                    detail: $"O token de acesso do Meu.Pluggy (pluggyAccessToken / {FinanceHubHeaderNames.PluggyAccessToken}) é obrigatório para realizar a sincronização.",
-                    statusCode: 400,
-                    extensions: new Dictionary<string, object?> { { ErrorCodeKey, NullOrEmptyPluggyAccessTokenErrorCode } }
-                );
+                return errorResult!;
             }
 
             var resolvedUserId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value
@@ -156,5 +104,37 @@ public static class PluggyGatewayEndpoints
         .WithSummary("Consulta o status e o resultado de um job de sincronização assíncrono no BFF Gateway.");
 
         return app;
+    }
+
+    private static bool TryGetPluggyToken(HttpContext httpContext, string actionContext, out string token, out IResult? errorResult)
+    {
+        token = httpContext.Request.Headers[FinanceHubHeaderNames.PluggyAccessToken].ToString();
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            errorResult = Results.Problem(
+                title: BusinessErrorTitle,
+                detail: $"O token de acesso do Meu.Pluggy (pluggyAccessToken / {FinanceHubHeaderNames.PluggyAccessToken}) é obrigatório para {actionContext}.",
+                statusCode: 400,
+                extensions: new Dictionary<string, object?> { { ErrorCodeKey, NullOrEmptyPluggyAccessTokenErrorCode } }
+            );
+            return false;
+        }
+
+        errorResult = null;
+        return true;
+    }
+
+    private static async Task<IResult> GetAccountsHandler(
+        HttpContext httpContext,
+        IPluggyIntegrationServiceClient pluggyClient,
+        CancellationToken ct)
+    {
+        if (!TryGetPluggyToken(httpContext, "consultar as contas", out var pluggyToken, out var errorResult))
+        {
+            return errorResult!;
+        }
+
+        var accounts = await pluggyClient.GetAccountsAsync(pluggyToken, ct);
+        return Results.Ok(accounts);
     }
 }

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
 using FinanceHub.TransactionAggregator.Application.DTOs;
@@ -14,6 +15,22 @@ namespace FinanceHub.TransactionAggregator.Infrastructure.Persistence.Repositori
 
 public class TransactionRepository : ITransactionRepository
 {
+    private static readonly Expression<Func<CanonicalTransaction, TransactionDto>> ProjectToDto = t => new TransactionDto(
+        t.Id,
+        t.UserId,
+        t.AccountInfo.InstitutionId,
+        t.AccountInfo.AccountId,
+        t.Amount.Amount,
+        t.Amount.Currency,
+        t.Type.ToString(),
+        t.Description.CleanText,
+        t.CategoryId,
+        t.CategorizationSource.ToString(),
+        t.IsManuallyCategorized,
+        t.TransactionDateUtc,
+        t.BankDetails.Channel.ToString(),
+        t.BankDetails.MerchantName);
+
     private readonly TransactionAggregatorDbContext _context;
 
     public TransactionRepository(TransactionAggregatorDbContext context)
@@ -59,21 +76,7 @@ public class TransactionRepository : ITransactionRepository
             .OrderByDescending(t => t.TransactionDateUtc)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(t => new TransactionDto(
-                t.Id,
-                t.UserId,
-                t.AccountInfo.InstitutionId,
-                t.AccountInfo.AccountId,
-                t.Amount.Amount,
-                t.Amount.Currency,
-                t.Type.ToString(),
-                t.Description.CleanText,
-                t.CategoryId,
-                t.CategorizationSource.ToString(),
-                t.IsManuallyCategorized,
-                t.TransactionDateUtc,
-                t.BankDetails.Channel.ToString(),
-                t.BankDetails.MerchantName))
+            .Select(ProjectToDto)
             .ToListAsync(cancellationToken);
     }
 
@@ -146,21 +149,7 @@ public class TransactionRepository : ITransactionRepository
             .OrderByDescending(t => t.TransactionDateUtc)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(t => new TransactionDto(
-                t.Id,
-                t.UserId,
-                t.AccountInfo.InstitutionId,
-                t.AccountInfo.AccountId,
-                t.Amount.Amount,
-                t.Amount.Currency,
-                t.Type.ToString(),
-                t.Description.CleanText,
-                t.CategoryId,
-                t.CategorizationSource.ToString(),
-                t.IsManuallyCategorized,
-                t.TransactionDateUtc,
-                t.BankDetails.Channel.ToString(),
-                t.BankDetails.MerchantName))
+            .Select(ProjectToDto)
             .ToListAsync(cancellationToken);
 
         var summary = new TransactionSummaryDto(totalIncome, totalExpense, netBalance, totalItems);

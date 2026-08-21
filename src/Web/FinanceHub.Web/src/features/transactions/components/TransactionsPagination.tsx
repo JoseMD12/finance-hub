@@ -31,33 +31,46 @@ export const TransactionsPagination: React.FC<TransactionsPaginationProps> = ({
 
   // Gerar botões de página numerados
   const getPageNumbers = () => {
-    const pages: { id: string; label: number | string; pageNumber?: number }[] = [];
     const maxVisible = 5;
 
     if (totalPages <= maxVisible) {
-      for (let i = 1; i <= totalPages; i++) {
-        pages.push({ id: `page-${i}`, label: i, pageNumber: i });
-      }
-    } else if (currentPage <= 3) {
-      [1, 2, 3, 4].forEach((p) => pages.push({ id: `page-${p}`, label: p, pageNumber: p }));
-      pages.push({ id: 'ellipsis-end', label: '...' });
-      pages.push({ id: `page-${totalPages}`, label: totalPages, pageNumber: totalPages });
-    } else if (currentPage >= totalPages - 2) {
-      pages.push({ id: 'page-1', label: 1, pageNumber: 1 });
-      pages.push({ id: 'ellipsis-start', label: '...' });
-      for (let i = totalPages - 3; i <= totalPages; i++) {
-        pages.push({ id: `page-${i}`, label: i, pageNumber: i });
-      }
-    } else {
-      pages.push({ id: 'page-1', label: 1, pageNumber: 1 });
-      pages.push({ id: 'ellipsis-start', label: '...' });
-      [currentPage - 1, currentPage, currentPage + 1].forEach((p) =>
-        pages.push({ id: `page-${p}`, label: p, pageNumber: p })
-      );
-      pages.push({ id: 'ellipsis-end', label: '...' });
-      pages.push({ id: `page-${totalPages}`, label: totalPages, pageNumber: totalPages });
+      return Array.from({ length: totalPages }, (_, i) => {
+        const p = i + 1;
+        return { id: `page-${p}`, label: p, pageNumber: p };
+      });
     }
-    return pages;
+
+    if (currentPage <= 3) {
+      return [
+        { id: 'page-1', label: 1, pageNumber: 1 },
+        { id: 'page-2', label: 2, pageNumber: 2 },
+        { id: 'page-3', label: 3, pageNumber: 3 },
+        { id: 'page-4', label: 4, pageNumber: 4 },
+        { id: 'ellipsis-end', label: '...' },
+        { id: `page-${totalPages}`, label: totalPages, pageNumber: totalPages },
+      ];
+    }
+
+    if (currentPage >= totalPages - 2) {
+      return [
+        { id: 'page-1', label: 1, pageNumber: 1 },
+        { id: 'ellipsis-start', label: '...' },
+        { id: `page-${totalPages - 3}`, label: totalPages - 3, pageNumber: totalPages - 3 },
+        { id: `page-${totalPages - 2}`, label: totalPages - 2, pageNumber: totalPages - 2 },
+        { id: `page-${totalPages - 1}`, label: totalPages - 1, pageNumber: totalPages - 1 },
+        { id: `page-${totalPages}`, label: totalPages, pageNumber: totalPages },
+      ];
+    }
+
+    return [
+      { id: 'page-1', label: 1, pageNumber: 1 },
+      { id: 'ellipsis-start', label: '...' },
+      { id: `page-${currentPage - 1}`, label: currentPage - 1, pageNumber: currentPage - 1 },
+      { id: `page-${currentPage}`, label: currentPage, pageNumber: currentPage },
+      { id: `page-${currentPage + 1}`, label: currentPage + 1, pageNumber: currentPage + 1 },
+      { id: 'ellipsis-end', label: '...' },
+      { id: `page-${totalPages}`, label: totalPages, pageNumber: totalPages },
+    ];
   };
 
   if (totalItems === 0) return null;

@@ -10,17 +10,6 @@ using Microsoft.AspNetCore.Routing;
 
 namespace FinanceHub.TransactionAggregator.Api.Endpoints;
 
-public sealed record GetTransactionsParameters(
-    string UserId,
-    int? Page,
-    int? PageSize,
-    DateTime? StartDate,
-    DateTime? EndDate,
-    string? InstitutionId,
-    Guid? CategoryId,
-    string? Type,
-    string? Search);
-
 public static class TransactionEndpoints
 {
     public static IEndpointRouteBuilder MapTransactionEndpoints(this IEndpointRouteBuilder endpoints)
