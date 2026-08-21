@@ -1,9 +1,10 @@
 using FinanceHub.ApiGateway.DTOs;
 using FinanceHub.ApiGateway.Services;
-
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.Hosting;
 
 namespace FinanceHub.ApiGateway.Endpoints;
 
@@ -20,8 +21,14 @@ public static class AuthGatewayEndpoints
 
         group.MapPost("/dev-token", (
             DevTokenRequest request,
-            IJwtTokenGenerator tokenGenerator) =>
+            IJwtTokenGenerator tokenGenerator,
+            IWebHostEnvironment env) =>
         {
+            if (!env.IsDevelopment())
+            {
+                return Results.NotFound();
+            }
+
             var userId = string.IsNullOrWhiteSpace(request.UserId) ? "usr_dev_001" : request.UserId;
 
             var tokenString = tokenGenerator.GenerateDevToken(userId);
