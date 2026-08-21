@@ -6,6 +6,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { useDashboardQuery } from '../hooks/useDashboardQuery';
 import { IconCircle } from '@/shared/components/IconCircle/IconCircle';
 import { StatusBadge } from '@/shared/components/StatusBadge/StatusBadge';
+import { PageContainer } from '@/shared/components/PageContainer/PageContainer';
 
 export const DashboardPage: React.FC = () => {
   const { data: dashboard, isLoading, error } = useDashboardQuery();
@@ -17,16 +18,10 @@ export const DashboardPage: React.FC = () => {
   const categoryExpenses = dashboard?.categoryExpenses ?? [];
 
   return (
-    <div className="flex flex-col gap-8 select-none">
-      {/* Dashboard Section Header */}
-      <div>
-        <h1 className="section-title text-xl font-extrabold text-secondary">
-          Visão Geral e Saldos Consolidados
-        </h1>
-        <p className="text-xs text-slate-500 font-medium mt-1">
-          Monitoramento unificado de patrimônio via Open Finance e ingestão de extratos
-        </p>
-      </div>
+    <PageContainer
+      title="Visão Geral e Saldos Consolidados"
+      description="Monitoramento unificado de patrimônio via Open Finance e ingestão de extratos"
+    >
 
       {isLoading && (
         <div className="flex items-center justify-center p-12 text-slate-400 gap-2">
@@ -166,7 +161,7 @@ export const DashboardPage: React.FC = () => {
           </div>
         </>
       )}
-    </div>
+    </PageContainer>
   );
 };
 

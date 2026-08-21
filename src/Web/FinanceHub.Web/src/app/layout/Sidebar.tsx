@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
-  Code2,
+  ArrowLeftRight,
   Landmark,
   LayoutGrid,
   LogOut,
@@ -21,7 +21,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ initialCollapsed = false }) =>
 
   const navItems = [
     { label: 'Dashboard', to: '/', icon: LayoutGrid },
-    { label: 'Dados', to: '/transacoes', icon: Code2 },
+    { label: 'Transações', to: '/transacoes', icon: ArrowLeftRight },
     { label: 'Conexões', to: '/conexoes', icon: Landmark },
   ];
 

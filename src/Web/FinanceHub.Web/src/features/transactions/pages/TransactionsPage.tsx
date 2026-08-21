@@ -6,6 +6,7 @@ import { TransactionsSummaryCards } from '../components/TransactionsSummaryCards
 import { TransactionsFilterBar } from '../components/TransactionsFilterBar';
 import { TransactionsTable } from '../components/TransactionsTable';
 import { TransactionsPagination } from '../components/TransactionsPagination';
+import { PageContainer } from '@/shared/components/PageContainer/PageContainer';
 import type { TransactionDto, TransactionFilterParams } from '../types/transactions.types';
 
 export const TransactionsPage: React.FC = () => {
@@ -34,26 +35,17 @@ export const TransactionsPage: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col gap-6 select-none">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="section-title text-xl font-extrabold text-secondary">
-            Extrato de Transações
-          </h1>
-          <p className="text-xs text-slate-500 font-medium mt-1">
-            Controle de fluxo de caixa e categorização inteligente
-          </p>
-        </div>
-        {!isLoading && totalItems > 0 && (
-          <div className="flex items-center gap-2">
-            <span className="px-3 py-1.5 rounded-xl bg-surface-card border border-border-subtle text-xs font-semibold text-slate-600 shadow-sm">
-              <strong className="text-secondary tabular-nums">{totalItems}</strong> lançamentos registrados
-            </span>
-          </div>
-        )}
-      </div>
-
+    <PageContainer
+      title="Extrato de Transações"
+      description="Controle de fluxo de caixa e categorização inteligente"
+      actions={
+        !isLoading && totalItems > 0 ? (
+          <span className="px-3 py-1.5 rounded-xl bg-surface-card border border-border-subtle text-xs font-semibold text-slate-600 shadow-sm select-none">
+            <strong className="text-secondary tabular-nums">{totalItems}</strong> lançamentos registrados
+          </span>
+        ) : undefined
+      }
+    >
       {/* Resumo do Período */}
       <TransactionsSummaryCards summary={summary} isLoading={isLoading} />
 
@@ -167,7 +159,7 @@ export const TransactionsPage: React.FC = () => {
           </div>
         )}
       </Modal>
-    </div>
+    </PageContainer>
   );
 };
 
