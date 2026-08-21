@@ -1,3 +1,6 @@
+export type NumericInput = number | string | null | undefined;
+export type DateInput = string | Date | null | undefined;
+
 const brlFormatter = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
   currency: 'BRL',
@@ -11,7 +14,7 @@ const dateFormatter = new Intl.DateTimeFormat('pt-BR', {
  * Formata um valor numérico para o padrão de moeda brasileiro (BRL).
  * Exemplo: 1234.56 -> "R$ 1.234,56"
  */
-export function formatCurrencyBRL(value: number | string | null | undefined): string {
+export function formatCurrencyBRL(value: NumericInput): string {
   if (value === null || value === undefined || Number.isNaN(Number(value))) {
     return 'R$ 0,00';
   }
@@ -21,7 +24,7 @@ export function formatCurrencyBRL(value: number | string | null | undefined): st
 /**
  * Formata uma data ISO ou string para exibição DD/MM/YYYY.
  */
-export function formatDateBR(dateString: string | Date | null | undefined): string {
+export function formatDateBR(dateString: DateInput): string {
   if (!dateString) return '-';
   
   let date: Date;
@@ -38,7 +41,7 @@ export function formatDateBR(dateString: string | Date | null | undefined): stri
   return dateFormatter.format(date);
 }
 
-export function formatDateTimeBR(dateString: string | Date | null | undefined): string {
+export function formatDateTimeBR(dateString: DateInput): string {
   if (!dateString) return '-';
   const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
   if (Number.isNaN(date.getTime())) return '-';
@@ -53,7 +56,7 @@ export function formatDateTimeBR(dateString: string | Date | null | undefined): 
 /**
  * Formata apenas a hora e minutos no formato HH:MM (fuso América/São Paulo).
  */
-export function formatTimeBR(dateString: string | Date | null | undefined): string {
+export function formatTimeBR(dateString: DateInput): string {
   if (!dateString) return '--:--';
   const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
   if (Number.isNaN(date.getTime())) return '--:--';

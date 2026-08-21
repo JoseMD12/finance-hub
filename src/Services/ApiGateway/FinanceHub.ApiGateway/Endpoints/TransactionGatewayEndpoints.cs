@@ -8,6 +8,16 @@ using Microsoft.AspNetCore.Routing;
 
 namespace FinanceHub.ApiGateway.Endpoints;
 
+public sealed record TransactionGatewayQueryParameters(
+    int? Page,
+    int? PageSize,
+    DateTime? StartDate,
+    DateTime? EndDate,
+    string? InstitutionId,
+    Guid? CategoryId,
+    string? Type,
+    string? Search);
+
 public static class TransactionGatewayEndpoints
 {
     public static IEndpointRouteBuilder MapTransactionGatewayEndpoints(this IEndpointRouteBuilder endpoints)
@@ -18,14 +28,7 @@ public static class TransactionGatewayEndpoints
 
         group.MapGet("/", async (
             ClaimsPrincipal user,
-            int? page,
-            int? pageSize,
-            DateTime? startDate,
-            DateTime? endDate,
-            string? institutionId,
-            Guid? categoryId,
-            string? type,
-            string? search,
+            [AsParameters] TransactionGatewayQueryParameters query,
             ITransactionAggregatorServiceClient transactionClient,
             CancellationToken ct) =>
         {
@@ -39,14 +42,14 @@ public static class TransactionGatewayEndpoints
 
             var filter = new GatewayTransactionFilterDto(
                 userId,
-                page ?? 1,
-                pageSize ?? 20,
-                startDate,
-                endDate,
-                institutionId,
-                categoryId,
-                type,
-                search);
+                query.Page ?? 1,
+                query.PageSize ?? 20,
+                query.StartDate,
+                query.EndDate,
+                query.InstitutionId,
+                query.CategoryId,
+                query.Type,
+                query.Search);
 
             var result = await transactionClient.GetTransactionsAsync(filter, ct);
             return Results.Ok(result);

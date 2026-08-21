@@ -10,6 +10,17 @@ using Microsoft.AspNetCore.Routing;
 
 namespace FinanceHub.TransactionAggregator.Api.Endpoints;
 
+public sealed record GetTransactionsParameters(
+    string UserId,
+    int? Page,
+    int? PageSize,
+    DateTime? StartDate,
+    DateTime? EndDate,
+    string? InstitutionId,
+    Guid? CategoryId,
+    string? Type,
+    string? Search);
+
 public static class TransactionEndpoints
 {
     public static IEndpointRouteBuilder MapTransactionEndpoints(this IEndpointRouteBuilder endpoints)
@@ -30,28 +41,20 @@ public static class TransactionEndpoints
         .ProducesProblem(StatusCodes.Status400BadRequest);
 
         group.MapGet("/", async (
-            string userId,
-            int? page,
-            int? pageSize,
-            DateTime? startDate,
-            DateTime? endDate,
-            string? institutionId,
-            Guid? categoryId,
-            string? type,
-            string? search,
+            [AsParameters] GetTransactionsParameters parameters,
             IGetTransactionsQueryHandler handler,
             CancellationToken cancellationToken) =>
         {
             var filter = new TransactionFilterDto(
-                userId,
-                page ?? 1,
-                pageSize ?? 20,
-                startDate,
-                endDate,
-                institutionId,
-                categoryId,
-                type,
-                search);
+                parameters.UserId,
+                parameters.Page ?? 1,
+                parameters.PageSize ?? 20,
+                parameters.StartDate,
+                parameters.EndDate,
+                parameters.InstitutionId,
+                parameters.CategoryId,
+                parameters.Type,
+                parameters.Search);
 
             var query = new GetTransactionsQuery(filter);
             var result = await handler.Handle(query, cancellationToken);

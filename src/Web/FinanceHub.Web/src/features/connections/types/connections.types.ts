@@ -28,9 +28,11 @@ export interface SyncJobAcceptedDto {
   startedAtUtc: string;
 }
 
+export type SyncJobStatus = 'Processing' | 'Completed' | 'Failed';
+
 export interface SyncJobStatusDto {
   jobId: string;
-  status: 'Processing' | 'Completed' | 'Failed' | string;
+  status: SyncJobStatus;
   message: string;
   startedAtUtc: string;
   completedAtUtc?: string | null;

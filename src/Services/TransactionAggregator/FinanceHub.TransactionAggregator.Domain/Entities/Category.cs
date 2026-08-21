@@ -34,9 +34,7 @@ public class Category
         Guid? parentCategoryId,
         string iconKey,
         string colorToken,
-        bool isSystemDefault,
-        bool isActive,
-        DateTime createdAtUtc)
+        bool isSystemDefault)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
@@ -55,8 +53,8 @@ public class Category
         IconKey = string.IsNullOrWhiteSpace(iconKey) ? "tag" : iconKey.Trim();
         ColorToken = string.IsNullOrWhiteSpace(colorToken) ? "gray" : colorToken.Trim();
         IsSystemDefault = isSystemDefault;
-        IsActive = isActive;
-        CreatedAtUtc = createdAtUtc;
+        IsActive = true;
+        CreatedAtUtc = DateTime.UtcNow;
     }
 
     public static Category Create(
@@ -75,9 +73,7 @@ public class Category
             parentCategoryId,
             iconKey,
             colorToken,
-            isSystemDefault,
-            isActive: true,
-            DateTime.UtcNow);
+            isSystemDefault);
     }
 
     public void Deactivate()

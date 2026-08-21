@@ -24,12 +24,12 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<TransactionAggregatorDbContext>();
-    dbContext.Database.Migrate();
+    await dbContext.Database.MigrateAsync();
 
-    if (!dbContext.Categories.Any())
+    if (!await dbContext.Categories.AnyAsync())
     {
-        dbContext.Categories.AddRange(CategorySeedData.GetDefaultCategories());
-        dbContext.SaveChanges();
+        await dbContext.Categories.AddRangeAsync(CategorySeedData.GetDefaultCategories());
+        await dbContext.SaveChangesAsync();
     }
 }
 

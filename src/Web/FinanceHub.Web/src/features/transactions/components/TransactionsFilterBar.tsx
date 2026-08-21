@@ -93,10 +93,13 @@ export const TransactionsFilterBar: React.FC<TransactionsFilterBarProps> = ({
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-end">
         {/* Busca textual */}
         <div className="flex flex-col gap-1.5 w-full">
-          <label className="text-xs font-semibold text-slate-700 pl-1">Buscar por Termo</label>
+          <label htmlFor="transactions-search-input" className="text-xs font-semibold text-slate-700 pl-1">
+            Buscar por Termo
+          </label>
           <div className="relative flex items-center h-10">
             <Search className="w-4 h-4 absolute left-3.5 text-slate-400 pointer-events-none" />
             <input
+              id="transactions-search-input"
               type="text"
               placeholder="Descrição, loja ou estabelecimento..."
               value={filters.search ?? ''}

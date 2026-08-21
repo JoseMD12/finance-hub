@@ -9,6 +9,10 @@ namespace FinanceHub.ApiGateway.Endpoints;
 
 public static class PluggyGatewayEndpoints
 {
+    private const string BusinessErrorTitle = "Erro de Negócio";
+    private const string ErrorCodeKey = "errorCode";
+    private const string NullOrEmptyPluggyAccessTokenErrorCode = "NULL_OR_EMPTY_PLUGGY_ACCESS_TOKEN";
+
     public static IEndpointRouteBuilder MapPluggyGatewayEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/v1/gateway/pluggy")
@@ -23,10 +27,10 @@ public static class PluggyGatewayEndpoints
             if (string.IsNullOrWhiteSpace(pluggyToken))
             {
                 return Results.Problem(
-                    title: "Erro de Negócio",
+                    title: BusinessErrorTitle,
                     detail: $"O token de acesso do Meu.Pluggy (pluggyAccessToken / {FinanceHubHeaderNames.PluggyAccessToken}) é obrigatório para consultar as instituições.",
                     statusCode: 400,
-                    extensions: new Dictionary<string, object?> { { "errorCode", "NULL_OR_EMPTY_PLUGGY_ACCESS_TOKEN" } }
+                    extensions: new Dictionary<string, object?> { { ErrorCodeKey, NullOrEmptyPluggyAccessTokenErrorCode } }
                 );
             }
 
@@ -46,10 +50,10 @@ public static class PluggyGatewayEndpoints
             if (string.IsNullOrWhiteSpace(pluggyToken))
             {
                 return Results.Problem(
-                    title: "Erro de Negócio",
+                    title: BusinessErrorTitle,
                     detail: $"O token de acesso do Meu.Pluggy (pluggyAccessToken / {FinanceHubHeaderNames.PluggyAccessToken}) é obrigatório para consultar as contas.",
                     statusCode: 400,
-                    extensions: new Dictionary<string, object?> { { "errorCode", "NULL_OR_EMPTY_PLUGGY_ACCESS_TOKEN" } }
+                    extensions: new Dictionary<string, object?> { { ErrorCodeKey, NullOrEmptyPluggyAccessTokenErrorCode } }
                 );
             }
 
@@ -69,10 +73,10 @@ public static class PluggyGatewayEndpoints
             if (string.IsNullOrWhiteSpace(pluggyToken))
             {
                 return Results.Problem(
-                    title: "Erro de Negócio",
+                    title: BusinessErrorTitle,
                     detail: $"O token de acesso do Meu.Pluggy (pluggyAccessToken / {FinanceHubHeaderNames.PluggyAccessToken}) é obrigatório para consultar as contas.",
                     statusCode: 400,
-                    extensions: new Dictionary<string, object?> { { "errorCode", "NULL_OR_EMPTY_PLUGGY_ACCESS_TOKEN" } }
+                    extensions: new Dictionary<string, object?> { { ErrorCodeKey, NullOrEmptyPluggyAccessTokenErrorCode } }
                 );
             }
 
@@ -94,7 +98,7 @@ public static class PluggyGatewayEndpoints
             if (string.IsNullOrWhiteSpace(pluggyToken))
             {
                 return Results.Problem(
-                    title: "Erro de Negócio",
+                    title: BusinessErrorTitle,
                     detail: "O token de acesso do Meu.Pluggy é obrigatório para ressincronizar a instituição.",
                     statusCode: 400);
             }
@@ -119,10 +123,10 @@ public static class PluggyGatewayEndpoints
             if (string.IsNullOrWhiteSpace(pluggyToken))
             {
                 return Results.Problem(
-                    title: "Erro de Negócio",
+                    title: BusinessErrorTitle,
                     detail: $"O token de acesso do Meu.Pluggy (pluggyAccessToken / {FinanceHubHeaderNames.PluggyAccessToken}) é obrigatório para realizar a sincronização.",
                     statusCode: 400,
-                    extensions: new Dictionary<string, object?> { { "errorCode", "NULL_OR_EMPTY_PLUGGY_ACCESS_TOKEN" } }
+                    extensions: new Dictionary<string, object?> { { ErrorCodeKey, NullOrEmptyPluggyAccessTokenErrorCode } }
                 );
             }
 

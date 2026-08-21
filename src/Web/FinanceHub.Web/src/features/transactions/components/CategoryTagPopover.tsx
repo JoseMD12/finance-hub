@@ -105,7 +105,6 @@ export const CategoryTagPopover: React.FC<CategoryTagPopoverProps> = ({
 
       {isOpen && (
         <div
-          role="dialog"
           aria-label="Alterar categoria da transação"
           className="absolute left-0 top-full mt-2 z-50 w-72 p-3.5 bg-surface-card rounded-2xl shadow-elevated border border-border-subtle flex flex-col gap-3 animate-in fade-in zoom-in-95 duration-150"
         >
@@ -180,34 +179,35 @@ export const CategoryTagPopover: React.FC<CategoryTagPopoverProps> = ({
                 return (
                   <div key={parent.id} className="flex flex-col gap-0.5">
                     {/* Item Principal */}
-                    <div
-                      className={`flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-medium text-left transition-all cursor-pointer ${
-                        isParentSelected
-                          ? 'bg-brand-light text-brand-dark font-bold shadow-xs'
-                          : 'hover:bg-slate-100/80 text-slate-700 hover:text-slate-900'
-                      }`}
-                      onClick={() => handleSelectCategory(parent.id)}
-                    >
-                      <span className="truncate flex-1 font-semibold">{parent.name}</span>
-
-                      <div className="flex items-center gap-1.5 shrink-0">
+                    <div className="flex items-center justify-between rounded-lg">
+                      <button
+                        type="button"
+                        onClick={() => handleSelectCategory(parent.id)}
+                        className={`flex-1 flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-medium text-left transition-all cursor-pointer ${
+                          isParentSelected
+                            ? 'bg-brand-light text-brand-dark font-bold shadow-xs'
+                            : 'hover:bg-slate-100/80 text-slate-700 hover:text-slate-900'
+                        }`}
+                      >
+                        <span className="truncate font-semibold">{parent.name}</span>
                         {isParentSelected && <Check className="w-3.5 h-3.5 text-brand shrink-0" />}
-                        {hasSub && (
-                          <button
-                            type="button"
-                            onClick={(e) => toggleExpand(parent.id, e)}
-                            aria-label={isExpanded ? `Recolher subcategorias de ${parent.name}` : `Expandir subcategorias de ${parent.name}`}
-                            title={isExpanded ? 'Recolher subcategorias' : 'Ver subcategorias'}
-                            className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-brand hover:bg-brand-light active:scale-95 transition-all cursor-pointer -mr-1"
-                          >
-                            {isExpanded ? (
-                              <ChevronDown className="w-4 h-4" />
-                            ) : (
-                              <ChevronRight className="w-4 h-4" />
-                            )}
-                          </button>
-                        )}
-                      </div>
+                      </button>
+
+                      {hasSub && (
+                        <button
+                          type="button"
+                          onClick={(e) => toggleExpand(parent.id, e)}
+                          aria-label={isExpanded ? `Recolher subcategorias de ${parent.name}` : `Expandir subcategorias de ${parent.name}`}
+                          title={isExpanded ? 'Recolher subcategorias' : 'Ver subcategorias'}
+                          className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-brand hover:bg-brand-light active:scale-95 transition-all cursor-pointer shrink-0 ml-1"
+                        >
+                          {isExpanded ? (
+                            <ChevronDown className="w-4 h-4" />
+                          ) : (
+                            <ChevronRight className="w-4 h-4" />
+                          )}
+                        </button>
+                      )}
                     </div>
 
                     {/* Subcategorias expandidas */}

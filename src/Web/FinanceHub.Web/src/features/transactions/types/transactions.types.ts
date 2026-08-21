@@ -10,6 +10,8 @@ export interface CategoryDto {
   readonly subcategories?: CategoryDto[];
 }
 
+export type TransactionType = 'Credit' | 'Debit';
+
 export interface TransactionDto {
   readonly id: string;
   readonly userId: string;
@@ -17,7 +19,7 @@ export interface TransactionDto {
   readonly accountNumber: string;
   readonly amount: number;
   readonly currency: string;
-  readonly type: 'Credit' | 'Debit' | string;
+  readonly type: TransactionType;
   readonly description: string;
   readonly categoryId: string;
   readonly categorizationSource: string;

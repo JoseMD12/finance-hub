@@ -31,19 +31,31 @@ export const TransactionsPagination: React.FC<TransactionsPaginationProps> = ({
 
   // Gerar botões de página numerados
   const getPageNumbers = () => {
-    const pages: (number | string)[] = [];
+    const pages: { id: string; label: number | string; pageNumber?: number }[] = [];
     const maxVisible = 5;
 
     if (totalPages <= maxVisible) {
-      for (let i = 1; i <= totalPages; i++) pages.push(i);
-    } else {
-      if (currentPage <= 3) {
-        pages.push(1, 2, 3, 4, '...', totalPages);
-      } else if (currentPage >= totalPages - 2) {
-        pages.push(1, '...', totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
-      } else {
-        pages.push(1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages);
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push({ id: `page-${i}`, label: i, pageNumber: i });
       }
+    } else if (currentPage <= 3) {
+      [1, 2, 3, 4].forEach((p) => pages.push({ id: `page-${p}`, label: p, pageNumber: p }));
+      pages.push({ id: 'ellipsis-end', label: '...' });
+      pages.push({ id: `page-${totalPages}`, label: totalPages, pageNumber: totalPages });
+    } else if (currentPage >= totalPages - 2) {
+      pages.push({ id: 'page-1', label: 1, pageNumber: 1 });
+      pages.push({ id: 'ellipsis-start', label: '...' });
+      for (let i = totalPages - 3; i <= totalPages; i++) {
+        pages.push({ id: `page-${i}`, label: i, pageNumber: i });
+      }
+    } else {
+      pages.push({ id: 'page-1', label: 1, pageNumber: 1 });
+      pages.push({ id: 'ellipsis-start', label: '...' });
+      [currentPage - 1, currentPage, currentPage + 1].forEach((p) =>
+        pages.push({ id: `page-${p}`, label: p, pageNumber: p })
+      );
+      pages.push({ id: 'ellipsis-end', label: '...' });
+      pages.push({ id: `page-${totalPages}`, label: totalPages, pageNumber: totalPages });
     }
     return pages;
   };
@@ -84,25 +96,25 @@ export const TransactionsPagination: React.FC<TransactionsPaginationProps> = ({
           </button>
 
           {/* Páginas numeradas */}
-          {getPageNumbers().map((p, idx) =>
-            typeof p === 'number' ? (
+          {getPageNumbers().map((item) =>
+            item.pageNumber !== undefined ? (
               <button
-                key={idx}
+                key={item.id}
                 type="button"
-                onClick={() => onPageChange(p)}
-                aria-label={`Página ${p}`}
-                aria-current={p === currentPage ? 'page' : undefined}
+                onClick={() => onPageChange(item.pageNumber!)}
+                aria-label={`Página ${item.label}`}
+                aria-current={item.pageNumber === currentPage ? 'page' : undefined}
                 className={`min-w-8 h-8 px-2 rounded-lg font-bold transition-colors cursor-pointer ${
-                  p === currentPage
+                  item.pageNumber === currentPage
                     ? 'bg-brand text-white shadow-sm'
                     : 'bg-surface-ground text-slate-600 hover:bg-slate-100 border border-border-subtle'
                 }`}
               >
-                {p}
+                {item.label}
               </button>
             ) : (
-              <span key={idx} className="px-1 text-slate-400">
-                {p}
+              <span key={item.id} className="px-1 text-slate-400">
+                {item.label}
               </span>
             )
           )}
