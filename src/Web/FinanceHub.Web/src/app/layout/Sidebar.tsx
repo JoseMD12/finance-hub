@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
-  Code2,
+  ArrowLeftRight,
   Landmark,
   LayoutGrid,
   LogOut,
@@ -21,14 +21,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ initialCollapsed = false }) =>
 
   const navItems = [
     { label: 'Dashboard', to: '/', icon: LayoutGrid },
-    { label: 'Dados', to: '/transacoes', icon: Code2 },
+    { label: 'Transações', to: '/transacoes', icon: ArrowLeftRight },
     { label: 'Conexões', to: '/conexoes', icon: Landmark },
   ];
 
   return (
     <aside
       className={cn(
-        'bg-surface-card border-r border-border-subtle flex flex-col justify-between p-4 shadow-card transition-all duration-300 ease-in-out select-none relative z-30',
+        'sticky top-0 h-screen shrink-0 bg-surface-card border-r border-border-subtle flex flex-col justify-between p-4 shadow-card transition-[width] duration-300 ease-in-out select-none z-30',
         isCollapsed ? 'w-20' : 'w-64'
       )}
     >
@@ -38,11 +38,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ initialCollapsed = false }) =>
         onClick={() => setIsCollapsed((prev) => !prev)}
         aria-label={isCollapsed ? 'Expandir barra lateral' : 'Recolher barra lateral'}
         title={isCollapsed ? 'Expandir' : 'Recolher'}
-        className="absolute -right-3 top-7 w-6 h-6 rounded-full bg-white border border-border-subtle shadow-sm flex items-center justify-center text-slate-500 hover:text-brand hover:scale-110 transition-all cursor-pointer z-40"
+        className="absolute -right-3 top-7 w-6 h-6 rounded-full bg-white border border-border-subtle shadow-sm flex items-center justify-center text-slate-500 hover:text-brand hover:scale-110 transition-all cursor-pointer z-50"
       >
         {isCollapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
       </button>
-      <div>
+      <div className="flex-1 flex flex-col min-h-0 overflow-y-auto overflow-x-hidden">
         {/* User Profile Header (Fidelidade ao Side Bar.pdf) */}
         <div
           className={cn(

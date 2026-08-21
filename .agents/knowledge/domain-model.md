@@ -8,9 +8,12 @@ This document defines the core Domain Driven Design (DDD) model for **FinanceHub
 
 FinanceHub enforces **Database-per-Service** isolation. Each aggregate resides strictly within its owning microservice:
 
-- **`FinanceHub.AuthConsent`**: Manages `ConexaoOpenFinance`, consent lifecycle, OAuth2 tokens (`BankCredentials`), and FAPI security parameters.
-- **`FinanceHub.TransactionAggregator`**: Manages core financial domain models: `ContaFinanceira`, `Instituicao`, `Transacao`, `Categoria`, and `Orcamento`.
-- **`FinanceHub.ItauIntegration` / `FinanceHub.MercadoPagoIntegration` / `FinanceHub.InterIntegration`**: Stateless bank integration services. Translate external financial payloads into `TransactionIngested` integration events via MassTransit/RabbitMQ + Transactional Outbox Pattern.
+- **`FinanceHub.PluggyIntegration`**: Manages Open Finance personal bank connections via Meu.Pluggy (covering Itaú, Banco Inter, and Mercado Pago), emits `TransactionIngested` and `InvoiceItemIngested`.
+- **`FinanceHub.FileImporter`**: Offline ingestion engine for `.ofx`, `.csv`, and `.pdf` files.
+- **`FinanceHub.TransactionAggregator`**: Manages core financial domain models: `ContaFinanceira`, `Instituicao`, `CanonicalTransaction` (`Transacao`), `Category` (`Categoria`), and `Orcamento`.
+- **`FinanceHub.ApiGateway`**: BFF handling client authentication, rate limiting, and route orchestration.
+
+> **Historical Architecture Note**: Legacy direct bank connectors (`AuthConsent`, `ItauIntegration`, `MercadoPagoIntegration`, `InterIntegration`) and `Shared.Certificates` have been consolidated into `PluggyIntegration` and `FileImporter` (see [System Architecture ADR](system-architecture-and-services.md)).
 
 ---
 
@@ -88,17 +91,15 @@ Tracks spending limits per category for a specified time frame.
 - **Domain Methods**:
   - `AcumularGasto(Money valor)`: Recalculates current spending and raises alerts if thresholds (80%, 100%) are passed.
 
-### 1.6 `ConexaoOpenFinance` (Aggregate Root — `AuthConsent`)
-Manages Open Finance consent tokens, mTLS parameters, and sync status for a specific bank link.
+### 1.6 `ConexaoOpenFinance` (Aggregate Root / Entity — `PluggyIntegration`)
+Manages Open Finance connection status, item synchronization timestamps, and account mappings.
 - **Properties**:
   - `Id`: `ConexaoId`
   - `UsuarioId`: `UsuarioId`
   - `InstituicaoId`: `InstituicaoId`
-  - `ConsentId`: `ConsentId` (Value Object representing Open Finance Consent UUID)
-  - `StatusConsentimento`: `StatusConsentimentoEnum` (`AwaitingAuthorisation`, `Authorised`, `Rejected`, `Revoked`, `Expired`)
-  - `DataExpiracaoConsentimento`: `DateTimeOffset`
+  - `ItemId`: `string` (External Pluggy item ID)
+  - `Status`: `StatusConexaoEnum` (`UPDATED`, `UPDATING`, `WAITING_USER_INPUT`, `LOGIN_ERROR`)
   - `UltimaSincronizacao`: `DateTimeOffset?`
-  - `Credenciais`: `BankCredentials` (Encrypted token store Value Object)
 
 ---
 
@@ -132,10 +133,11 @@ Manages Open Finance consent tokens, mTLS parameters, and sync status for a spec
 | Event Name | Type | Emitted By | Key Payload |
 |---|---|---|---|
 | `TransacaoCriadaEvent` | Domain Event | `TransactionAggregator` | `TransacaoId`, `ContaId`, `Money`, `DataTransacao`, `HashUnico` |
-| `TransactionIngested` | Integration Event | Bank Integration Services | `ExternalAccountId`, `BankCode`, `Amount`, `Description`, `RawPayload`, `IngestedAt` |
+| `TransactionIngested` | Integration Event | `PluggyIntegration` / `FileImporter` | `ExternalAccountId`, `BankCode`, `Amount`, `Description`, `RawPayload`, `IngestedAt` |
+| `InvoiceItemIngested` | Integration Event | `PluggyIntegration` / `FileImporter` | `CreditCardAccountId`, `Amount`, `Description`, `Category`, `DueDate` |
+| `TransactionsBatchIngested` | Integration Event | `PluggyIntegration` | `UserId`, `Transactions`, `BatchId`, `PublishedAtUtc` |
 | `TransactionNormalized` | Integration Event | `TransactionAggregator` | `TransacaoId`, `ContaId`, `Valor`, `HashUnico`, `NormalizedAt` |
 | `OrcamentoExcedidoEvent` | Domain Event | `TransactionAggregator` | `OrcamentoId`, `UsuarioId`, `CategoriaId`, `Limite`, `ValorAtual` |
-| `ConexaoOpenFinanceExpiradaEvent` | Integration Event | `AuthConsent` | `ConexaoId`, `UsuarioId`, `ConsentId`, `DataExpiracao` |
 
 ---
 

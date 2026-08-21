@@ -39,29 +39,26 @@ public class UserCustomRuleCategoryResolver : ICategoryResolver
 
 public class GlobalPatternCategoryResolver : ICategoryResolver
 {
-    private static readonly Guid TransportCategoryId = Guid.Parse("10000000-0000-0000-0000-000000000001");
-    private static readonly Guid FoodCategoryId = Guid.Parse("10000000-0000-0000-0000-000000000002");
-    private static readonly Guid ShoppingCategoryId = Guid.Parse("10000000-0000-0000-0000-000000000003");
+    private readonly IMerchantDatasetProvider _merchantDatasetProvider;
 
     public int Priority => 2;
 
+    public GlobalPatternCategoryResolver(IMerchantDatasetProvider merchantDatasetProvider)
+    {
+        _merchantDatasetProvider = merchantDatasetProvider;
+    }
+
     public Task<CategorizationResult?> ResolveAsync(string userId, SanitizedDescription description, CancellationToken cancellationToken)
     {
-        var text = description.CleanText.ToUpperInvariant();
-
-        if (text.Contains("UBER") || text.Contains("99APP") || text.Contains("POSTO"))
+        if (string.IsNullOrWhiteSpace(description.CleanText))
         {
-            return Task.FromResult<CategorizationResult?>(new CategorizationResult(TransportCategoryId, CategorizationSource.GlobalRule));
+            return Task.FromResult<CategorizationResult?>(null);
         }
 
-        if (text.Contains("IFOOD") || text.Contains("RESTAURANTE") || text.Contains("PADARIA") || text.Contains("MCDONALDS"))
+        var match = _merchantDatasetProvider.Match(description.CleanText);
+        if (match != null)
         {
-            return Task.FromResult<CategorizationResult?>(new CategorizationResult(FoodCategoryId, CategorizationSource.GlobalRule));
-        }
-
-        if (text.Contains("AMAZON") || text.Contains("MERCADOLIVRE") || text.Contains("MAGALU"))
-        {
-            return Task.FromResult<CategorizationResult?>(new CategorizationResult(ShoppingCategoryId, CategorizationSource.GlobalRule));
+            return Task.FromResult<CategorizationResult?>(new CategorizationResult(match.CategoryId, CategorizationSource.GlobalRule));
         }
 
         return Task.FromResult<CategorizationResult?>(null);
@@ -70,7 +67,7 @@ public class GlobalPatternCategoryResolver : ICategoryResolver
 
 public class DefaultFallbackCategoryResolver : ICategoryResolver
 {
-    public static readonly Guid OthersCategoryId = Guid.Parse("99999999-9999-9999-9999-999999999999");
+    public static readonly Guid OthersCategoryId = Guid.Parse("11111111-1111-1111-1111-111111111110");
 
     public int Priority => 3;
 

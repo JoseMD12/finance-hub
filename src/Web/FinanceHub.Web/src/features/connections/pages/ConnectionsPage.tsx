@@ -8,6 +8,7 @@ import { ConnectionCard } from '../components/ConnectionCard';
 import { EmptyConnectionsState } from '../components/EmptyConnectionsState';
 import { FileImporterCard } from '../components/FileImporterCard';
 import { Skeleton } from '@/shared/components/Skeleton/Skeleton';
+import { PageContainer } from '@/shared/components/PageContainer/PageContainer';
 
 export const ConnectionsPage: React.FC = () => {
   const { token, hasToken, lastSync, saveToken, saveLastSync, clearToken } = usePluggyToken();
@@ -73,16 +74,10 @@ export const ConnectionsPage: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-xl font-extrabold text-secondary">
-          Conexões
-        </h1>
-        <p className="text-xs text-slate-500 font-medium">
-          Instituições bancárias e extratos conectados
-        </p>
-      </div>
-
+    <PageContainer
+      title="Conexões"
+      description="Instituições bancárias e extratos conectados"
+    >
       {lastSync && <SyncSummaryBanner summary={lastSync} />}
 
       <PluggySyncPanel
@@ -106,7 +101,7 @@ export const ConnectionsPage: React.FC = () => {
       </section>
 
       <FileImporterCard />
-    </div>
+    </PageContainer>
   );
 };
 

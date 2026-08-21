@@ -1,5 +1,7 @@
+using System;
 using FinanceHub.TransactionAggregator.Application.Commands.CategorizeTransaction;
 using FinanceHub.TransactionAggregator.Application.Commands.IngestTransaction;
+using FinanceHub.TransactionAggregator.Application.DTOs;
 using FinanceHub.TransactionAggregator.Application.Queries.GetConsolidatedBalance;
 using FinanceHub.TransactionAggregator.Application.Queries.GetTransactions;
 using Microsoft.AspNetCore.Builder;
@@ -28,18 +30,27 @@ public static class TransactionEndpoints
         .ProducesProblem(StatusCodes.Status400BadRequest);
 
         group.MapGet("/", async (
-            string userId,
-            int? page,
-            int? pageSize,
+            [AsParameters] GetTransactionsParameters parameters,
             IGetTransactionsQueryHandler handler,
             CancellationToken cancellationToken) =>
         {
-            var query = new GetTransactionsQuery(userId, page ?? 1, pageSize ?? 20);
+            var filter = new TransactionFilterDto(
+                parameters.UserId,
+                parameters.Page ?? 1,
+                parameters.PageSize ?? 20,
+                parameters.StartDate,
+                parameters.EndDate,
+                parameters.InstitutionId,
+                parameters.CategoryId,
+                parameters.Type,
+                parameters.Search);
+
+            var query = new GetTransactionsQuery(filter);
             var result = await handler.Handle(query, cancellationToken);
             return Results.Ok(result);
         })
         .WithName("GetTransactions")
-        .Produces(StatusCodes.Status200OK);
+        .Produces<PagedTransactionsResponseDto>(StatusCodes.Status200OK);
 
         group.MapGet("/balances/user/{userId}", async (
             string userId,
@@ -63,7 +74,8 @@ public static class TransactionEndpoints
                 id,
                 request.UserId,
                 request.NewCategoryId,
-                request.CreateCustomRule);
+                request.CreateCustomRule,
+                request.ApplyToPastTransactions);
 
             await handler.Handle(command, cancellationToken);
             return Results.NoContent();
@@ -79,4 +91,5 @@ public static class TransactionEndpoints
 public record CategorizeTransactionRequest(
     string UserId,
     Guid NewCategoryId,
-    bool CreateCustomRule);
+    bool CreateCustomRule,
+    bool ApplyToPastTransactions = false);

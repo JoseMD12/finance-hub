@@ -62,12 +62,6 @@ namespace FinanceHub.TransactionAggregator.Infrastructure.Migrations
                     b.Property<Guid>("CategoryId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)")
-                        .HasColumnName("description");
-
                     b.Property<string>("Hash")
                         .IsRequired()
                         .HasMaxLength(64)
@@ -88,6 +82,12 @@ namespace FinanceHub.TransactionAggregator.Infrastructure.Migrations
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)");
 
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Hash")
@@ -95,6 +95,83 @@ namespace FinanceHub.TransactionAggregator.Infrastructure.Migrations
                         .HasDatabaseName("idx_canonical_transactions_hash");
 
                     b.ToTable("canonical_transactions", (string)null);
+                });
+
+            modelBuilder.Entity("FinanceHub.TransactionAggregator.Domain.Entities.Category", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ColorToken")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("IconKey")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsSystemDefault")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid?>("ParentCategoryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ParentCategoryId");
+
+                    b.HasIndex("Slug")
+                        .IsUnique()
+                        .HasDatabaseName("idx_categories_slug");
+
+                    b.ToTable("categories", (string)null);
+                });
+
+            modelBuilder.Entity("FinanceHub.TransactionAggregator.Domain.Entities.InboxProcessedMessage", b =>
+                {
+                    b.Property<string>("MessageHash")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("message_hash");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)")
+                        .HasColumnName("event_type");
+
+                    b.Property<DateTime>("ProcessedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("processed_at_utc");
+
+                    b.HasKey("MessageHash");
+
+                    b.ToTable("inbox_processed_messages", (string)null);
                 });
 
             modelBuilder.Entity("FinanceHub.TransactionAggregator.Domain.Entities.UserCategoryRule", b =>
@@ -119,6 +196,12 @@ namespace FinanceHub.TransactionAggregator.Infrastructure.Migrations
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)");
 
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
                     b.HasKey("Id");
 
                     b.HasIndex("UserId", "Pattern")
@@ -126,6 +209,37 @@ namespace FinanceHub.TransactionAggregator.Infrastructure.Migrations
                         .HasDatabaseName("idx_user_category_rules_user_pattern");
 
                     b.ToTable("user_category_rules", (string)null);
+                });
+
+            modelBuilder.Entity("FinanceHub.TransactionAggregator.Domain.Entities.UserConsolidatedBalanceReadModel", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("user_id");
+
+                    b.Property<DateTime>("LastCalculatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_calculated_at_utc");
+
+                    b.Property<decimal>("NetConsolidatedBalance")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("net_consolidated_balance");
+
+                    b.Property<decimal>("TotalCheckingBalance")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("total_checking_balance");
+
+                    b.Property<decimal>("TotalCreditCardSpent")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("total_credit_card_spent");
+
+                    b.HasKey("UserId");
+
+                    b.ToTable("user_consolidated_balance_read_model", (string)null);
                 });
 
             modelBuilder.Entity("MassTransit.EntityFrameworkCoreIntegration.InboxState", b =>
@@ -434,6 +548,31 @@ namespace FinanceHub.TransactionAggregator.Infrastructure.Migrations
                                 .HasForeignKey("CanonicalTransactionId");
                         });
 
+                    b.OwnsOne("FinanceHub.TransactionAggregator.Domain.ValueObjects.SanitizedDescription", "Description", b1 =>
+                        {
+                            b1.Property<Guid>("CanonicalTransactionId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("CleanText")
+                                .IsRequired()
+                                .HasMaxLength(255)
+                                .HasColumnType("character varying(255)")
+                                .HasColumnName("description");
+
+                            b1.Property<string>("OriginalText")
+                                .IsRequired()
+                                .HasMaxLength(512)
+                                .HasColumnType("character varying(512)")
+                                .HasColumnName("original_description");
+
+                            b1.HasKey("CanonicalTransactionId");
+
+                            b1.ToTable("canonical_transactions");
+
+                            b1.WithOwner()
+                                .HasForeignKey("CanonicalTransactionId");
+                        });
+
                     b.OwnsOne("FinanceHub.TransactionAggregator.Domain.ValueObjects.TransactionAuditInfo", "AuditInfo", b1 =>
                         {
                             b1.Property<Guid>("CanonicalTransactionId")
@@ -466,6 +605,19 @@ namespace FinanceHub.TransactionAggregator.Infrastructure.Migrations
 
                     b.Navigation("BankDetails")
                         .IsRequired();
+
+                    b.Navigation("Description")
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("FinanceHub.TransactionAggregator.Domain.Entities.Category", b =>
+                {
+                    b.HasOne("FinanceHub.TransactionAggregator.Domain.Entities.Category", "ParentCategory")
+                        .WithMany("Subcategories")
+                        .HasForeignKey("ParentCategoryId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("ParentCategory");
                 });
 
             modelBuilder.Entity("MassTransit.EntityFrameworkCoreIntegration.OutboxMessage", b =>
@@ -478,6 +630,11 @@ namespace FinanceHub.TransactionAggregator.Infrastructure.Migrations
                         .WithMany()
                         .HasForeignKey("InboxMessageId", "InboxConsumerId")
                         .HasPrincipalKey("MessageId", "ConsumerId");
+                });
+
+            modelBuilder.Entity("FinanceHub.TransactionAggregator.Domain.Entities.Category", b =>
+                {
+                    b.Navigation("Subcategories");
                 });
 #pragma warning restore 612, 618
         }

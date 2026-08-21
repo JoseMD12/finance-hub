@@ -1,10 +1,27 @@
 import { defineConfig } from 'wxt';
 import { loadEnv } from 'vite';
+import path from 'node:path';
 
-const repositoryRoot = '../../../';
-const environment = loadEnv('production', repositoryRoot, '');
-const financeHubWebUrl = environment.VITE_FINANCEHUB_WEB_URL || 'http://localhost:3000';
-const financeHubApiUrl = environment.VITE_API_GATEWAY_URL || 'http://localhost:5056';
+// Load .env from repository root (/home/josemd12/Code/FinanceHub) and extension folder
+const repositoryRoot = path.resolve(__dirname, '../../../');
+const env = {
+  ...process.env,
+  ...loadEnv('development', repositoryRoot, ''),
+  ...loadEnv('production', repositoryRoot, ''),
+  ...loadEnv('development', __dirname, ''),
+  ...loadEnv('production', __dirname, ''),
+};
+
+const financeHubWebUrl =
+  env.FINANCEHUB_WEB_URL ||
+  env.VITE_FINANCEHUB_WEB_URL ||
+  'http://localhost:3000';
+
+const financeHubApiUrl =
+  env.FINANCEHUB_API_URL ||
+  env.VITE_API_GATEWAY_URL ||
+  env.API_GATEWAY_URL ||
+  'http://localhost:5050';
 
 function toOriginPattern(url: string): string {
   return `${new URL(url).origin}/*`;

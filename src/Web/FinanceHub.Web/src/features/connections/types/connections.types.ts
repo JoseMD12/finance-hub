@@ -21,6 +21,25 @@ export interface PluggySyncSummaryDto {
   syncedAtUtc: string;
 }
 
+export interface SyncJobAcceptedDto {
+  jobId: string;
+  status: string;
+  message: string;
+  startedAtUtc: string;
+}
+
+export type SyncJobStatus = 'Processing' | 'Completed' | 'Failed';
+
+export interface SyncJobStatusDto {
+  jobId: string;
+  status: SyncJobStatus;
+  message: string;
+  startedAtUtc: string;
+  completedAtUtc?: string | null;
+  result?: PluggySyncSummaryDto | null;
+  errorMessage?: string | null;
+}
+
 export interface ConnectedAccountDto {
   accountNumber: string;
   institutionName: string;

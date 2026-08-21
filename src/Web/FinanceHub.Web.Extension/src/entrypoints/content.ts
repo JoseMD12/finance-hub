@@ -10,21 +10,8 @@ export default defineContentScript({
   matches: ['https://meu.pluggy.ai/*'],
   runAt: 'document_idle',
   main() {
-    let lastPath = window.location.pathname;
-
     const notifyLogout = () => {
       void browser.runtime.sendMessage({ type: MESSAGE_TYPES.logoutDetected });
-    };
-
-    const isLoginPath = () => RUNTIME_CONSTANTS.loginPathMarkers.some((marker) => {
-      const path = window.location.pathname.toLowerCase();
-      return path === marker || path.startsWith(`${marker}/`);
-    });
-
-    const inspectAuthenticationState = () => {
-      if (window.location.pathname === lastPath) return;
-      lastPath = window.location.pathname;
-      if (isLoginPath()) notifyLogout();
     };
 
     const getInteractiveTarget = (event: Event): Element | null => {
@@ -48,8 +35,6 @@ export default defineContentScript({
       if (label && RUNTIME_CONSTANTS.logoutTextPattern.test(label)) notifyLogout();
     }, true);
 
-    if (isLoginPath()) notifyLogout();
-    window.setInterval(inspectAuthenticationState, 1_000);
     installPageObserver();
 
     window.addEventListener('message', (event) => {

@@ -1,8 +1,8 @@
-import { Search, Bell, ShieldCheck } from 'lucide-react';
+import { Search, Bell } from 'lucide-react';
 
 export const Topbar: React.FC = () => {
   return (
-    <header className="h-16 bg-surface-card border-b border-border-subtle px-8 flex items-center justify-between shadow-sm select-none">
+    <header className="sticky top-0 z-20 h-16 shrink-0 bg-surface-card border-b border-border-subtle px-8 flex items-center justify-between shadow-sm select-none">
       {/* Search Input */}
       <div className="relative w-80">
         <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" aria-hidden="true" />
@@ -14,13 +14,8 @@ export const Topbar: React.FC = () => {
         />
       </div>
 
-      {/* Actions & Status */}
+      {/* Actions */}
       <div className="flex items-center gap-4">
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-status-success-bg text-status-success text-xs font-bold shadow-sm">
-          <span className="w-2 h-2 rounded-full bg-status-success animate-pulse" />
-          <ShieldCheck className="w-3.5 h-3.5" aria-hidden="true" />
-          <span>Open Finance Online</span>
-        </div>
         <button
           type="button"
           aria-label="Central de notificações"

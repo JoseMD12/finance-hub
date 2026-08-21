@@ -1,0 +1,153 @@
+[
+  {
+    "id": "11111111-1111-1111-1111-111111111101",
+    "name": "Alimentação",
+    "slug": "food",
+    "icon": "utensils",
+    "color": "emerald",
+    "isSystemDefault": true,
+    "parentCategoryId": null,
+    "subcategories": [
+      { "name": "Supermercado", "slug": "food-supermarket", "icon": "shopping-cart", "color": "emerald" },
+      { "name": "Restaurante", "slug": "food-restaurant", "icon": "utensils", "color": "emerald" },
+      { "name": "Delivery", "slug": "food-delivery", "icon": "bike", "color": "emerald" },
+      { "name": "Padaria", "slug": "food-bakery", "icon": "croissant", "color": "emerald" }
+    ]
+  },
+  {
+    "id": "11111111-1111-1111-1111-111111111102",
+    "name": "Transporte",
+    "slug": "transport",
+    "icon": "car",
+    "color": "sky",
+    "isSystemDefault": true,
+    "parentCategoryId": null,
+    "subcategories": [
+      { "name": "Aplicativos", "slug": "transport-rideshare", "icon": "car", "color": "sky" },
+      { "name": "Combustível", "slug": "transport-fuel", "icon": "fuel", "color": "sky" },
+      { "name": "Passagens", "slug": "transport-transit", "icon": "ticket", "color": "sky" },
+      { "name": "Estacionamento", "slug": "transport-parking", "icon": "circle-parking", "color": "sky" },
+      { "name": "Manutenção", "slug": "transport-maintenance", "icon": "wrench", "color": "sky" }
+    ]
+  },
+  {
+    "id": "11111111-1111-1111-1111-111111111103",
+    "name": "Moradia",
+    "slug": "housing",
+    "icon": "home",
+    "color": "amber",
+    "isSystemDefault": true,
+    "parentCategoryId": null,
+    "subcategories": [
+      { "name": "Aluguel", "slug": "housing-rent", "icon": "building", "color": "amber" },
+      { "name": "Condomínio", "slug": "housing-condo", "icon": "building-2", "color": "amber" },
+      { "name": "Energia", "slug": "housing-electricity", "icon": "zap", "color": "amber" },
+      { "name": "Água", "slug": "housing-water", "icon": "droplet", "color": "amber" },
+      { "name": "Gás", "slug": "housing-gas", "icon": "flame", "color": "amber" },
+      { "name": "Internet", "slug": "housing-internet", "icon": "wifi", "color": "amber" }
+    ]
+  },
+  {
+    "id": "11111111-1111-1111-1111-111111111104",
+    "name": "Saúde",
+    "slug": "health",
+    "icon": "heart-pulse",
+    "color": "rose",
+    "isSystemDefault": true,
+    "parentCategoryId": null,
+    "subcategories": [
+      { "name": "Farmácia", "slug": "health-pharmacy", "icon": "pill", "color": "rose" },
+      { "name": "Consultas", "slug": "health-doctor", "icon": "stethoscope", "color": "rose" },
+      { "name": "Plano", "slug": "health-insurance", "icon": "shield-plus", "color": "rose" },
+      { "name": "Academia", "slug": "health-gym", "icon": "dumbbell", "color": "rose" }
+    ]
+  },
+  {
+    "id": "11111111-1111-1111-1111-111111111105",
+    "name": "Lazer",
+    "slug": "leisure",
+    "icon": "tv",
+    "color": "purple",
+    "isSystemDefault": true,
+    "parentCategoryId": null,
+    "subcategories": [
+      { "name": "Streaming", "slug": "leisure-streaming", "icon": "play", "color": "purple" },
+      { "name": "Viagens", "slug": "leisure-travel", "icon": "plane", "color": "purple" },
+      { "name": "Eventos", "slug": "leisure-events", "icon": "ticket", "color": "purple" },
+      { "name": "Hobbies", "slug": "leisure-hobbies", "icon": "gamepad", "color": "purple" }
+    ]
+  },
+  {
+    "id": "11111111-1111-1111-1111-111111111106",
+    "name": "Compras",
+    "slug": "shopping",
+    "icon": "shopping-bag",
+    "color": "indigo",
+    "isSystemDefault": true,
+    "parentCategoryId": null,
+    "subcategories": [
+      { "name": "Vestuário", "slug": "shopping-clothing", "icon": "shirt", "color": "indigo" },
+      { "name": "Eletrônicos", "slug": "shopping-electronics", "icon": "laptop", "color": "indigo" },
+      { "name": "Cosméticos", "slug": "shopping-cosmetics", "icon": "sparkles", "color": "indigo" },
+      { "name": "Decoração", "slug": "shopping-decor", "icon": "lamp", "color": "indigo" }
+    ]
+  },
+  {
+    "id": "11111111-1111-1111-1111-111111111107",
+    "name": "Educação",
+    "slug": "education",
+    "icon": "graduation-cap",
+    "color": "teal",
+    "isSystemDefault": true,
+    "parentCategoryId": null,
+    "subcategories": [
+      { "name": "Cursos", "slug": "education-courses", "icon": "video", "color": "teal" },
+      { "name": "Livros", "slug": "education-books", "icon": "book-open", "color": "teal" },
+      { "name": "Mensalidades", "slug": "education-tuition", "icon": "school", "color": "teal" }
+    ]
+  },
+  {
+    "id": "11111111-1111-1111-1111-111111111108",
+    "name": "Finanças",
+    "slug": "finance",
+    "icon": "landmark",
+    "color": "blue",
+    "isSystemDefault": true,
+    "parentCategoryId": null,
+    "subcategories": [
+      { "name": "Tarifas", "slug": "finance-fees", "icon": "receipt", "color": "blue" },
+      { "name": "Impostos", "slug": "finance-taxes", "icon": "file-text", "color": "blue" },
+      { "name": "Juros", "slug": "finance-interest", "icon": "percent", "color": "blue" },
+      { "name": "Seguros", "slug": "finance-insurance", "icon": "shield", "color": "blue" }
+    ]
+  },
+  {
+    "id": "11111111-1111-1111-1111-111111111109",
+    "name": "Receitas",
+    "slug": "income",
+    "icon": "trending-up",
+    "color": "green",
+    "isSystemDefault": true,
+    "parentCategoryId": null,
+    "subcategories": [
+      { "name": "Salário", "slug": "income-salary", "icon": "briefcase", "color": "green" },
+      { "name": "Rendimentos", "slug": "income-yield", "icon": "coins", "color": "green" },
+      { "name": "Reembolsos", "slug": "income-refund", "icon": "rotate-ccw", "color": "green" },
+      { "name": "Freelance", "slug": "income-freelance", "icon": "laptop", "color": "green" }
+    ]
+  },
+  {
+    "id": "11111111-1111-1111-1111-111111111110",
+    "name": "Outros",
+    "slug": "others",
+    "icon": "tag",
+    "color": "gray",
+    "isSystemDefault": true,
+    "parentCategoryId": null,
+    "subcategories": [
+      { "name": "Ajustes", "slug": "others-adjustments", "icon": "sliders", "color": "gray" },
+      { "name": "Transferências", "slug": "others-transfers", "icon": "arrow-left-right", "color": "gray" },
+      { "name": "Diversos", "slug": "others-general", "icon": "tag", "color": "gray" }
+    ]
+  }
+]

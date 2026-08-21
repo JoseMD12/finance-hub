@@ -22,10 +22,11 @@ public class CategoryResolverPipelineTests
         userRepo.FindByPatternAsync("user-1", "SMARTFIT", Arg.Any<CancellationToken>())
             .Returns(UserCategoryRule.Create("user-1", "SMARTFIT", userCategoryId));
 
+        var merchantProvider = Substitute.For<IMerchantDatasetProvider>();
         var resolvers = new List<ICategoryResolver>
         {
             new UserCustomRuleCategoryResolver(userRepo),
-            new GlobalPatternCategoryResolver(),
+            new GlobalPatternCategoryResolver(merchantProvider),
             new DefaultFallbackCategoryResolver()
         };
 
@@ -47,10 +48,15 @@ public class CategoryResolverPipelineTests
         userRepo.FindByPatternAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns((UserCategoryRule?)null);
 
+        var globalCategoryId = Guid.NewGuid();
+        var merchantProvider = Substitute.For<IMerchantDatasetProvider>();
+        merchantProvider.Match(Arg.Any<string>())
+            .Returns(new MerchantDefinition("merchant-uber", "Uber", globalCategoryId, new[] { "UBER" }, "Uber"));
+
         var resolvers = new List<ICategoryResolver>
         {
             new UserCustomRuleCategoryResolver(userRepo),
-            new GlobalPatternCategoryResolver(),
+            new GlobalPatternCategoryResolver(merchantProvider),
             new DefaultFallbackCategoryResolver()
         };
 
@@ -61,7 +67,7 @@ public class CategoryResolverPipelineTests
 
         // Assert
         result.Source.Should().Be(CategorizationSource.GlobalRule);
-        result.CategoryId.Should().NotBeEmpty();
+        result.CategoryId.Should().Be(globalCategoryId);
     }
 
     [Fact]
@@ -72,10 +78,13 @@ public class CategoryResolverPipelineTests
         userRepo.FindByPatternAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns((UserCategoryRule?)null);
 
+        var merchantProvider = Substitute.For<IMerchantDatasetProvider>();
+        merchantProvider.Match(Arg.Any<string>()).Returns((MerchantDefinition?)null);
+
         var resolvers = new List<ICategoryResolver>
         {
             new UserCustomRuleCategoryResolver(userRepo),
-            new GlobalPatternCategoryResolver(),
+            new GlobalPatternCategoryResolver(merchantProvider),
             new DefaultFallbackCategoryResolver()
         };
 

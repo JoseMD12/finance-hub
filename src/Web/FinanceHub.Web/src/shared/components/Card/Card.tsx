@@ -22,7 +22,7 @@ export const Card: React.FC<CardProps> = ({
   return (
     <div
       className={cn(
-        'rounded-2xl p-6 transition-all duration-200',
+        'rounded-2xl p-6 transition-[box-shadow,transform] duration-200',
         variantStyles[variant],
         hoverable && 'hover:shadow-elevated hover:-translate-y-0.5',
         className

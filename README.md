@@ -21,25 +21,26 @@ O sistema é dividido em microsserviços especializados e bibliotecas compartilh
                   └──────────────┬─────────────────┬─────────────┘
                                  │ HTTP            │ HTTP
      ┌───────────────────────────▼──┐   ┌──────────▼────────────────────────────┐
-     │  Auth/Consent Service        │   │ Transaction Aggregator / Normalizer   │
-     │  OAuth2 / FAPI Consent Flow  │   │ Canonical Ledger & Deduplication      │
+     │  Pluggy Integration          │   │ Transaction Aggregator / Normalizer   │
+     │  Open Finance Connector      │   │ Canonical Ledger & Deduplication      │
+     │  (Itaú, Inter, Mercado Pago) │   │ (Categorization, Rules & Balance)     │
      └──────────────┬───────────────┘   └──────────▲────────────────────────────┘
-                    │ Valid Token                  │ RabbitMQ (MassTransit)
-                    │ (Internal API)               │ TransactionIngested Event
-     ┌──────────────┴───────────────┐              │
-     │ Bank Integration Services    ├──────────────┘
-     │ - Itau Integration           │
-     │ - Mercado Pago Integration   │
-     │ - Inter Integration (Fase 2) │
-     └──────────────┘
+                    │                              │ RabbitMQ (MassTransit)
+                    │                              │ - TransactionIngested
+     ┌──────────────┴───────────────┐              │ - InvoiceItemIngested
+     │  File Importer               ├──────────────┘ - TransactionsBatchIngested
+     │  Offline Parser (.OFX, .CSV) │
+     └──────────────────────────────┘
 ```
 
 ### 🧩 Serviços e Responsabilidades (`src/Services/`)
 
 1. **`FinanceHub.ApiGateway`**: Ponto único de entrada (BFF) para a aplicação frontend. Realiza agregação de dados do dashboard, autenticação JWT, rate limiting e roteamento.
-2. **`FinanceHub.PluggyIntegration`**: Conector unificado de Open Finance Pessoal (via Meu.Pluggy), cobrindo Itaú, Banco Inter e Mercado Pago com publicação de eventos `TransactionIngested` e `InvoiceItemIngested`.
+2. **`FinanceHub.PluggyIntegration`**: Conector unificado de Open Finance Pessoal (via Meu.Pluggy), cobrindo Itaú, Banco Inter e Mercado Pago com publicação assíncrona de eventos.
 3. **`FinanceHub.FileImporter`**: Motor de importação offline para arquivos de extratos e faturas históricas (`.ofx`, `.csv`, `.pdf`).
-4. **`FinanceHub.TransactionAggregator`**: Consumidor de eventos contábeis. Normaliza transações para o modelo canônico, deduplica lançamentos via SHA-256 e persiste o histórico consolidado.
+4. **`FinanceHub.TransactionAggregator`**: Consumidor de eventos contábeis. Normaliza transações para o modelo canônico, deduplica lançamentos via SHA-256, auto-categoriza e persiste o histórico consolidado.
+
+> **Nota de Histórico Arquitetural**: Os microsserviços legados de conexão direta individual (`AuthConsent`, `ItauIntegration`, `MercadoPagoIntegration`, `InterIntegration`) e a biblioteca `FinanceHub.Shared.Certificates` foram consolidados e substituídos pelo conector unificado `PluggyIntegration` e o motor offline `FileImporter`. Consulte o [ADR de Arquitetura](.agents/knowledge/system-architecture-and-services.md).
 
 ### 📦 Módulos Compartilhados (`src/Shared/`)
 
@@ -81,9 +82,9 @@ Este repositório inclui um **Harness de IA** estruturado para garantir desenvol
 ## 🔐 Segurança & Conformidade Bancária
 
 - **Database per Service**: Cada microsserviço possui e gerencia seu próprio banco PostgreSQL. Acesso direto ao DB de outro serviço é estritamente proibido.
-- **Financial-Grade API (FAPI 1.0/2.0)**: Suporte a `private_key_jwt`, Pushed Authorization Requests (PAR) e PKCE.
-- **Handshake mTLS**: Conexões de saída com instituições financeiras autenticadas via certificado ICP-Brasil em `FinanceHub.Shared.Certificates`.
-- **Criptografia em Repouso**: Tokens de acesso e dados sensíveis criptografados via **AES-256-GCM** / Data Protection API / KMS.
+- **Financial-Grade API (FAPI 1.0/2.0)**: Suporte a `private_key_jwt`, Pushed Authorization Requests (PAR) e PKCE quando aplicável.
+- **Conexões Seguras**: Conexões com o ecossistema Open Finance executadas via canais seguros HTTPS/OAuth2 gerenciados pelo `PluggyIntegration`.
+- **Criptografia em Repouso**: Tokens de acesso e dados sensíveis criptografados via **AES-256-GCM** / Data Protection API / KMS com envelope encryption.
 - **Conformidade LGPD**: Sanitização de logs sem exibição de PII (CPF, nomes ou chaves JWT) e rastreabilidade total do ciclo de vida dos consentimentos.
 
 ---
@@ -126,4 +127,4 @@ Todas as contribuições e commits gerados por agentes devem seguir a especifica
 ```
 
 - **Tipos**: `feat`, `fix`, `security`, `arch`, `refactor`, `test`, `docs`, `chore`.
-- **Escopos**: `auth`, `itau`, `mercadopago`, `inter`, `aggregator`, `gateway`, `shared`, `harness`.
+- **Escopos**: `pluggy`, `fileimporter`, `aggregator`, `gateway`, `web`, `shared`, `harness`.
