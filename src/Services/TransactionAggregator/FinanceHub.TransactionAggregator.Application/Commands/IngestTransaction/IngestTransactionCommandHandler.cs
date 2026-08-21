@@ -28,17 +28,20 @@ public class IngestTransactionCommandHandler : IIngestTransactionCommandHandler
     private readonly IAccountBalanceRepository _accountBalanceRepository;
     private readonly ICategoryResolverPipeline _categoryResolverPipeline;
     private readonly IEventPublisher _eventPublisher;
+    private readonly IUnitOfWork _unitOfWork;
 
     public IngestTransactionCommandHandler(
         ITransactionRepository transactionRepository,
         IAccountBalanceRepository accountBalanceRepository,
         ICategoryResolverPipeline categoryResolverPipeline,
-        IEventPublisher eventPublisher)
+        IEventPublisher eventPublisher,
+        IUnitOfWork unitOfWork)
     {
         _transactionRepository = transactionRepository;
         _accountBalanceRepository = accountBalanceRepository;
         _categoryResolverPipeline = categoryResolverPipeline;
         _eventPublisher = eventPublisher;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<Guid> Handle(IngestTransactionCommand command, CancellationToken cancellationToken)
@@ -97,6 +100,8 @@ public class IngestTransactionCommandHandler : IIngestTransactionCommandHandler
         }
 
         await _accountBalanceRepository.AddOrUpdateAsync(balance, cancellationToken);
+
+        await _unitOfWork.CommitAsync(cancellationToken);
 
         await _eventPublisher.PublishAsync(new TransactionNormalized(
             TransactionId: transaction.Id,

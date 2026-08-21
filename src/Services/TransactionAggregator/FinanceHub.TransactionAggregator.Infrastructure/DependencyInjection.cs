@@ -35,6 +35,7 @@ public static class DependencyInjection
         services.AddScoped<IAccountBalanceRepository, AccountBalanceRepository>();
         services.AddScoped<IUserCategoryRuleRepository, UserCategoryRuleRepository>();
         services.AddScoped<ICategoryRepository, CategoryRepository>();
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         // ── Messaging — MassTransit + Transactional Outbox ──────────────────────
         services.AddFinanceHubMessaging(configuration, busConfig =>

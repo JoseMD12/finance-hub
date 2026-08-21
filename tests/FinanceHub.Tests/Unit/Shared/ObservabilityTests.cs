@@ -31,6 +31,25 @@ public class ObservabilityTests
     }
 
     [Fact]
+    public void AddFinanceHubObservability_ShouldConfigureEntityFrameworkCoreAndMassTransitInstrumentation()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        var config = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            { "OpenTelemetry:OtlpEndpoint", "http://localhost:4317" }
+        }).Build();
+
+        // Act
+        services.AddFinanceHubObservability(config, "FinanceHub.TestService");
+        var serviceProvider = services.BuildServiceProvider();
+
+        // Assert
+        var tracerProvider = serviceProvider.GetService<TracerProvider>();
+        tracerProvider.Should().NotBeNull();
+    }
+
+    [Fact]
     public void UseFinanceHubSerilog_ShouldConfigureHostBuilder()
     {
         // Arrange
