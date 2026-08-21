@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Modal } from '@/shared/components/Modal/Modal';
-import { formatCurrencyBRL, formatDateBR, maskSensitiveAccount } from '@/shared/utils/formatters';
+import { formatCurrencyBRL, formatDateBR, formatTimeBR, formatPaymentMethod, maskSensitiveAccount } from '@/shared/utils/formatters';
 import { useTransactionsQuery } from '../hooks/useTransactionsQuery';
 import { TransactionsSummaryCards } from '../components/TransactionsSummaryCards';
 import { TransactionsFilterBar } from '../components/TransactionsFilterBar';
@@ -122,10 +122,15 @@ export const TransactionsPage: React.FC = () => {
             {/* Grid de Metadados */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="p-3 rounded-xl bg-surface-ground border border-border-subtle flex flex-col gap-1">
-                <span className="text-slate-400 font-semibold">Data da Transação</span>
-                <span className="text-sm font-bold text-slate-800 tabular-nums">
-                  {formatDateBR(selectedTransaction.transactionDateUtc)}
-                </span>
+                <span className="text-slate-400 font-semibold">Data e Hora</span>
+                <div className="flex flex-col">
+                  <span className="text-sm font-bold text-slate-800 tabular-nums">
+                    {formatDateBR(selectedTransaction.transactionDateUtc)}
+                  </span>
+                  <span className="text-xs font-semibold text-slate-400 font-mono tabular-nums">
+                    {formatTimeBR(selectedTransaction.transactionDateUtc)}
+                  </span>
+                </div>
               </div>
 
               <div className="p-3 rounded-xl bg-surface-ground border border-border-subtle flex flex-col gap-1">
@@ -136,9 +141,9 @@ export const TransactionsPage: React.FC = () => {
               </div>
 
               <div className="p-3 rounded-xl bg-surface-ground border border-border-subtle flex flex-col gap-1">
-                <span className="text-slate-400 font-semibold">Canal de Pagamento</span>
+                <span className="text-slate-400 font-semibold">Meio de Pagamento</span>
                 <span className="text-sm font-bold text-slate-800 font-mono">
-                  {selectedTransaction.channel || 'Geral'}
+                  {formatPaymentMethod(selectedTransaction.channel)}
                 </span>
               </div>
 

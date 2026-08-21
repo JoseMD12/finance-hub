@@ -65,15 +65,15 @@ export const CategoryTag: React.FC<CategoryTagProps> = ({
       disabled={!interactive}
       aria-label={`Categoria: ${name}`}
       className={cn(
-        'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold border transition-all duration-150',
+        'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold border transition-all duration-150 whitespace-nowrap shrink-0',
         style.bg,
         style.text,
         style.border,
         interactive && 'cursor-pointer hover:shadow-sm hover:brightness-95 active:scale-95'
       )}
     >
-      <Icon className="w-3.5 h-3.5" aria-hidden="true" />
-      <span>{name}</span>
+      <Icon className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+      <span className="whitespace-nowrap">{name}</span>
     </button>
   );
 };

@@ -48,6 +48,7 @@ export interface TransactionFilterParams {
   readonly pageSize?: number;
   readonly startDate?: string;
   readonly endDate?: string;
+  readonly datePreset?: number;
   readonly institutionId?: string;
   readonly categoryId?: string;
   readonly type?: string;

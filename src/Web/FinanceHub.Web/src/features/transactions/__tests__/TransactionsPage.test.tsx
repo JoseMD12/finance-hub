@@ -112,7 +112,7 @@ describe('TransactionsPage', () => {
     await user.click(viewButton);
 
     expect(screen.getByText('Detalhes da Transação')).toBeInTheDocument();
-    expect(screen.getByText('Canal de Pagamento')).toBeInTheDocument();
+    expect(screen.getByText('Meio de Pagamento')).toBeInTheDocument();
     expect(screen.getAllByText('Pix').length).toBeGreaterThan(0);
   });
 });

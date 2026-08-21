@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card } from '@/shared/components/Card/Card';
 import { Skeleton } from '@/shared/components/Skeleton/Skeleton';
-import { formatCurrencyBRL, formatDateBR, maskSensitiveAccount } from '@/shared/utils/formatters';
+import { formatCurrencyBRL, formatDateBR, formatTimeBR, formatPaymentMethod, maskSensitiveAccount } from '@/shared/utils/formatters';
+import { getInstitutionInfo } from '@/shared/constants/institutions';
+import { cn } from '@/shared/utils/cn';
 import { Landmark, ArrowUpRight, ArrowDownRight, Eye, SearchX } from 'lucide-react';
 import { CategoryTagPopover } from './CategoryTagPopover';
 import type { TransactionDto } from '../types/transactions.types';
@@ -12,18 +14,31 @@ export interface TransactionsTableProps {
   onSelectTransaction: (transaction: TransactionDto) => void;
 }
 
-const getInstitutionBadgeStyle = (institutionId: string) => {
-  const normalized = institutionId.toLowerCase();
-  if (normalized.includes('itau')) {
-    return 'bg-amber-50 text-amber-800 border-amber-200';
-  }
-  if (normalized.includes('inter')) {
-    return 'bg-orange-50 text-orange-800 border-orange-200';
-  }
-  if (normalized.includes('mercadopago') || normalized.includes('mp')) {
-    return 'bg-sky-50 text-sky-800 border-sky-200';
-  }
-  return 'bg-surface-ground text-slate-700 border-border-subtle';
+const BankLogoTag: React.FC<{ institutionId: string }> = ({ institutionId }) => {
+  const info = getInstitutionInfo(institutionId);
+  const [hasError, setHasError] = useState(false);
+
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold border whitespace-nowrap shrink-0 shadow-2xs',
+        info.tagClass
+      )}
+    >
+      {info.logoUrl && !hasError ? (
+        <img
+          src={info.logoUrl}
+          alt={`Logo ${info.name}`}
+          className="w-3.5 h-3.5 object-contain shrink-0"
+          loading="lazy"
+          onError={() => setHasError(true)}
+        />
+      ) : (
+        <Landmark className="w-3 h-3 shrink-0" aria-hidden="true" />
+      )}
+      <span className="whitespace-nowrap">{info.code}</span>
+    </span>
+  );
 };
 
 export const TransactionsTable: React.FC<TransactionsTableProps> = ({
@@ -37,13 +52,13 @@ export const TransactionsTable: React.FC<TransactionsTableProps> = ({
         <table className="w-full text-left text-xs">
           <thead>
             <tr className="bg-secondary text-white font-semibold uppercase tracking-wider text-[11px]">
-              <th className="px-6 py-4">Data</th>
-              <th className="px-6 py-4">Descrição e Estabelecimento</th>
-              <th className="px-6 py-4">Instituição e Conta</th>
-              <th className="px-6 py-4">Categoria (Tag)</th>
-              <th className="px-6 py-4">Canal</th>
-              <th className="px-6 py-4 text-right">Valor</th>
-              <th className="px-6 py-4 text-center">Ações</th>
+              <th className="px-6 py-4 text-left whitespace-nowrap">Data</th>
+              <th className="px-6 py-4 text-left">Descrição e Estabelecimento</th>
+              <th className="px-6 py-4 text-left whitespace-nowrap">Instituição e Conta</th>
+              <th className="px-6 py-4 text-left whitespace-nowrap">Categoria</th>
+              <th className="px-6 py-4 text-left whitespace-nowrap">Meio</th>
+              <th className="px-6 py-4 text-left whitespace-nowrap">Valor</th>
+              <th className="px-6 py-4 text-left whitespace-nowrap">Ações</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border-subtle bg-surface-card">
@@ -51,34 +66,37 @@ export const TransactionsTable: React.FC<TransactionsTableProps> = ({
               // Structured Skeleton Loading (5 rows)
               Array.from({ length: 5 }).map((_, idx) => (
                 <tr key={`skeleton-${idx}`} className="animate-pulse">
-                  <td className="px-6 py-4">
-                    <Skeleton className="h-4 w-20 rounded-md" />
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex flex-col gap-1.5">
-                      <Skeleton className="h-4 w-40 rounded-md" />
-                      <Skeleton className="h-3 w-24 rounded-md" />
+                  <td className="px-6 py-4 text-left whitespace-nowrap">
+                    <div className="flex flex-col gap-1">
+                      <Skeleton className="h-4 w-20 rounded-md" />
+                      <Skeleton className="h-3 w-12 rounded-md" />
                     </div>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 text-left">
                     <div className="flex flex-col gap-1.5">
-                      <Skeleton className="h-4 w-28 rounded-md" />
+                      <Skeleton className="h-4 w-44 rounded-md" />
+                      <Skeleton className="h-3 w-28 rounded-md" />
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-left whitespace-nowrap">
+                    <div className="flex flex-col gap-1.5">
+                      <Skeleton className="h-5 w-28 rounded-md" />
                       <Skeleton className="h-3 w-20 rounded-md" />
                     </div>
                   </td>
-                  <td className="px-6 py-4">
-                    <Skeleton className="h-6 w-28 rounded-full" />
+                  <td className="px-6 py-4 text-left whitespace-nowrap">
+                    <Skeleton className="h-6 w-28 rounded-md" />
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 text-left whitespace-nowrap">
                     <Skeleton className="h-5 w-16 rounded-md" />
                   </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex justify-end">
-                      <Skeleton className="h-4 w-24 rounded-md" />
+                  <td className="px-6 py-4 text-center whitespace-nowrap min-w-[150px]">
+                    <div className="flex items-center justify-center">
+                      <Skeleton className="h-5 w-24 rounded-md" />
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-center">
-                    <div className="flex justify-center">
+                  <td className="px-6 py-4 text-center whitespace-nowrap min-w-[80px]">
+                    <div className="flex items-center justify-center">
                       <Skeleton className="h-7 w-7 rounded-lg" />
                     </div>
                   </td>
@@ -104,71 +122,89 @@ export const TransactionsTable: React.FC<TransactionsTableProps> = ({
                 </td>
               </tr>
             ) : (
-              transactions.map((t) => {
-                const institutionStyle = getInstitutionBadgeStyle(t.institutionId);
-
-                return (
-                  <tr
-                    key={t.id}
-                    className="hover:bg-brand-light/20 transition-colors duration-150 group"
-                  >
-                    <td className="px-6 py-4 text-slate-500 font-semibold tabular-nums">
-                      {formatDateBR(t.transactionDateUtc)}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex flex-col">
-                        <span className="font-bold text-slate-800 group-hover:text-secondary transition-colors">
-                          {t.description}
-                        </span>
-                        {t.merchantName && (
-                          <span className="text-[11px] text-slate-400 font-medium">
-                            {t.merchantName}
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-slate-600">
-                      <div className="flex flex-col gap-1">
-                        <span
-                          className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-bold border w-fit ${institutionStyle}`}
-                        >
-                          <Landmark className="w-3 h-3" aria-hidden="true" />
-                          {t.institutionId.toUpperCase()}
-                        </span>
-                        <span className="text-[10px] text-slate-400 font-mono">
-                          Conta {maskSensitiveAccount(t.accountNumber)}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <CategoryTagPopover
-                        transactionId={t.id}
-                        currentCategoryId={t.categoryId}
-                      />
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-surface-ground border border-border-subtle text-[11px] font-mono text-slate-600">
-                        {t.channel || 'Geral'}
+              transactions.map((t) => (
+                <tr
+                  key={t.id}
+                  className="hover:bg-brand-light/20 transition-colors duration-150 group"
+                >
+                  {/* Data e Hora - Alinhadas à esquerda */}
+                  <td className="px-6 py-4 text-left whitespace-nowrap">
+                    <div className="flex flex-col">
+                      <span className="text-slate-700 font-semibold tabular-nums">
+                        {formatDateBR(t.transactionDateUtc)}
                       </span>
-                    </td>
-                    <td className="px-6 py-4 text-right font-bold text-sm">
+                      <span className="text-[10px] text-slate-400 font-mono tabular-nums">
+                        {formatTimeBR(t.transactionDateUtc)}
+                      </span>
+                    </div>
+                  </td>
+
+                  {/* Descrição - Alinhada à esquerda */}
+                  <td className="px-6 py-4 text-left">
+                    <div className="flex flex-col">
+                      <span className="font-bold text-slate-800 group-hover:text-secondary transition-colors">
+                        {t.description}
+                      </span>
+                      {t.merchantName && (
+                        <span className="text-[11px] text-slate-400 font-medium">
+                          {t.merchantName}
+                        </span>
+                      )}
+                    </div>
+                  </td>
+
+                  {/* Instituição e Conta - Alinhada à esquerda */}
+                  <td className="px-6 py-4 text-left whitespace-nowrap">
+                    <div className="flex flex-col items-start gap-1">
+                      <BankLogoTag institutionId={t.institutionId} />
+                      <span className="text-[10px] text-slate-400 font-mono whitespace-nowrap pl-0.5">
+                        Conta {maskSensitiveAccount(t.accountNumber)}
+                      </span>
+                    </div>
+                  </td>
+
+                  {/* Categoria - Alinhada à esquerda */}
+                  <td className="px-6 py-4 text-left whitespace-nowrap">
+                    <CategoryTagPopover
+                      transactionId={t.id}
+                      currentCategoryId={t.categoryId}
+                    />
+                  </td>
+
+                  {/* Meio de Pagamento - Alinhado à esquerda */}
+                  <td className="px-6 py-4 text-left whitespace-nowrap">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-surface-ground border border-border-subtle text-[11px] font-mono text-slate-600 whitespace-nowrap">
+                      {formatPaymentMethod(t.channel)}
+                    </span>
+                  </td>
+
+                  {/* Valor - Centralizado na célula com largura protegida e sem quebra */}
+                  <td className="px-6 py-4 text-center whitespace-nowrap min-w-[150px]">
+                    <div className="flex items-center justify-center">
                       <span
-                        className={`tabular-nums tracking-tight font-mono inline-flex items-center gap-1 ${
+                        className={cn(
+                          'tabular-nums tracking-tight font-mono inline-flex items-center justify-center gap-1 font-bold text-sm whitespace-nowrap',
                           t.type === 'Credit'
                             ? 'text-status-success'
                             : 'text-status-danger'
-                        }`}
+                        )}
                       >
                         {t.type === 'Credit' ? (
-                          <ArrowUpRight className="w-4 h-4" aria-hidden="true" />
+                          <ArrowUpRight className="w-4 h-4 shrink-0" aria-hidden="true" />
                         ) : (
-                          <ArrowDownRight className="w-4 h-4" aria-hidden="true" />
+                          <ArrowDownRight className="w-4 h-4 shrink-0" aria-hidden="true" />
                         )}
-                        {t.type === 'Credit' ? '+ ' : '- '}
-                        {formatCurrencyBRL(t.amount)}
+                        <span className="whitespace-nowrap">
+                          {t.type === 'Credit' ? '+ ' : '- '}
+                          {formatCurrencyBRL(t.amount)}
+                        </span>
                       </span>
-                    </td>
-                    <td className="px-6 py-4 text-center">
+                    </div>
+                  </td>
+
+                  {/* Ações - Centralizado */}
+                  <td className="px-6 py-4 text-center whitespace-nowrap min-w-[80px]">
+                    <div className="flex items-center justify-center">
                       <button
                         type="button"
                         onClick={() => onSelectTransaction(t)}
@@ -178,10 +214,10 @@ export const TransactionsTable: React.FC<TransactionsTableProps> = ({
                       >
                         <Eye className="w-4 h-4" />
                       </button>
-                    </td>
-                  </tr>
-                );
-              })
+                    </div>
+                  </td>
+                </tr>
+              ))
             )}
           </tbody>
         </table>

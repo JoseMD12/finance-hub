@@ -1,6 +1,7 @@
 import React from 'react';
-import { Search, RotateCcw, X, SlidersHorizontal } from 'lucide-react';
+import { Search, RotateCcw, X, SlidersHorizontal, Calendar } from 'lucide-react';
 import { CustomSelect } from '@/shared/components/Select/CustomSelect';
+import { cn } from '@/shared/utils/cn';
 import { useCategoriesQuery } from '../hooks/useCategoriesQuery';
 import type { TransactionFilterParams } from '../types/transactions.types';
 
@@ -9,6 +10,13 @@ export interface TransactionsFilterBarProps {
   onFilterChange: (newFilters: Partial<TransactionFilterParams>) => void;
   onResetFilters: () => void;
 }
+
+const DATE_PRESET_OPTIONS = [
+  { days: 15, label: '15 dias' },
+  { days: 30, label: '30 dias' },
+  { days: 60, label: '60 dias' },
+  { days: 90, label: '90 dias' },
+] as const;
 
 export const TransactionsFilterBar: React.FC<TransactionsFilterBarProps> = ({
   filters,
@@ -47,7 +55,8 @@ export const TransactionsFilterBar: React.FC<TransactionsFilterBarProps> = ({
     (filters.search ? 1 : 0) +
     (filters.institutionId ? 1 : 0) +
     (filters.categoryId ? 1 : 0) +
-    (filters.type ? 1 : 0);
+    (filters.type ? 1 : 0) +
+    (filters.datePreset ? 1 : 0);
 
   const selectedInstitutionLabel = institutionOptions.find(
     (o) => o.value === filters.institutionId
@@ -57,12 +66,34 @@ export const TransactionsFilterBar: React.FC<TransactionsFilterBarProps> = ({
     (o) => o.value === filters.categoryId
   )?.label?.trim();
 
+  const handleToggleDatePreset = (days: number) => {
+    if (filters.datePreset === days) {
+      onFilterChange({
+        startDate: undefined,
+        endDate: undefined,
+        datePreset: undefined,
+        page: 1,
+      });
+    } else {
+      const end = new Date();
+      const start = new Date();
+      start.setDate(end.getDate() - days);
+      onFilterChange({
+        startDate: start.toISOString().split('T')[0],
+        endDate: end.toISOString().split('T')[0],
+        datePreset: days,
+        page: 1,
+      });
+    }
+  };
+
   return (
     <div className="p-4 bg-surface-card rounded-2xl border border-border-subtle shadow-card flex flex-col gap-4">
+      {/* Grid Principal de Filtros */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-end">
         {/* Busca textual */}
         <div className="flex flex-col gap-1.5 w-full">
-          <label className="text-xs font-semibold text-slate-700">Buscar por Termo</label>
+          <label className="text-xs font-semibold text-slate-700 pl-1">Buscar por Termo</label>
           <div className="relative flex items-center h-10">
             <Search className="w-4 h-4 absolute left-3.5 text-slate-400 pointer-events-none" />
             <input
@@ -116,6 +147,36 @@ export const TransactionsFilterBar: React.FC<TransactionsFilterBarProps> = ({
         </div>
       </div>
 
+      {/* Filtros Rápidos de Período (Apenas 1 ativo por vez) */}
+      <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-border-subtle/60">
+        <span className="text-xs font-semibold text-slate-500 inline-flex items-center gap-1.5 mr-1 pl-1">
+          <Calendar className="w-3.5 h-3.5 text-brand" />
+          Período rápido:
+        </span>
+        <div className="flex flex-wrap items-center gap-1.5">
+          {DATE_PRESET_OPTIONS.map(({ days, label }) => {
+            const isSelected = filters.datePreset === days;
+
+            return (
+              <button
+                key={days}
+                type="button"
+                onClick={() => handleToggleDatePreset(days)}
+                aria-pressed={isSelected}
+                className={cn(
+                  'px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150 cursor-pointer select-none',
+                  isSelected
+                    ? 'bg-brand-light text-brand-dark border-brand font-bold shadow-2xs ring-1 ring-brand/20'
+                    : 'bg-surface-ground text-slate-600 border-border-subtle hover:bg-slate-200/60 hover:text-slate-800'
+                )}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Rodapé com filtros ativos e botão limpar */}
       <div className="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-border-subtle text-xs text-slate-500">
         <div className="flex flex-wrap items-center gap-1.5">
@@ -128,6 +189,27 @@ export const TransactionsFilterBar: React.FC<TransactionsFilterBarProps> = ({
             <span className="text-slate-400 italic">Nenhum filtro aplicado</span>
           ) : (
             <>
+              {filters.datePreset && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-surface-ground border border-border-subtle text-slate-700 font-medium">
+                  Últimos {filters.datePreset} dias
+                  <button
+                    type="button"
+                    onClick={() =>
+                      onFilterChange({
+                        startDate: undefined,
+                        endDate: undefined,
+                        datePreset: undefined,
+                        page: 1,
+                      })
+                    }
+                    className="hover:text-brand transition-colors cursor-pointer"
+                    aria-label="Remover filtro de período rápido"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              )}
+
               {filters.search && (
                 <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-surface-ground border border-border-subtle text-slate-700 font-medium">
                   Busca: &ldquo;{filters.search}&rdquo;
