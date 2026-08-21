@@ -90,7 +90,7 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
   return (
     <div className={cn('flex flex-col gap-1.5 w-full', className)} ref={containerRef}>
       {label && <label className="text-xs font-semibold text-slate-700 pl-1">{label}</label>}
-      <div className="relative w-full">
+      <div className={cn('relative w-full', isOpen && 'z-50')}>
         <button
           type="button"
           disabled={disabled}
@@ -129,11 +129,11 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
               const isSelected = option.value === value;
               const isFocused = idx === focusedIndex;
               return (
-                <div
-                  key={option.value}
+                <button
+                  key={option.value || `opt-${idx}`}
+                  type="button"
                   role="option"
                   aria-selected={isSelected}
-                  tabIndex={0}
                   onClick={() => {
                     onChange(option.value);
                     setIsOpen(false);
@@ -147,7 +147,7 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
                   }}
                   onMouseEnter={() => setFocusedIndex(idx)}
                   className={cn(
-                    'flex items-center justify-between px-3.5 py-2 text-xs font-medium rounded-lg cursor-pointer transition-colors duration-150 outline-none',
+                    'flex items-center justify-between w-full px-3.5 py-2 text-xs font-medium rounded-lg cursor-pointer transition-colors duration-150 outline-none text-left',
                     getOptionStyle(isSelected, isFocused)
                   )}
                 >
@@ -163,7 +163,7 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
                     )}
                     {isSelected && <Check className="w-3.5 h-3.5 text-brand" />}
                   </div>
-                </div>
+                </button>
               );
             })}
           </div>

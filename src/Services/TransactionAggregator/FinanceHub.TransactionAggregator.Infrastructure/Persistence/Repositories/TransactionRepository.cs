@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using FinanceHub.TransactionAggregator.Application.DTOs;
 using FinanceHub.TransactionAggregator.Application.Interfaces;
+using FinanceHub.TransactionAggregator.Domain.Constants;
 using FinanceHub.TransactionAggregator.Domain.Entities;
 using FinanceHub.TransactionAggregator.Domain.ValueObjects;
 using FinanceHub.TransactionAggregator.Infrastructure.Persistence;
@@ -99,22 +100,32 @@ public class TransactionRepository : ITransactionRepository
 
         if (filter.StartDate.HasValue)
         {
-            query = query.Where(t => t.TransactionDateUtc >= DateTime.SpecifyKind(filter.StartDate.Value, DateTimeKind.Utc));
+            var startUtc = DateTime.SpecifyKind(filter.StartDate.Value.Date, DateTimeKind.Utc);
+            query = query.Where(t => t.TransactionDateUtc >= startUtc);
         }
 
         if (filter.EndDate.HasValue)
         {
-            query = query.Where(t => t.TransactionDateUtc <= DateTime.SpecifyKind(filter.EndDate.Value, DateTimeKind.Utc));
+            var endUtc = DateTime.SpecifyKind(filter.EndDate.Value.Date.AddDays(1).AddTicks(-1), DateTimeKind.Utc);
+            query = query.Where(t => t.TransactionDateUtc <= endUtc);
         }
 
         if (!string.IsNullOrWhiteSpace(filter.InstitutionId))
         {
-            query = query.Where(t => t.AccountInfo.InstitutionId == filter.InstitutionId);
+            var keywords = BankAliases.GetKeywordsFor(filter.InstitutionId);
+            query = query.Where(BuildInstitutionFilterExpression(keywords));
         }
 
         if (filter.CategoryId.HasValue)
         {
-            query = query.Where(t => t.CategoryId == filter.CategoryId.Value);
+            var selectedCategoryId = filter.CategoryId.Value;
+            var categoryIds = await _context.Categories
+                .AsNoTracking()
+                .Where(c => c.Id == selectedCategoryId || c.ParentCategoryId == selectedCategoryId)
+                .Select(c => c.Id)
+                .ToListAsync(cancellationToken);
+
+            query = query.Where(t => categoryIds.Contains(t.CategoryId));
         }
 
         if (!string.IsNullOrWhiteSpace(filter.Type) && Enum.TryParse<TransactionType>(filter.Type, true, out var parsedType))
@@ -155,5 +166,31 @@ public class TransactionRepository : ITransactionRepository
         var summary = new TransactionSummaryDto(totalIncome, totalExpense, netBalance, totalItems);
 
         return new PagedTransactionsResponseDto(items, summary, page, pageSize, totalItems, totalPages);
+    }
+
+    private static Expression<Func<CanonicalTransaction, bool>> BuildInstitutionFilterExpression(IReadOnlyList<string> keywords)
+    {
+        var parameter = Expression.Parameter(typeof(CanonicalTransaction), "t");
+        var accountInfoProperty = Expression.Property(parameter, nameof(CanonicalTransaction.AccountInfo));
+        var institutionIdProperty = Expression.Property(accountInfoProperty, nameof(AccountIdentifier.InstitutionId));
+
+        var toLowerMethod = typeof(string).GetMethod(nameof(string.ToLower), Type.EmptyTypes)!;
+        var containsMethod = typeof(string).GetMethod(nameof(string.Contains), [typeof(string)])!;
+
+        var lowerInstitutionId = Expression.Call(institutionIdProperty, toLowerMethod);
+
+        Expression? combined = null;
+
+        foreach (var keyword in keywords)
+        {
+            var keywordConstant = Expression.Constant(keyword.ToLowerInvariant());
+            var containsExpression = Expression.Call(lowerInstitutionId, containsMethod, keywordConstant);
+
+            combined = combined == null
+                ? containsExpression
+                : Expression.OrElse(combined, containsExpression);
+        }
+
+        return Expression.Lambda<Func<CanonicalTransaction, bool>>(combined ?? Expression.Constant(true), parameter);
     }
 }

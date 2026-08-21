@@ -30,6 +30,7 @@ export const TransactionsFilterBar: React.FC<TransactionsFilterBarProps> = ({
     { value: 'itau', label: 'Itaú Unibanco' },
     { value: 'inter', label: 'Banco Inter' },
     { value: 'mercadopago', label: 'Mercado Pago' },
+    { value: 'nubank', label: 'Nubank' },
   ];
 
   const typeOptions = [
