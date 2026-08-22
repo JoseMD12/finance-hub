@@ -27,6 +27,9 @@ export interface TransactionDto {
   readonly transactionDateUtc: string;
   readonly channel: string;
   readonly merchantName: string;
+  readonly nature?: string;
+  readonly isIgnoredInTotals?: boolean;
+  readonly pairedTransactionId?: string | null;
 }
 
 export interface TransactionSummaryDto {
@@ -34,6 +37,10 @@ export interface TransactionSummaryDto {
   readonly totalExpense: number;
   readonly netBalance: number;
   readonly totalCount: number;
+  readonly realConsolidatedBalanceBrl?: number;
+  readonly totalOpenCreditCardsBrl?: number;
+  readonly projectedAvailableBalanceBrl?: number;
+  readonly lastSyncAtUtc?: string | null;
 }
 
 export interface PaginatedTransactionsDto {
@@ -50,7 +57,7 @@ export interface TransactionFilterParams {
   readonly pageSize?: number;
   readonly startDate?: string;
   readonly endDate?: string;
-  readonly datePreset?: number;
+  readonly datePreset?: string;
   readonly institutionId?: string;
   readonly categoryId?: string;
   readonly type?: string;

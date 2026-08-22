@@ -7,7 +7,11 @@ public record TransactionSummaryDto(
     decimal TotalIncome,
     decimal TotalExpense,
     decimal NetBalance,
-    int TotalCount);
+    int TotalCount,
+    decimal RealConsolidatedBalanceBrl = 0m,
+    decimal TotalOpenCreditCardsBrl = 0m,
+    decimal ProjectedAvailableBalanceBrl = 0m,
+    DateTime? LastSyncAtUtc = null);
 
 public record PagedTransactionsResponseDto(
     IEnumerable<TransactionDto> Items,

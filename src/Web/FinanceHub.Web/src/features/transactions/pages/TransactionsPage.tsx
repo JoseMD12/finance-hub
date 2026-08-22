@@ -3,16 +3,21 @@ import { Modal } from '@/shared/components/Modal/Modal';
 import { formatCurrencyBRL, formatDateBR, formatTimeBR, formatPaymentMethod, maskSensitiveAccount } from '@/shared/utils/formatters';
 import { useTransactionsQuery } from '../hooks/useTransactionsQuery';
 import { TransactionsSummaryCards } from '../components/TransactionsSummaryCards';
-import { TransactionsFilterBar } from '../components/TransactionsFilterBar';
+import { TransactionsFilterBar, getPresetDateRange } from '../components/TransactionsFilterBar';
 import { TransactionsTable } from '../components/TransactionsTable';
 import { TransactionsPagination } from '../components/TransactionsPagination';
 import { PageContainer } from '@/shared/components/PageContainer/PageContainer';
 import type { TransactionDto, TransactionFilterParams } from '../types/transactions.types';
 
 export const TransactionsPage: React.FC = () => {
+  const initialRange = getPresetDateRange('current-month');
+
   const [filters, setFilters] = useState<TransactionFilterParams>({
     page: 1,
     pageSize: 20,
+    startDate: initialRange.startDate,
+    endDate: initialRange.endDate,
+    datePreset: 'current-month',
   });
 
   const [selectedTransaction, setSelectedTransaction] = useState<TransactionDto | null>(null);
@@ -31,7 +36,14 @@ export const TransactionsPage: React.FC = () => {
   };
 
   const handleResetFilters = () => {
-    setFilters({ page: 1, pageSize: 20 });
+    const range = getPresetDateRange('current-month');
+    setFilters({
+      page: 1,
+      pageSize: 20,
+      startDate: range.startDate,
+      endDate: range.endDate,
+      datePreset: 'current-month',
+    });
   };
 
   return (
@@ -98,56 +110,42 @@ export const TransactionsPage: React.FC = () => {
               </div>
 
               {selectedTransaction.merchantName && (
-                <div className="text-[11px] text-slate-500 font-medium">
-                  Estabelecimento: <strong className="text-slate-700">{selectedTransaction.merchantName}</strong>
+                <div className="flex items-center gap-2 pt-2 border-t border-border-subtle text-slate-500 font-medium">
+                  <span className="text-[11px] text-slate-400">Estabelecimento:</span>
+                  <span>{selectedTransaction.merchantName}</span>
                 </div>
               )}
             </div>
 
-            {/* Grid de Metadados */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {/* Grid de Metadados Bancários */}
+            <div className="grid grid-cols-2 gap-3">
               <div className="p-3 rounded-xl bg-surface-ground border border-border-subtle flex flex-col gap-1">
-                <span className="text-slate-400 font-semibold">Data e Hora</span>
-                <div className="flex flex-col">
-                  <span className="text-sm font-bold text-slate-800 tabular-nums">
-                    {formatDateBR(selectedTransaction.transactionDateUtc)}
-                  </span>
-                  <span className="text-xs font-semibold text-slate-400 font-mono tabular-nums">
-                    {formatTimeBR(selectedTransaction.transactionDateUtc)}
-                  </span>
-                </div>
-              </div>
-
-              <div className="p-3 rounded-xl bg-surface-ground border border-border-subtle flex flex-col gap-1">
-                <span className="text-slate-400 font-semibold">Instituição e Conta</span>
-                <span className="text-sm font-bold text-slate-800">
-                  {selectedTransaction.institutionId.toUpperCase()} • Conta {maskSensitiveAccount(selectedTransaction.accountNumber)}
+                <span className="text-[10px] font-semibold text-slate-400 uppercase">Data e Hora</span>
+                <span className="font-mono font-medium text-slate-700">
+                  {formatDateBR(selectedTransaction.transactionDateUtc)} às {formatTimeBR(selectedTransaction.transactionDateUtc)}
                 </span>
               </div>
 
               <div className="p-3 rounded-xl bg-surface-ground border border-border-subtle flex flex-col gap-1">
-                <span className="text-slate-400 font-semibold">Meio de Pagamento</span>
-                <span className="text-sm font-bold text-slate-800 font-mono">
+                <span className="text-[10px] font-semibold text-slate-400 uppercase">Meio de Pagamento</span>
+                <span className="font-mono font-medium text-slate-700">
                   {formatPaymentMethod(selectedTransaction.channel)}
                 </span>
               </div>
 
               <div className="p-3 rounded-xl bg-surface-ground border border-border-subtle flex flex-col gap-1">
-                <span className="text-slate-400 font-semibold">Origem da Categorização</span>
-                <span className="text-sm font-bold text-slate-800">
-                  {selectedTransaction.isManuallyCategorized
-                    ? 'Categorizado Manualmente'
-                    : selectedTransaction.categorizationSource || 'Regra Automática'}
+                <span className="text-[10px] font-semibold text-slate-400 uppercase">Conta Vinculada</span>
+                <span className="font-mono font-medium text-slate-700">
+                  {maskSensitiveAccount(selectedTransaction.accountNumber)}
                 </span>
               </div>
-            </div>
 
-            {/* ID Canônico do Ledger */}
-            <div className="p-3 rounded-xl bg-surface-ground border border-border-subtle flex flex-col gap-1">
-              <span className="text-slate-400 font-semibold">ID Canônico no Ledger</span>
-              <span className="text-[11px] font-mono text-slate-600 break-all select-all">
-                {selectedTransaction.id}
-              </span>
+              <div className="p-3 rounded-xl bg-surface-ground border border-border-subtle flex flex-col gap-1">
+                <span className="text-[10px] font-semibold text-slate-400 uppercase">Origem da Categoria</span>
+                <span className="font-mono font-medium text-slate-700">
+                  {selectedTransaction.categorizationSource} {selectedTransaction.isManuallyCategorized ? '(Manual)' : '(Auto)'}
+                </span>
+              </div>
             </div>
           </div>
         )}

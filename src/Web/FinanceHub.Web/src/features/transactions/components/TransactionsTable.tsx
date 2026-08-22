@@ -4,7 +4,7 @@ import { Skeleton } from '@/shared/components/Skeleton/Skeleton';
 import { formatCurrencyBRL, formatDateBR, formatTimeBR, formatPaymentMethod, maskSensitiveAccount } from '@/shared/utils/formatters';
 import { getInstitutionInfo } from '@/shared/constants/institutions';
 import { cn } from '@/shared/utils/cn';
-import { Landmark, ArrowUpRight, ArrowDownRight, Eye, SearchX } from 'lucide-react';
+import { Landmark, ArrowUpRight, ArrowDownRight, ArrowLeftRight, Receipt, Eye, SearchX } from 'lucide-react';
 import { CategoryTagPopover } from './CategoryTagPopover';
 import type { TransactionDto } from '../types/transactions.types';
 
@@ -139,10 +139,38 @@ export const TransactionsTable: React.FC<TransactionsTableProps> = ({
 
             {/* Descrição e Estabelecimento - Alinhada à esquerda */}
             <td className="px-6 py-4 text-left">
-              <div className="flex flex-col">
-                <span className="font-bold text-slate-800 group-hover:text-secondary transition-colors">
-                  {t.description}
-                </span>
+              <div className="flex flex-col gap-0.5">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-bold text-slate-800 group-hover:text-secondary transition-colors">
+                    {t.description}
+                  </span>
+                  {t.nature === 'Transfer' && (
+                    <span
+                      title="Transferência interna pareada entre contas próprias (não computada nos totais)"
+                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200"
+                    >
+                      <ArrowLeftRight className="w-2.5 h-2.5 text-slate-500" aria-hidden="true" />
+                      Transferência
+                    </span>
+                  )}
+                  {t.nature === 'BillPayment' && (
+                    <span
+                      title="Pagamento de fatura de cartão (não duplicada nos totais)"
+                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200"
+                    >
+                      <Receipt className="w-2.5 h-2.5 text-slate-500" aria-hidden="true" />
+                      Fatura
+                    </span>
+                  )}
+                  {t.isIgnoredInTotals && t.nature !== 'Transfer' && t.nature !== 'BillPayment' && (
+                    <span
+                      title="Movimentação patrimonial/neutra (não computada nos totais operacionais)"
+                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-500 border border-slate-200"
+                    >
+                      Neutro
+                    </span>
+                  )}
+                </div>
                 {t.merchantName &&
                   t.merchantName.trim().toLowerCase() !== t.description.trim().toLowerCase() && (
                     <span className="text-[11px] text-slate-400 font-medium">
