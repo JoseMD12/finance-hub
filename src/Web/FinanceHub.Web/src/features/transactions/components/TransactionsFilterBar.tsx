@@ -1,9 +1,10 @@
 import React from 'react';
-import { Search, RotateCcw, X, SlidersHorizontal, Calendar } from 'lucide-react';
+import { Search, RotateCcw, X, SlidersHorizontal, Calendar, Landmark, ArrowUpRight, ArrowDownRight, ArrowLeftRight } from 'lucide-react';
 import { CustomSelect } from '@/shared/components/Select/CustomSelect';
 import { CategoryFilterSelect } from './CategoryFilterSelect';
 import { cn } from '@/shared/utils/cn';
 import { useCategoriesQuery } from '../hooks/useCategoriesQuery';
+import { getInstitutionLogoUrl } from '@/shared/constants/institutions';
 import type { TransactionFilterParams } from '../types/transactions.types';
 
 export interface TransactionsFilterBarProps {
@@ -27,17 +28,44 @@ export const TransactionsFilterBar: React.FC<TransactionsFilterBarProps> = ({
   const { data: categories = [] } = useCategoriesQuery();
 
   const institutionOptions = [
-    { value: '', label: 'Todas as Instituições' },
-    { value: 'itau', label: 'Itaú Unibanco' },
-    { value: 'inter', label: 'Banco Inter' },
-    { value: 'mercadopago', label: 'Mercado Pago' },
-    { value: 'nubank', label: 'Nubank' },
+    {
+      value: '',
+      label: 'Todas as Instituições',
+      icon: <Landmark className="w-3.5 h-3.5 text-brand shrink-0" />,
+    },
+    {
+      value: 'itau',
+      label: 'Itaú Unibanco',
+      icon: <img src={getInstitutionLogoUrl('itau') || ''} alt="" className="w-3.5 h-3.5 object-contain rounded-xs" />,
+    },
+    {
+      value: 'inter',
+      label: 'Banco Inter',
+      icon: <img src={getInstitutionLogoUrl('inter') || ''} alt="" className="w-3.5 h-3.5 object-contain rounded-xs" />,
+    },
+    {
+      value: 'mercadopago',
+      label: 'Mercado Pago',
+      icon: <img src={getInstitutionLogoUrl('mercadopago') || ''} alt="" className="w-3.5 h-3.5 object-contain rounded-xs" />,
+    },
   ];
 
   const typeOptions = [
-    { value: '', label: 'Todos os Tipos' },
-    { value: 'Debit', label: 'Saídas / Despesas' },
-    { value: 'Credit', label: 'Entradas / Receitas' },
+    {
+      value: '',
+      label: 'Todos os Tipos',
+      icon: <ArrowLeftRight className="w-3.5 h-3.5 text-brand shrink-0" />,
+    },
+    {
+      value: 'Debit',
+      label: 'Saídas / Despesas',
+      icon: <ArrowDownRight className="w-3.5 h-3.5 text-status-danger shrink-0" />,
+    },
+    {
+      value: 'Credit',
+      label: 'Entradas / Receitas',
+      icon: <ArrowUpRight className="w-3.5 h-3.5 text-status-success shrink-0" />,
+    },
   ];
 
   const allCategories = React.useMemo(() => {
@@ -150,7 +178,7 @@ export const TransactionsFilterBar: React.FC<TransactionsFilterBarProps> = ({
       </div>
 
       {/* Filtros Rápidos de Período (Apenas 1 ativo por vez) */}
-      <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-border-subtle/60">
+      <div className="flex flex-wrap items-center gap-2 pt-3 pb-0.5 border-t border-border-subtle/60">
         <span className="text-xs font-semibold text-slate-500 inline-flex items-center gap-1.5 mr-1 pl-1">
           <Calendar className="w-3.5 h-3.5 text-brand" />
           Período rápido:

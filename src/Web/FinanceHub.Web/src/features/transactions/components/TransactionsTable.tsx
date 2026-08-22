@@ -123,7 +123,7 @@ export const TransactionsTable: React.FC<TransactionsTableProps> = ({
         {transactions.map((t) => (
           <tr
             key={t.id}
-            className="hover:bg-brand-light/20 transition-colors duration-150 group"
+            className="hover:bg-brand-light/35 transition-all duration-150 group"
           >
             {/* Data e Hora - Alinhadas à esquerda */}
             <td className="px-6 py-4 text-left whitespace-nowrap">
@@ -137,17 +137,18 @@ export const TransactionsTable: React.FC<TransactionsTableProps> = ({
               </div>
             </td>
 
-            {/* Descrição - Alinhada à esquerda */}
+            {/* Descrição e Estabelecimento - Alinhada à esquerda */}
             <td className="px-6 py-4 text-left">
               <div className="flex flex-col">
                 <span className="font-bold text-slate-800 group-hover:text-secondary transition-colors">
                   {t.description}
                 </span>
-                {t.merchantName && (
-                  <span className="text-[11px] text-slate-400 font-medium">
-                    {t.merchantName}
-                  </span>
-                )}
+                {t.merchantName &&
+                  t.merchantName.trim().toLowerCase() !== t.description.trim().toLowerCase() && (
+                    <span className="text-[11px] text-slate-400 font-medium">
+                      {t.merchantName}
+                    </span>
+                  )}
               </div>
             </td>
 
@@ -227,7 +228,7 @@ export const TransactionsTable: React.FC<TransactionsTableProps> = ({
           <thead>
             <tr className="bg-secondary text-white font-semibold uppercase tracking-wider text-[11px]">
               <th className="px-6 py-4 text-left whitespace-nowrap">Data</th>
-              <th className="px-6 py-4 text-left">Descrição e Estabelecimento</th>
+              <th className="px-6 py-4 text-left">Descrição / Estabelecimento</th>
               <th className="px-6 py-4 text-left whitespace-nowrap">Instituição e Conta</th>
               <th className="px-6 py-4 text-left whitespace-nowrap">Categoria</th>
               <th className="px-6 py-4 text-left whitespace-nowrap">Meio</th>
