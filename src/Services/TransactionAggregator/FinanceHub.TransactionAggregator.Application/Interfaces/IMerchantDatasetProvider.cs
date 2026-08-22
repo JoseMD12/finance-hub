@@ -8,7 +8,8 @@ public record MerchantDefinition(
     string Name,
     Guid CategoryId,
     IReadOnlyList<string> Patterns,
-    string CleanName);
+    string CleanName,
+    int Priority = 100);
 
 public interface IMerchantDatasetProvider
 {
