@@ -4,4 +4,3 @@ export * from './NavActiveIndicator';
 export * from './MagneticButton';
 export * from './NumberScramble';
 export * from './AuroraBackground';
-export * from './ScannerReveal';

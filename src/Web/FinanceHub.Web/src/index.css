@@ -183,39 +183,5 @@ body {
 
 
 
-@keyframes scan-sweep {
-  0% {
-    background-position: -120% 0;
-  }
-  99% {
-    background-position: 220% 0;
-    background-image: linear-gradient(
-      90deg,
-      transparent 0%,
-      rgba(224, 86, 151, 0.16) 50%,
-      transparent 100%
-    );
-  }
-  100% {
-    background-position: 220% 0;
-    background-image: none;
-  }
-}
 
-.scanner-item {
-  position: relative;
-}
-
-.scanner-item.scanner-active {
-  background-image: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(224, 86, 151, 0.16) 50%,
-    transparent 100%
-  );
-  background-size: 60% 100%;
-  background-position: -120% 0;
-  background-repeat: no-repeat;
-  animation: scan-sweep 1.2s cubic-bezier(0.25, 1, 0.5, 1) forwards;
-}
 
