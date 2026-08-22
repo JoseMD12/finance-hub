@@ -49,10 +49,10 @@ export const TransactionsTable: React.FC<TransactionsTableProps> = ({
 }) => {
   const renderTableContent = () => {
     if (isLoading) {
-      // Structured Skeleton Loading (5 rows)
+      // Structured Skeleton Loading (8 rows)
       return (
         <tbody className="divide-y divide-border-subtle bg-surface-card">
-          {Array.from({ length: 5 }).map((_, idx) => (
+          {Array.from({ length: 8 }).map((_, idx) => (
             <tr key={`skeleton-${idx}`} className="animate-pulse">
               <td className="px-6 py-4 text-left whitespace-nowrap">
                 <div className="flex flex-col gap-1">
@@ -223,7 +223,7 @@ export const TransactionsTable: React.FC<TransactionsTableProps> = ({
 
   return (
     <Card className="p-0 overflow-hidden bg-surface-card border border-border-subtle shadow-card" hoverable={false}>
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto overflow-y-hidden">
         <table className="w-full text-left text-xs">
           <thead>
             <tr className="bg-secondary text-white font-semibold uppercase tracking-wider text-[11px]">

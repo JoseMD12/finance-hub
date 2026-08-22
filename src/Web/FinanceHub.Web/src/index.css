@@ -185,43 +185,37 @@ body {
 
 @keyframes scan-sweep {
   0% {
-    transform: translateX(-100%);
-    opacity: 0;
+    background-position: -120% 0;
   }
-  15% {
-    opacity: 1;
-  }
-  85% {
-    opacity: 1;
+  99% {
+    background-position: 220% 0;
+    background-image: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(224, 86, 151, 0.16) 50%,
+      transparent 100%
+    );
   }
   100% {
-    transform: translateX(100%);
-    opacity: 0;
+    background-position: 220% 0;
+    background-image: none;
   }
 }
 
 .scanner-item {
   position: relative;
-  overflow: hidden;
-  clip-path: inset(0);
-  contain: paint;
 }
 
-.scanner-item.scanner-active::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  background: linear-gradient(
+.scanner-item.scanner-active {
+  background-image: linear-gradient(
     90deg,
     transparent 0%,
     rgba(224, 86, 151, 0.16) 50%,
     transparent 100%
   );
-  animation: scan-sweep 1s cubic-bezier(0.25, 1, 0.5, 1) forwards;
-  z-index: 1;
+  background-size: 60% 100%;
+  background-position: -120% 0;
+  background-repeat: no-repeat;
+  animation: scan-sweep 1.2s cubic-bezier(0.25, 1, 0.5, 1) forwards;
 }
 

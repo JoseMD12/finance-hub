@@ -18,7 +18,18 @@ interface ScannerItemProps {
   itemProps?: Record<string, unknown>;
 }
 
-const itemVariants: Variants = {
+const tableRowVariants: Variants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      duration: 0.3,
+      ease: [0.25, 1, 0.5, 1],
+    },
+  },
+};
+
+const blockVariants: Variants = {
   hidden: { opacity: 0, y: 6 },
   visible: {
     opacity: 1,
@@ -41,18 +52,18 @@ const ScannerItem = ({
   const ref = useRef<HTMLTableRowElement | HTMLLIElement | HTMLDivElement>(null);
   const isInView = useInView(ref, {
     once: true,
-    amount: 0.1,
+    amount: 0.05,
     margin: '0px 0px -20px 0px',
   });
 
-  const delayMs = Math.min(index * staggerMs, 400);
+  const delayMs = Math.min(index * staggerMs, 360);
   const itemStyle = (itemProps.style as React.CSSProperties) || {};
 
   if (as === 'tbody') {
     return (
       <motion.tr
         ref={ref as React.RefObject<HTMLTableRowElement>}
-        variants={itemVariants}
+        variants={tableRowVariants}
         initial="hidden"
         animate={isInView ? 'visible' : 'hidden'}
         className={cn('scanner-item', isInView && 'scanner-active', className)}
@@ -71,7 +82,7 @@ const ScannerItem = ({
     return (
       <motion.li
         ref={ref as React.RefObject<HTMLLIElement>}
-        variants={itemVariants}
+        variants={blockVariants}
         initial="hidden"
         animate={isInView ? 'visible' : 'hidden'}
         className={cn('scanner-item', isInView && 'scanner-active', className)}
@@ -89,7 +100,7 @@ const ScannerItem = ({
   return (
     <motion.div
       ref={ref as React.RefObject<HTMLDivElement>}
-      variants={itemVariants}
+      variants={blockVariants}
       initial="hidden"
       animate={isInView ? 'visible' : 'hidden'}
       className={cn('scanner-item', isInView && 'scanner-active', className)}
