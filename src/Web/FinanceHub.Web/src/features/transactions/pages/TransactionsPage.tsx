@@ -38,13 +38,6 @@ export const TransactionsPage: React.FC = () => {
     <PageContainer
       title="Extrato de Transações"
       description="Controle de fluxo de caixa e categorização inteligente"
-      actions={
-        !isLoading && totalItems > 0 ? (
-          <span className="px-3 py-1.5 rounded-xl bg-surface-card border border-border-subtle text-xs font-semibold text-slate-600 shadow-sm select-none">
-            <strong className="text-secondary tabular-nums">{totalItems}</strong> lançamentos registrados
-          </span>
-        ) : undefined
-      }
     >
       {/* Resumo do Período */}
       <TransactionsSummaryCards summary={summary} isLoading={isLoading} />

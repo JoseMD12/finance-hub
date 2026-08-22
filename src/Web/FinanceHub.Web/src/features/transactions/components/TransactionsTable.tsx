@@ -5,7 +5,6 @@ import { formatCurrencyBRL, formatDateBR, formatTimeBR, formatPaymentMethod, mas
 import { getInstitutionInfo } from '@/shared/constants/institutions';
 import { cn } from '@/shared/utils/cn';
 import { Landmark, ArrowUpRight, ArrowDownRight, Eye, SearchX } from 'lucide-react';
-import { ScannerReveal } from '@/shared/components/motion';
 import { CategoryTagPopover } from './CategoryTagPopover';
 import type { TransactionDto } from '../types/transactions.types';
 
@@ -120,7 +119,7 @@ export const TransactionsTable: React.FC<TransactionsTableProps> = ({
     }
 
     return (
-      <ScannerReveal as="tbody" staggerMs={60} className="divide-y divide-border-subtle bg-surface-card">
+      <tbody className="divide-y divide-border-subtle bg-surface-card">
         {transactions.map((t) => (
           <tr
             key={t.id}
@@ -217,7 +216,7 @@ export const TransactionsTable: React.FC<TransactionsTableProps> = ({
             </td>
           </tr>
         ))}
-      </ScannerReveal>
+      </tbody>
     );
   };
 
