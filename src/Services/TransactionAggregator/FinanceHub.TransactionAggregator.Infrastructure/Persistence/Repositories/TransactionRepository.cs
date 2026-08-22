@@ -30,7 +30,10 @@ public class TransactionRepository : ITransactionRepository
         t.IsManuallyCategorized,
         t.TransactionDateUtc,
         t.BankDetails.Channel.ToString(),
-        t.BankDetails.MerchantName);
+        t.BankDetails.MerchantName,
+        t.Nature.ToString(),
+        t.IsIgnoredInTotals,
+        t.PairedTransactionId);
 
     private readonly TransactionAggregatorDbContext _context;
 
@@ -142,8 +145,9 @@ public class TransactionRepository : ITransactionRepository
 
         var totalItems = await query.CountAsync(cancellationToken);
 
-        // Calcular sumário do período selecionado
+        // Calcular sumário considerando estritamente transações operacionais (não ignoradas nos totais)
         var rawTotals = await query
+            .Where(t => !t.IsIgnoredInTotals)
             .GroupBy(t => t.Type)
             .Select(g => new { Type = g.Key, Total = g.Sum(x => x.Amount.Amount) })
             .ToListAsync(cancellationToken);
@@ -151,6 +155,22 @@ public class TransactionRepository : ITransactionRepository
         decimal totalIncome = rawTotals.FirstOrDefault(x => x.Type == TransactionType.Credit)?.Total ?? 0m;
         decimal totalExpense = rawTotals.FirstOrDefault(x => x.Type == TransactionType.Debit)?.Total ?? 0m;
         decimal netBalance = totalIncome - totalExpense;
+
+        // Buscar posição instantânea consolidada de saldos bancários e cartões do usuário
+        var accountBalances = await _context.AccountBalances
+            .Where(b => b.UserId == filter.UserId)
+            .ToListAsync(cancellationToken);
+
+        decimal realConsolidatedBalance = accountBalances
+            .Where(b => b.CurrentBalance.Amount > 0)
+            .Sum(b => b.CurrentBalance.Amount);
+
+        decimal openCreditCards = accountBalances
+            .Where(b => b.CurrentBalance.Amount < 0)
+            .Sum(b => Math.Abs(b.CurrentBalance.Amount));
+
+        decimal projectedAvailable = realConsolidatedBalance - openCreditCards;
+        DateTime? lastSync = accountBalances.Count > 0 ? accountBalances.Max(b => b.LastUpdatedAtUtc) : null;
 
         var page = filter.Page < 1 ? 1 : filter.Page;
         var pageSize = filter.PageSize < 1 ? 20 : filter.PageSize;
@@ -163,7 +183,15 @@ public class TransactionRepository : ITransactionRepository
             .Select(ProjectToDto)
             .ToListAsync(cancellationToken);
 
-        var summary = new TransactionSummaryDto(totalIncome, totalExpense, netBalance, totalItems);
+        var summary = new TransactionSummaryDto(
+            totalIncome,
+            totalExpense,
+            netBalance,
+            totalItems,
+            realConsolidatedBalance,
+            openCreditCards,
+            projectedAvailable,
+            lastSync);
 
         return new PagedTransactionsResponseDto(items, summary, page, pageSize, totalItems, totalPages);
     }
@@ -210,5 +238,22 @@ public class TransactionRepository : ITransactionRepository
         {
             tx.CategorizeManually(newCategoryId);
         }
+    }
+
+    public async Task<IEnumerable<CanonicalTransaction>> GetUnpairedTransfersCandidateAsync(string userId, DateTime fromUtc, DateTime toUtc, CancellationToken cancellationToken)
+    {
+        return await _context.Transactions
+            .Where(t => t.UserId == userId &&
+                        t.PairedTransactionId == null &&
+                        t.TransactionDateUtc >= fromUtc &&
+                        t.TransactionDateUtc <= toUtc)
+            .OrderBy(t => t.TransactionDateUtc)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task UpdateRangeAsync(IEnumerable<CanonicalTransaction> transactions, CancellationToken cancellationToken)
+    {
+        _context.Transactions.UpdateRange(transactions);
+        await _context.SaveChangesAsync(cancellationToken);
     }
 }

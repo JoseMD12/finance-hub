@@ -17,7 +17,10 @@ public record TransactionDto(
     bool IsManuallyCategorized,
     DateTime TransactionDateUtc,
     string Channel,
-    string MerchantName);
+    string MerchantName,
+    string Nature = "Operating",
+    bool IsIgnoredInTotals = false,
+    Guid? PairedTransactionId = null);
 
 public record AccountBalanceDto(
     string InstitutionId,

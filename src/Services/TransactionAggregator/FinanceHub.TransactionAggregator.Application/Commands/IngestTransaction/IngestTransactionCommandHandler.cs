@@ -87,6 +87,24 @@ public class IngestTransactionCommandHandler : IIngestTransactionCommandHandler
 
         var transaction = CanonicalTransaction.Create(creationParams);
 
+        // Classificação automática de neutralidade para categorias conhecidas
+        var transferCategoryId = Guid.Parse("11111111-1111-1111-1111-111111111002");
+        var billPaymentCategoryId = Guid.Parse("11111111-1111-1111-1111-111111110801");
+        var investmentsCategoryId = Guid.Parse("11111111-1111-1111-1111-111111110805");
+
+        if (categorization.CategoryId == transferCategoryId)
+        {
+            transaction.ToggleIgnoreInTotals(true);
+        }
+        else if (categorization.CategoryId == billPaymentCategoryId && sanitizedDescription.CleanText.Contains("FATURA", StringComparison.OrdinalIgnoreCase))
+        {
+            transaction.MarkAsBillPayment();
+        }
+        else if (categorization.CategoryId == investmentsCategoryId)
+        {
+            transaction.ToggleIgnoreInTotals(true);
+        }
+
         await _transactionRepository.AddAsync(transaction, cancellationToken);
 
         var balance = await _accountBalanceRepository.GetByUserAndAccountAsync(command.UserId, accountInfo, cancellationToken);

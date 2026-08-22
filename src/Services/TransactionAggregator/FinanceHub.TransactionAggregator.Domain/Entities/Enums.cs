@@ -6,6 +6,15 @@ public enum TransactionType
     Debit = 2
 }
 
+public enum TransactionNature
+{
+    Operating = 0,
+    Transfer = 1,
+    BillPayment = 2,
+    Investment = 3,
+    Adjustment = 4
+}
+
 public enum CategorizationSource
 {
     UserManual = 1,

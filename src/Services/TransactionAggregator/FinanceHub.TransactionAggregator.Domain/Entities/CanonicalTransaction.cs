@@ -19,6 +19,9 @@ public class CanonicalTransaction
     public DateTime TransactionDateUtc { get; private set; }
     public BankTransactionDetails BankDetails { get; private set; }
     public TransactionAuditInfo AuditInfo { get; private set; }
+    public TransactionNature Nature { get; private set; }
+    public bool IsIgnoredInTotals { get; private set; }
+    public Guid? PairedTransactionId { get; private set; }
 
     private CanonicalTransaction()
     {
@@ -29,6 +32,9 @@ public class CanonicalTransaction
         Description = SanitizedDescription.Create("NON_EMPTY");
         BankDetails = new BankTransactionDetails(string.Empty, TransactionChannel.Other, string.Empty);
         AuditInfo = new TransactionAuditInfo(DateTime.UtcNow, DateTime.UtcNow);
+        Nature = TransactionNature.Operating;
+        IsIgnoredInTotals = false;
+        PairedTransactionId = null;
     }
 
     private CanonicalTransaction(
@@ -54,6 +60,9 @@ public class CanonicalTransaction
         TransactionDateUtc = creationParams.TransactionDateUtc;
         BankDetails = creationParams.BankDetails ?? new BankTransactionDetails(string.Empty, TransactionChannel.Other, string.Empty);
         AuditInfo = auditInfo ?? new TransactionAuditInfo(DateTime.UtcNow, DateTime.UtcNow);
+        Nature = TransactionNature.Operating;
+        IsIgnoredInTotals = false;
+        PairedTransactionId = null;
     }
 
     public static CanonicalTransaction Create(CanonicalTransactionCreationParams creationParams)
@@ -75,6 +84,32 @@ public class CanonicalTransaction
         CategoryId = newCategoryId;
         CategorizationSource = CategorizationSource.UserManual;
         IsManuallyCategorized = true;
+        AuditInfo = new TransactionAuditInfo(AuditInfo.CreatedAtUtc, DateTime.UtcNow);
+    }
+
+    public void MarkAsInternalTransfer(Guid pairedTransactionId)
+    {
+        if (pairedTransactionId == Guid.Empty)
+        {
+            throw new TransactionAggregatorDomainException("PairedTransactionId invalido.");
+        }
+
+        Nature = TransactionNature.Transfer;
+        IsIgnoredInTotals = true;
+        PairedTransactionId = pairedTransactionId;
+        AuditInfo = new TransactionAuditInfo(AuditInfo.CreatedAtUtc, DateTime.UtcNow);
+    }
+
+    public void MarkAsBillPayment()
+    {
+        Nature = TransactionNature.BillPayment;
+        IsIgnoredInTotals = true;
+        AuditInfo = new TransactionAuditInfo(AuditInfo.CreatedAtUtc, DateTime.UtcNow);
+    }
+
+    public void ToggleIgnoreInTotals(bool ignore)
+    {
+        IsIgnoredInTotals = ignore;
         AuditInfo = new TransactionAuditInfo(AuditInfo.CreatedAtUtc, DateTime.UtcNow);
     }
 }
