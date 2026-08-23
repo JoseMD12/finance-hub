@@ -56,8 +56,8 @@ public static class TransactionGatewayEndpoints
             return Results.Ok(categories);
         })
         .WithName("GetGatewayCategories")
-        .Produces<IEnumerable<GatewayCategoryDto>>(StatusCodes.Status200OK)
-        .ProducesProblem(StatusCodes.Status401Unauthorized);
+        .AllowAnonymous()
+        .Produces<IEnumerable<GatewayCategoryDto>>(StatusCodes.Status200OK);
 
         group.MapPatch("/{id:guid}/category", async (
             Guid id,
