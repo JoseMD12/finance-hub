@@ -87,37 +87,31 @@ public class IngestTransactionCommandHandler : IIngestTransactionCommandHandler
 
         var transaction = CanonicalTransaction.Create(creationParams);
 
-        // Classificação automática de neutralidade para categorias conhecidas
+        // Classificação automática de neutralidade para categorias e padrões conhecidos
         var transferCategoryId = Guid.Parse("11111111-1111-1111-1111-111111111002");
         var billPaymentCategoryId = Guid.Parse("11111111-1111-1111-1111-111111110801");
         var investmentsCategoryId = Guid.Parse("11111111-1111-1111-1111-111111110805");
+        var descUpper = sanitizedDescription.CleanText.ToUpperInvariant();
 
-        if (categorization.CategoryId == transferCategoryId)
+        if (categorization.CategoryId == transferCategoryId || 
+            ((descUpper.Contains("JOSE HENRIQUE MARTINS DOTTA") || descUpper.Contains("JOSÉ HENRIQUE MARTINS DOTTA")) && !descUpper.Contains("WELLHUB")))
         {
             transaction.ToggleIgnoreInTotals(true);
         }
-        else if (categorization.CategoryId == billPaymentCategoryId && sanitizedDescription.CleanText.Contains("FATURA", StringComparison.OrdinalIgnoreCase))
+        else if (categorization.CategoryId == billPaymentCategoryId && descUpper.Contains("FATURA"))
         {
             transaction.MarkAsBillPayment();
         }
-        else if (categorization.CategoryId == investmentsCategoryId)
+        else if (categorization.CategoryId == investmentsCategoryId || 
+                 descUpper.Contains("NOSSA GRANA") || 
+                 descUpper.Contains("DINHEIRO RETIRADO") || 
+                 descUpper.Contains("DINHEIRO GUARDADO") ||
+                 descUpper.Contains("COFRINHO"))
         {
             transaction.ToggleIgnoreInTotals(true);
         }
 
         await _transactionRepository.AddAsync(transaction, cancellationToken);
-
-        var balance = await _accountBalanceRepository.GetByUserAndAccountAsync(command.UserId, accountInfo, cancellationToken);
-        if (balance == null)
-        {
-            balance = AccountBalance.Create(command.UserId, accountInfo, moneyAmount);
-        }
-        else
-        {
-            balance.ApplyTransaction(moneyAmount, command.Type);
-        }
-
-        await _accountBalanceRepository.AddOrUpdateAsync(balance, cancellationToken);
 
         await _unitOfWork.CommitAsync(cancellationToken);
 
