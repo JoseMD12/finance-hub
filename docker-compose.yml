@@ -83,7 +83,6 @@ services:
       RabbitMQ__Username: "${RabbitMQ__Username:-guest}"
       RabbitMQ__Password: "${RabbitMQ__Password:-guest}"
       PLUGGY_USER_API_BASE_URL: "${PLUGGY_USER_API_BASE_URL}"
-      PLUGGY_USER_TOKEN: "${PLUGGY_USER_TOKEN}"
       OTEL_EXPORTER_OTLP_ENDPOINT: "http://financehub-jaeger:4317"
     ports:
       - "5056:5056"
@@ -120,6 +119,8 @@ services:
       - .env
     ports:
       - "${WEB_PORT:-3000}:80"
+    volumes:
+      - ./src/Web/FinanceHub.Web/dist:/usr/share/nginx/html:ro
     depends_on:
       - apigateway-api
 
