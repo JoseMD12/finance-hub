@@ -23,32 +23,51 @@ Identificamos 3 padrões de fluxo transitório que inflam artificialmente o bala
 
 ## 2. 🏛️ Arquitetura da Solução
 
-### 2.1 Backend — `TransferPairMatchingEngine` Expandido
+### 2.1 Desacoplamento Ortogonal: Natureza (Comportamento) vs Propósito (Finalidade)
+No modelo financeiro, um lançamento pode ser simultaneamente uma **Transferência Pareada** (comportamento de compensação entre contas) e um **Pagamento de Fatura** (propósito semântico do débito):
+
+* **`Nature: TransactionNature` (Comportamento/Ação Relacional)**:
+  * `Operating`: Transação comum de vida / terceiros.
+  * `Transfer`: Transação pareada com lançamento espelho (titularidade própria ou repasse).
+  * `Investment`: Aporte ou resgate de aplicação/caixinha.
+  * `Adjustment`: Ajuste de saldo manual ou compensatório.
+* **`IsBillPayment: bool` (Propósito / Finalidade Semântica)**:
+  * Indica se o lançamento representa liquidação de fatura de cartão de crédito (baseado em padrão textual `FATURA` ou categoria `Pagamento de Fatura`).
+* **`IsIgnoredInTotals: bool` (Expurgo Operacional)**:
+  * Verdadeiro sempre que `Nature == Transfer`, `IsBillPayment == true`, ou quando marcado como neutro/trânsito.
+* **`PairedTransactionId: Guid?` (Vínculo de Pareamento)**:
+  * Chave de identificação da transação simétrica oposta.
+
+### 2.2 Backend — `TransferPairMatchingEngine` Expandido
 * **Fase 1: Pareamento de Transferências Próprias**:
-  - Já implementado para contas com titularidade cruzada (`José` $\leftrightarrow$ `José`).
+  - Reconhece e pareia transferências entre contas de mesma titularidade (`José` $\leftrightarrow$ `José`), mesmo que uma das pernas seja pagamento de fatura (`Nature = Transfer`, preservando `IsBillPayment = true`).
 * **Fase 2: Pareamento Recíproco com Terceiros**:
   - Analisa pares de `Pix enviado <Nome>` e `Pix recebido <Nome>`.
-  - Se os valores forem idênticos em uma janela de até 3 dias, marca ambos como `is_ignored_in_totals = true` e `nature = TransactionNature.Transfer`.
+  - Se os valores forem idênticos em janela de $\le 72\text{h}$, marca ambos como `is_ignored_in_totals = true` e `nature = TransactionNature.Transfer`.
 * **Fase 3: Detecção de Dinheiro de Trânsito / Boleto Espelho**:
   - Detecta entrada de Pix não-salarial seguida de pagamento de boleto ou saída com valor quase idêntico ($\Delta \le \text{R\$ } 2,00$) no mesmo dia ($\le 24\text{h}$).
   - Marca a entrada e a saída como `is_ignored_in_totals = true` (Trânsito).
 
-### 2.2 Endpoint & Comando de Neutralidade Manual
+### 2.3 Endpoint & Comando de Neutralidade Manual
 * `PATCH /api/v1/transactions/{id}/neutrality`
   - `ToggleTransactionNeutralityCommand(Guid TransactionId, string UserId, bool IsIgnoredInTotals, string? Reason)`
 * BFF: `PATCH /api/v1/gateway/transactions/{id}/neutrality`
 
-### 2.3 Frontend — Controle Visual e Interativo
-* **Tabela de Transações**:
-  - Badge visual informativo: `Neutro` / `Trânsito`.
-* **Gaveta de Detalhes da Transação (`TransactionDetailsDrawer`)**:
-  - Switch/Toggle interativo para marcar/desmarcar a transação como dinheiro de trânsito em 1 clique, com recalculo instantâneo dos cards de resumo.
-* **Filtros Rápidos**:
-  - Opção no filtro para exibir/ocultar transações neutras.
+### 2.4 Frontend — Badges Cumulativos e Controle Visual
+* **Tabela de Transações (`TransactionsTable.tsx`)**:
+  - Suporte a **múltiplos badges complementares** na mesma linha:
+    * Se `isBillPayment === true` $\rightarrow$ exibe Badge 🧾 **`Fatura`**.
+    * Se `nature === 'Transfer'` $\rightarrow$ exibe Badge 🔄 **`Transferência`**.
+    * Se `isIgnoredInTotals === true` e não for transferência nem fatura $\rightarrow$ exibe Badge **`Neutro`**.
+  - Lançamentos de pagamento de fatura transferidos entre contas exibirão simultaneamente `[ 🔄 Transferência ]` e `[ 🧾 Fatura ]`.
+* **Modal de Detalhes da Transação**:
+  - Switch interativo para alternar neutralidade nos totais.
+  - Exibição destacada das tags de finalidade (Fatura) e relacionamento (Transferência Pareada).
 
 ---
 
 ## 3. 🧪 Plano de Validação & TDD
-1. Criar testes unitários no backend para as 3 fases do `TransferPairMatchingEngine`.
-2. Criar testes de integração para o comando `ToggleTransactionNeutralityCommand`.
-3. Criar testes no frontend para a ação de toggle e renderização dos badges.
+1. Criar testes unitários para a entidade `CanonicalTransaction` garantindo coexistência de `Nature = Transfer` e `IsBillPayment = true`.
+2. Atualizar migração/coluna no EF Core (`is_bill_payment`) se necessário e DTOs de leitura (`TransactionDto.isBillPayment`).
+3. Atualizar `TransferPairMatchingEngineTests` e testes do frontend (`TransactionsTable.test.tsx` e `TransactionsPage.test.tsx`).
+

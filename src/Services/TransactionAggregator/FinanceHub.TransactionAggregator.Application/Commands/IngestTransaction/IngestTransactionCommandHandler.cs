@@ -5,6 +5,7 @@ using FinanceHub.Shared.Messaging.Events;
 using FinanceHub.TransactionAggregator.Application.Interfaces;
 using FinanceHub.TransactionAggregator.Application.Services.Categorization;
 using FinanceHub.TransactionAggregator.Domain.Entities;
+using FinanceHub.TransactionAggregator.Domain.Services;
 using FinanceHub.TransactionAggregator.Domain.ValueObjects;
 
 namespace FinanceHub.TransactionAggregator.Application.Commands.IngestTransaction;
@@ -68,9 +69,11 @@ public class IngestTransactionCommandHandler : IIngestTransactionCommandHandler
             command.RawDescription,
             cancellationToken);
 
+        var channel = TransactionChannelDetector.ResolveChannel(command.Channel, command.RawDescription);
+
         var bankDetails = new BankTransactionDetails(
             command.BankTransactionId,
-            command.Channel,
+            channel,
             command.MerchantName);
 
         var creationParams = new CanonicalTransactionCreationParams(
@@ -93,14 +96,15 @@ public class IngestTransactionCommandHandler : IIngestTransactionCommandHandler
         var investmentsCategoryId = Guid.Parse("11111111-1111-1111-1111-111111110805");
         var descUpper = sanitizedDescription.CleanText.ToUpperInvariant();
 
+        if (categorization.CategoryId == billPaymentCategoryId || descUpper.Contains("FATURA"))
+        {
+            transaction.MarkAsBillPayment();
+        }
+
         if (categorization.CategoryId == transferCategoryId || 
             ((descUpper.Contains("JOSE HENRIQUE MARTINS DOTTA") || descUpper.Contains("JOSÉ HENRIQUE MARTINS DOTTA")) && !descUpper.Contains("WELLHUB")))
         {
             transaction.ToggleIgnoreInTotals(true);
-        }
-        else if (categorization.CategoryId == billPaymentCategoryId && descUpper.Contains("FATURA"))
-        {
-            transaction.MarkAsBillPayment();
         }
         else if (categorization.CategoryId == investmentsCategoryId || 
                  descUpper.Contains("NOSSA GRANA") || 

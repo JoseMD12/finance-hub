@@ -26,6 +26,7 @@ public static class DependencyInjection
         // Command & Query Handlers
         services.AddScoped<IIngestTransactionCommandHandler, IngestTransactionCommandHandler>();
         services.AddScoped<ICategorizeTransactionCommandHandler, CategorizeTransactionCommandHandler>();
+        services.AddScoped<FinanceHub.TransactionAggregator.Application.Commands.ToggleTransactionNeutrality.IToggleTransactionNeutralityCommandHandler, FinanceHub.TransactionAggregator.Application.Commands.ToggleTransactionNeutrality.ToggleTransactionNeutralityCommandHandler>();
         services.AddScoped<IGetTransactionsQueryHandler, GetTransactionsQueryHandler>();
         services.AddScoped<IGetCategoriesQueryHandler, GetCategoriesQueryHandler>();
         services.AddScoped<IGetConsolidatedBalanceQueryHandler, GetConsolidatedBalanceQueryHandler>();
