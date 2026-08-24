@@ -11,4 +11,5 @@ public sealed record GetTransactionsParameters(
     string? InstitutionId,
     Guid? CategoryId,
     string? Type,
-    string? Search);
+    string? Search,
+    bool? IncludeIgnoredInTotals);

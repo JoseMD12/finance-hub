@@ -43,7 +43,8 @@ public static class TransactionEndpoints
                 parameters.InstitutionId,
                 parameters.CategoryId,
                 parameters.Type,
-                parameters.Search);
+                parameters.Search,
+                parameters.IncludeIgnoredInTotals ?? false);
 
             var query = new GetTransactionsQuery(filter);
             var result = await handler.Handle(query, cancellationToken);
@@ -84,6 +85,25 @@ public static class TransactionEndpoints
         .Produces(StatusCodes.Status204NoContent)
         .ProducesProblem(StatusCodes.Status404NotFound);
 
+        group.MapPatch("/{id:guid}/neutrality", async (
+            Guid id,
+            ToggleTransactionNeutralityRequest request,
+            FinanceHub.TransactionAggregator.Application.Commands.ToggleTransactionNeutrality.IToggleTransactionNeutralityCommandHandler handler,
+            CancellationToken cancellationToken) =>
+        {
+            var command = new FinanceHub.TransactionAggregator.Application.Commands.ToggleTransactionNeutrality.ToggleTransactionNeutralityCommand(
+                id,
+                request.UserId,
+                request.IsIgnoredInTotals,
+                request.Reason);
+
+            await handler.Handle(command, cancellationToken);
+            return Results.NoContent();
+        })
+        .WithName("ToggleTransactionNeutrality")
+        .Produces(StatusCodes.Status204NoContent)
+        .ProducesProblem(StatusCodes.Status404NotFound);
+
         return endpoints;
     }
 }
@@ -93,3 +113,8 @@ public record CategorizeTransactionRequest(
     Guid NewCategoryId,
     bool CreateCustomRule,
     bool ApplyToPastTransactions = false);
+
+public record ToggleTransactionNeutralityRequest(
+    string UserId,
+    bool IsIgnoredInTotals,
+    string? Reason = null);

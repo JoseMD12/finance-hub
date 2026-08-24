@@ -5,12 +5,15 @@ import { CategoryFilterSelect } from './CategoryFilterSelect';
 import { cn } from '@/shared/utils/cn';
 import { useCategoriesQuery } from '../hooks/useCategoriesQuery';
 import { getInstitutionLogoUrl } from '@/shared/constants/institutions';
+import { Switch } from '@/shared/components/Switch/Switch';
 import type { TransactionFilterParams } from '../types/transactions.types';
 
 export interface TransactionsFilterBarProps {
   filters: TransactionFilterParams;
   onFilterChange: (newFilters: Partial<TransactionFilterParams>) => void;
   onResetFilters: () => void;
+  includeIgnoredInTotals?: boolean;
+  onIncludeIgnoredChange?: (include: boolean) => void;
 }
 
 export type DatePresetKey = 'current-month' | 'previous-month' | 'last-30' | 'current-year' | 'all-time';
@@ -80,6 +83,8 @@ export const TransactionsFilterBar: React.FC<TransactionsFilterBarProps> = ({
   filters,
   onFilterChange,
   onResetFilters,
+  includeIgnoredInTotals,
+  onIncludeIgnoredChange,
 }) => {
   const { data: categories = [] } = useCategoriesQuery();
 
@@ -224,33 +229,44 @@ export const TransactionsFilterBar: React.FC<TransactionsFilterBarProps> = ({
         </div>
       </div>
 
-      {/* Barra de Presets Rápidos de Período */}
-      <div className="flex flex-wrap items-center gap-2 pt-3 pb-0.5 border-t border-border-subtle/60">
-        <span className="text-xs font-semibold text-slate-500 inline-flex items-center gap-1.5 mr-1 pl-1">
-          <Calendar className="w-3.5 h-3.5 text-brand" />
-          Período:
-        </span>
-        <div className="flex flex-wrap items-center gap-1.5">
-          {DATE_PRESET_OPTIONS.map(({ key, label }) => {
-            const isSelected = activePreset === key;
+      {/* Barra de Presets Rápidos de Período e Switch de Totais Neutros */}
+      <div className="flex flex-wrap items-center justify-between gap-3 pt-3 pb-0.5 border-t border-border-subtle/60">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs font-semibold text-slate-500 inline-flex items-center gap-1.5 mr-1 pl-1">
+            <Calendar className="w-3.5 h-3.5 text-brand" />
+            Período:
+          </span>
+          <div className="flex flex-wrap items-center gap-1.5">
+            {DATE_PRESET_OPTIONS.map(({ key, label }) => {
+              const isSelected = activePreset === key;
 
-            return (
-              <button
-                key={key}
-                type="button"
-                onClick={() => handleSelectDatePreset(key)}
-                aria-pressed={isSelected}
-                className={cn(
-                  'px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150 cursor-pointer select-none',
-                  isSelected
-                    ? 'bg-brand-light text-brand-dark border-brand font-bold shadow-2xs ring-1 ring-brand/20'
-                    : 'bg-surface-ground text-slate-600 border-border-subtle hover:bg-slate-200/60 hover:text-slate-800'
-                )}
-              >
-                {label}
-              </button>
-            );
-          })}
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => handleSelectDatePreset(key)}
+                  aria-pressed={isSelected}
+                  className={cn(
+                    'px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150 cursor-pointer select-none',
+                    isSelected
+                      ? 'bg-brand-light text-brand-dark border-brand font-bold shadow-2xs ring-1 ring-brand/20'
+                      : 'bg-surface-ground text-slate-600 border-border-subtle hover:bg-slate-200/60 hover:text-slate-800'
+                  )}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Novo Switch para controle de cálculo de Neutros / Transferências */}
+        <div className="p-2 rounded-xl bg-surface-ground border border-border-subtle flex items-center gap-2">
+          <Switch
+            checked={Boolean(includeIgnoredInTotals)}
+            onChange={(val) => onIncludeIgnoredChange?.(val)}
+            label="Incluir Transferências / Neutros nos Totais"
+          />
         </div>
       </div>
 

@@ -71,6 +71,11 @@ public class TransactionAggregatorServiceClient : ITransactionAggregatorServiceC
             queryParams.Add($"search={Uri.EscapeDataString(filter.Search)}");
         }
 
+        if (filter.IncludeIgnoredInTotals)
+        {
+            queryParams.Add("includeIgnoredInTotals=true");
+        }
+
         var queryString = string.Join("&", queryParams);
         using var request = new HttpRequestMessage(HttpMethod.Get, $"/api/v1/transactions?{queryString}");
         var response = await _httpClient.SendAndDeserializeAsync<PagedGatewayTransactionsDto>(request, ServiceName, _logger, ct);
@@ -95,6 +100,16 @@ public class TransactionAggregatorServiceClient : ITransactionAggregatorServiceC
     {
         var payload = new { UserId = userId, NewCategoryId = categoryId, CreateCustomRule = createCustomRule, ApplyToPastTransactions = applyToPastTransactions };
         using var request = new HttpRequestMessage(HttpMethod.Patch, $"/api/v1/transactions/{transactionId}/categorize")
+        {
+            Content = JsonContent.Create(payload)
+        };
+        await _httpClient.SendOrThrowAsync(request, ServiceName, _logger, null, ct);
+    }
+
+    public async Task ToggleTransactionNeutralityAsync(Guid transactionId, string userId, bool isIgnoredInTotals, string? reason = null, CancellationToken ct = default)
+    {
+        var payload = new { UserId = userId, IsIgnoredInTotals = isIgnoredInTotals, Reason = reason };
+        using var request = new HttpRequestMessage(HttpMethod.Patch, $"/api/v1/transactions/{transactionId}/neutrality")
         {
             Content = JsonContent.Create(payload)
         };

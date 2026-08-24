@@ -34,3 +34,12 @@ export const categorizeTransactionApi = async (
     applyToPastTransactions: payload.applyToPastTransactions ?? false,
   });
 };
+
+export const toggleTransactionNeutralityApi = async (
+  payload: { transactionId: string; isIgnoredInTotals: boolean; reason?: string }
+): Promise<void> => {
+  await httpClient.patch(API_ENDPOINTS.TRANSACTIONS.TOGGLE_NEUTRALITY(payload.transactionId), {
+    isIgnoredInTotals: payload.isIgnoredInTotals,
+    reason: payload.reason,
+  });
+};

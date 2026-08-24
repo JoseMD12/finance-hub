@@ -7,6 +7,8 @@ import { TransactionsFilterBar, getPresetDateRange } from '../components/Transac
 import { TransactionsTable } from '../components/TransactionsTable';
 import { TransactionsPagination } from '../components/TransactionsPagination';
 import { PageContainer } from '@/shared/components/PageContainer/PageContainer';
+import { useToggleNeutralityMutation } from '../hooks/useToggleNeutralityMutation';
+import { ArrowLeftRight } from 'lucide-react';
 import type { TransactionDto, TransactionFilterParams } from '../types/transactions.types';
 
 export const TransactionsPage: React.FC = () => {
@@ -23,9 +25,11 @@ export const TransactionsPage: React.FC = () => {
   const [selectedTransaction, setSelectedTransaction] = useState<TransactionDto | null>(null);
 
   const { data, isLoading } = useTransactionsQuery(filters);
+  const toggleNeutralityMutation = useToggleNeutralityMutation();
 
   const transactions = data?.items ?? [];
   const summary = data?.summary;
+
   const totalPages = data?.totalPages ?? 1;
   const totalItems = data?.totalItems ?? 0;
   const currentPage = filters.page ?? 1;
@@ -43,7 +47,18 @@ export const TransactionsPage: React.FC = () => {
       startDate: range.startDate,
       endDate: range.endDate,
       datePreset: 'current-month',
+      includeIgnoredInTotals: false,
     });
+  };
+
+  const handleToggleNeutrality = async (transaction: TransactionDto) => {
+    const nextIgnored = !transaction.isIgnoredInTotals;
+    await toggleNeutralityMutation.mutateAsync({
+      transactionId: transaction.id,
+      isIgnoredInTotals: nextIgnored,
+      reason: nextIgnored ? 'Marcado manualmente como neutro/trânsito' : 'Reativado manualmente',
+    });
+    setSelectedTransaction((prev) => prev ? { ...prev, isIgnoredInTotals: nextIgnored } : null);
   };
 
   return (
@@ -59,6 +74,8 @@ export const TransactionsPage: React.FC = () => {
         filters={filters}
         onFilterChange={handleFilterChange}
         onResetFilters={handleResetFilters}
+        includeIgnoredInTotals={Boolean(filters.includeIgnoredInTotals)}
+        onIncludeIgnoredChange={(include) => handleFilterChange({ includeIgnoredInTotals: include })}
       />
 
       {/* Tabela de Transações */}
@@ -66,6 +83,7 @@ export const TransactionsPage: React.FC = () => {
         transactions={transactions}
         isLoading={isLoading}
         onSelectTransaction={setSelectedTransaction}
+        onToggleNeutrality={handleToggleNeutrality}
       />
 
       {/* Paginação Clássica */}
@@ -115,6 +133,36 @@ export const TransactionsPage: React.FC = () => {
                   <span>{selectedTransaction.merchantName}</span>
                 </div>
               )}
+            </div>
+
+            {/* Controle de Neutralidade / Dinheiro de Trânsito */}
+            <div className="p-4 rounded-2xl bg-surface-card border border-border-subtle flex items-center justify-between gap-3">
+              <div className="flex flex-col gap-0.5">
+                <div className="flex items-center gap-1.5 font-bold text-slate-800">
+                  <ArrowLeftRight className="w-4 h-4 text-brand" />
+                  <span>Dinheiro de Trânsito / Lançamento Neutro</span>
+                </div>
+                <p className="text-[11px] text-slate-500">
+                  Quando ativo, este lançamento é expurgado dos somatórios de receitas e despesas operacionais.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => handleToggleNeutrality(selectedTransaction)}
+                disabled={toggleNeutralityMutation.isPending}
+                aria-pressed={Boolean(selectedTransaction.isIgnoredInTotals)}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 ${
+                  selectedTransaction.isIgnoredInTotals ? 'bg-brand' : 'bg-slate-300'
+                }`}
+              >
+                <span className="sr-only">Alternar neutralidade nos totais</span>
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
+                    selectedTransaction.isIgnoredInTotals ? 'translate-x-5' : 'translate-x-0'
+                  }`}
+                />
+              </button>
             </div>
 
             {/* Grid de Metadados Bancários */}

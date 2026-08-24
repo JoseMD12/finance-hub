@@ -108,7 +108,10 @@ describe('TransactionsPage', () => {
       expect(screen.getByText('Supermercado Silva')).toBeInTheDocument();
     });
 
-    const viewButton = screen.getByLabelText('Ver detalhes da transação Supermercado Silva');
+    const actionMenuButton = screen.getByLabelText('Ações da transação Supermercado Silva');
+    await user.click(actionMenuButton);
+
+    const viewButton = screen.getByRole('menuitem', { name: /ver detalhes/i });
     await user.click(viewButton);
 
     expect(screen.getByText('Detalhes da Transação')).toBeInTheDocument();
@@ -153,5 +156,38 @@ describe('TransactionsPage', () => {
 
     expect(screen.getByText('Alterar Categoria')).toBeInTheDocument();
     expect(screen.getByLabelText('Alterar categoria da transação')).toBeInTheDocument();
+  });
+
+  it('deve alternar a neutralidade da transação via toggle no modal de detalhes', async () => {
+    const user = userEvent.setup();
+    const queryClient = createTestQueryClient();
+    vi.mocked(transactionsApi.toggleTransactionNeutralityApi).mockResolvedValue();
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <TransactionsPage />
+      </QueryClientProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Supermercado Silva')).toBeInTheDocument();
+    });
+
+    const actionMenuButton = screen.getByLabelText('Ações da transação Supermercado Silva');
+    await user.click(actionMenuButton);
+
+    const viewButton = screen.getByRole('menuitem', { name: /ver detalhes/i });
+    await user.click(viewButton);
+
+    const toggleButton = screen.getByRole('button', { name: 'Alternar neutralidade nos totais' });
+    expect(toggleButton).toHaveAttribute('aria-pressed', 'false');
+
+    await user.click(toggleButton);
+
+    expect(transactionsApi.toggleTransactionNeutralityApi).toHaveBeenCalledWith({
+      transactionId: 'tx-1',
+      isIgnoredInTotals: true,
+      reason: 'Marcado manualmente como neutro/trânsito',
+    });
   });
 });

@@ -5,6 +5,7 @@ using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using FinanceHub.TransactionAggregator.Api;
+using FinanceHub.TransactionAggregator.Api.Endpoints;
 using FinanceHub.TransactionAggregator.Application.Commands.IngestTransaction;
 using FinanceHub.TransactionAggregator.Application.DTOs;
 using FinanceHub.TransactionAggregator.Application.Queries.GetConsolidatedBalance;
@@ -116,6 +117,39 @@ public class TransactionEndpointsTests
 
             result.Should().NotBeNull();
             result!.TotalBalanceBrl.Should().Be(500m);
+        }
+        finally
+        {
+            await factory.DisposeAsync();
+        }
+    }
+
+    [Fact]
+    public async Task ToggleTransactionNeutrality_WithValidPayload_ShouldReturn204NoContent()
+    {
+        var neutralityHandler = Substitute.For<FinanceHub.TransactionAggregator.Application.Commands.ToggleTransactionNeutrality.IToggleTransactionNeutralityCommandHandler>();
+        var txId = Guid.NewGuid();
+
+        neutralityHandler.Handle(Arg.Any<FinanceHub.TransactionAggregator.Application.Commands.ToggleTransactionNeutrality.ToggleTransactionNeutralityCommand>(), Arg.Any<CancellationToken>())
+            .Returns(Task.CompletedTask);
+
+        using var factory = new CustomWebApplicationFactory<FinanceHub.TransactionAggregator.Api.Program>();
+        await factory.InitializeAsync();
+
+        var client = factory.WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureServices(services =>
+            {
+                services.AddScoped(_ => neutralityHandler);
+            });
+        }).CreateClient();
+
+        try
+        {
+            var request = new ToggleTransactionNeutralityRequest("user-77", true, "Dinheiro de transito");
+            var response = await client.PatchAsJsonAsync($"/api/v1/transactions/{txId}/neutrality", request);
+
+            response.StatusCode.Should().Be(HttpStatusCode.NoContent);
         }
         finally
         {
