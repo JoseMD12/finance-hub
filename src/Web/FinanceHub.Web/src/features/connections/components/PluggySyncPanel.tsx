@@ -139,4 +139,3 @@ export const PluggySyncPanel: React.FC<PluggySyncPanelProps> = ({
     </GlowCard>
   );
 };
-

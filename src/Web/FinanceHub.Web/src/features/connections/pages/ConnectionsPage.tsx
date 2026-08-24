@@ -8,7 +8,6 @@ import { SyncSummaryBanner } from '../components/SyncSummaryBanner';
 import { ConnectionCard } from '../components/ConnectionCard';
 import { EmptyConnectionsState } from '../components/EmptyConnectionsState';
 import { FileImporterCard } from '../components/FileImporterCard';
-import { SyncTimingInfoCard } from '../components/SyncTimingInfoCard';
 import { Skeleton } from '@/shared/components/Skeleton/Skeleton';
 import { PageContainer } from '@/shared/components/PageContainer/PageContainer';
 
@@ -96,8 +95,6 @@ export const ConnectionsPage: React.FC = () => {
         onSaveToken={saveToken}
         onClearToken={clearToken}
       />
-
-      <SyncTimingInfoCard />
 
       <section className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
