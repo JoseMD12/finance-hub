@@ -1,17 +1,21 @@
 export interface AccountBalanceDto {
   accountNumber: string;
-  institutionName: string;
-  balanceBrl: number;
+  institutionId?: string;
+  institutionName?: string;
+  balanceBrl?: number;
+  amount?: number;
+  currency?: string;
+  lastUpdatedAtUtc?: string;
   badge?: string;
 }
 
 export interface DashboardSummaryDto {
   userId: string;
   totalBalanceBrl: number;
-  monthlyIncomeBrl: number;
-  monthlyExpenseBrl: number;
+  monthlyIncomeBrl?: number;
+  monthlyExpenseBrl?: number;
   accountBalances: AccountBalanceDto[];
-  categoryExpenses: {
+  categoryExpenses?: {
     categoryName: string;
     amountBrl: number;
     color: string;

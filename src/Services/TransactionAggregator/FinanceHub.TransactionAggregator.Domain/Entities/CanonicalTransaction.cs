@@ -20,6 +20,7 @@ public class CanonicalTransaction
     public BankTransactionDetails BankDetails { get; private set; }
     public TransactionAuditInfo AuditInfo { get; private set; }
     public TransactionNature Nature { get; private set; }
+    public bool IsBillPayment { get; private set; }
     public bool IsIgnoredInTotals { get; private set; }
     public Guid? PairedTransactionId { get; private set; }
 
@@ -33,6 +34,7 @@ public class CanonicalTransaction
         BankDetails = new BankTransactionDetails(string.Empty, TransactionChannel.Other, string.Empty);
         AuditInfo = new TransactionAuditInfo(DateTime.UtcNow, DateTime.UtcNow);
         Nature = TransactionNature.Operating;
+        IsBillPayment = false;
         IsIgnoredInTotals = false;
         PairedTransactionId = null;
     }
@@ -61,6 +63,7 @@ public class CanonicalTransaction
         BankDetails = creationParams.BankDetails ?? new BankTransactionDetails(string.Empty, TransactionChannel.Other, string.Empty);
         AuditInfo = auditInfo ?? new TransactionAuditInfo(DateTime.UtcNow, DateTime.UtcNow);
         Nature = TransactionNature.Operating;
+        IsBillPayment = false;
         IsIgnoredInTotals = false;
         PairedTransactionId = null;
     }
@@ -102,8 +105,15 @@ public class CanonicalTransaction
 
     public void MarkAsBillPayment()
     {
-        Nature = TransactionNature.BillPayment;
+        IsBillPayment = true;
         IsIgnoredInTotals = true;
+        AuditInfo = new TransactionAuditInfo(AuditInfo.CreatedAtUtc, DateTime.UtcNow);
+    }
+
+    public void MarkAsTransitMoney(Guid? pairedTransactionId = null)
+    {
+        IsIgnoredInTotals = true;
+        PairedTransactionId = pairedTransactionId;
         AuditInfo = new TransactionAuditInfo(AuditInfo.CreatedAtUtc, DateTime.UtcNow);
     }
 

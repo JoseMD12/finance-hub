@@ -4,14 +4,16 @@ import { Skeleton } from '@/shared/components/Skeleton/Skeleton';
 import { formatCurrencyBRL, formatDateBR, formatTimeBR, formatPaymentMethod, maskSensitiveAccount } from '@/shared/utils/formatters';
 import { getInstitutionInfo } from '@/shared/constants/institutions';
 import { cn } from '@/shared/utils/cn';
-import { Landmark, ArrowUpRight, ArrowDownRight, ArrowLeftRight, Receipt, Eye, SearchX } from 'lucide-react';
+import { Landmark, ArrowUpRight, ArrowDownRight, ArrowLeftRight, Receipt, SearchX } from 'lucide-react';
 import { CategoryTagPopover } from './CategoryTagPopover';
+import { TransactionActionDropdown } from './TransactionActionDropdown';
 import type { TransactionDto } from '../types/transactions.types';
 
 export interface TransactionsTableProps {
   transactions: TransactionDto[];
   isLoading: boolean;
   onSelectTransaction: (transaction: TransactionDto) => void;
+  onToggleNeutrality: (transaction: TransactionDto) => void;
 }
 
 const BankLogoTag: React.FC<{ institutionId: string }> = ({ institutionId }) => {
@@ -45,6 +47,7 @@ export const TransactionsTable: React.FC<TransactionsTableProps> = ({
   transactions,
   isLoading,
   onSelectTransaction,
+  onToggleNeutrality,
 }) => {
   const renderTableContent = () => {
     if (isLoading) {
@@ -137,34 +140,34 @@ export const TransactionsTable: React.FC<TransactionsTableProps> = ({
               </div>
             </td>
 
-            {/* Descrição e Estabelecimento - Alinhada à esquerda */}
+            {/* Descrição e Estabelecimento - Sanitizado no topo em negrito, nome bruto embaixo */}
             <td className="px-6 py-4 text-left">
               <div className="flex flex-col gap-0.5">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-bold text-slate-800 group-hover:text-secondary transition-colors">
+                  <span className="font-bold text-slate-800 group-hover:text-secondary transition-colors text-xs">
                     {t.description}
                   </span>
                   {t.nature === 'Transfer' && (
                     <span
-                      title="Transferência interna pareada entre contas próprias (não computada nos totais)"
+                      title="Transferência interna pareada entre contas próprias ou repasse (não computada nos totais)"
                       className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200"
                     >
                       <ArrowLeftRight className="w-2.5 h-2.5 text-slate-500" aria-hidden="true" />
                       Transferência
                     </span>
                   )}
-                  {t.nature === 'BillPayment' && (
+                  {t.isBillPayment && (
                     <span
-                      title="Pagamento de fatura de cartão (não duplicada nos totais)"
-                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200"
+                      title="Pagamento de fatura de cartão de crédito"
+                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200"
                     >
-                      <Receipt className="w-2.5 h-2.5 text-slate-500" aria-hidden="true" />
+                      <Receipt className="w-2.5 h-2.5 text-blue-600" aria-hidden="true" />
                       Fatura
                     </span>
                   )}
-                  {t.isIgnoredInTotals && t.nature !== 'Transfer' && t.nature !== 'BillPayment' && (
+                  {t.isIgnoredInTotals && t.nature !== 'Transfer' && (
                     <span
-                      title="Movimentação patrimonial/neutra (não computada nos totais operacionais)"
+                      title="Movimentação patrimonial / dinheiro de trânsito (não computada nos totais operacionais)"
                       className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-500 border border-slate-200"
                     >
                       Neutro
@@ -173,7 +176,7 @@ export const TransactionsTable: React.FC<TransactionsTableProps> = ({
                 </div>
                 {t.merchantName &&
                   t.merchantName.trim().toLowerCase() !== t.description.trim().toLowerCase() && (
-                    <span className="text-[11px] text-slate-400 font-medium">
+                    <span className="text-[11px] text-slate-400 font-mono font-medium truncate max-w-md">
                       {t.merchantName}
                     </span>
                   )}
@@ -229,18 +232,14 @@ export const TransactionsTable: React.FC<TransactionsTableProps> = ({
               </div>
             </td>
 
-            {/* Ações - Centralizado */}
+            {/* Ações - Centralizado com DropdownMenu padronizado */}
             <td className="px-6 py-4 text-center whitespace-nowrap min-w-[80px]">
               <div className="flex items-center justify-center">
-                <button
-                  type="button"
-                  onClick={() => onSelectTransaction(t)}
-                  aria-label={`Ver detalhes da transação ${t.description}`}
-                  title="Ver Detalhes"
-                  className="p-2 text-slate-400 hover:text-brand hover:bg-brand-light rounded-lg transition-all duration-200 cursor-pointer"
-                >
-                  <Eye className="w-4 h-4" />
-                </button>
+                <TransactionActionDropdown
+                  transaction={t}
+                  onSelectTransaction={onSelectTransaction}
+                  onToggleNeutrality={onToggleNeutrality}
+                />
               </div>
             </td>
           </tr>

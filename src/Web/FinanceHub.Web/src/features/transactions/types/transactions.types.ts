@@ -28,6 +28,7 @@ export interface TransactionDto {
   readonly channel: string;
   readonly merchantName: string;
   readonly nature?: string;
+  readonly isBillPayment?: boolean;
   readonly isIgnoredInTotals?: boolean;
   readonly pairedTransactionId?: string | null;
 }
@@ -62,6 +63,7 @@ export interface TransactionFilterParams {
   readonly categoryId?: string;
   readonly type?: string;
   readonly search?: string;
+  readonly includeIgnoredInTotals?: boolean;
 }
 
 export interface CategorizeTransactionPayload {
@@ -69,4 +71,10 @@ export interface CategorizeTransactionPayload {
   readonly categoryId: string;
   readonly createCustomRule: boolean;
   readonly applyToPastTransactions?: boolean;
+}
+
+export interface ToggleNeutralityPayload {
+  readonly transactionId: string;
+  readonly isIgnoredInTotals: boolean;
+  readonly reason?: string;
 }

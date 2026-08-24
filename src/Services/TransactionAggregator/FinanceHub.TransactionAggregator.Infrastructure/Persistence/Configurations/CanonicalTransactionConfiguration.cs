@@ -114,6 +114,11 @@ public class CanonicalTransactionConfiguration : IEntityTypeConfiguration<Canoni
             .IsRequired()
             .HasDefaultValue(TransactionNature.Operating);
 
+        builder.Property(x => x.IsBillPayment)
+            .HasColumnName("is_bill_payment")
+            .IsRequired()
+            .HasDefaultValue(false);
+
         builder.Property(x => x.IsIgnoredInTotals)
             .HasColumnName("is_ignored_in_totals")
             .IsRequired()

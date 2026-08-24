@@ -19,6 +19,7 @@ public record TransactionDto(
     string Channel,
     string MerchantName,
     string Nature = "Operating",
+    bool IsBillPayment = false,
     bool IsIgnoredInTotals = false,
     Guid? PairedTransactionId = null);
 

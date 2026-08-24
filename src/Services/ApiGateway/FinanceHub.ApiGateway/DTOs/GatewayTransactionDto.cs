@@ -16,6 +16,7 @@ public record GatewayTransactionDto(
     string Channel,
     string MerchantName,
     string Nature = "Operating",
+    bool IsBillPayment = false,
     bool IsIgnoredInTotals = false,
     Guid? PairedTransactionId = null);
 
@@ -58,4 +59,5 @@ public record GatewayTransactionFilterDto(
     string? InstitutionId = null,
     Guid? CategoryId = null,
     string? Type = null,
-    string? Search = null);
+    string? Search = null,
+    bool IncludeIgnoredInTotals = false);

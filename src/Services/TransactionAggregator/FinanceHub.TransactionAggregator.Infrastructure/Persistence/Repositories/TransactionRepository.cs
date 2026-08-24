@@ -32,6 +32,7 @@ public class TransactionRepository : ITransactionRepository
         t.BankDetails.Channel.ToString(),
         t.BankDetails.MerchantName,
         t.Nature.ToString(),
+        t.IsBillPayment,
         t.IsIgnoredInTotals,
         t.PairedTransactionId);
 
@@ -66,10 +67,10 @@ public class TransactionRepository : ITransactionRepository
         await _context.Transactions.AddAsync(transaction, cancellationToken);
     }
 
-    public Task UpdateAsync(CanonicalTransaction transaction, CancellationToken cancellationToken)
+    public async Task UpdateAsync(CanonicalTransaction transaction, CancellationToken cancellationToken)
     {
         _context.Transactions.Update(transaction);
-        return Task.CompletedTask;
+        await _context.SaveChangesAsync(cancellationToken);
     }
 
     public async Task<IEnumerable<TransactionDto>> GetProjectedByUserIdAsync(string userId, int page, int pageSize, CancellationToken cancellationToken)
@@ -145,9 +146,14 @@ public class TransactionRepository : ITransactionRepository
 
         var totalItems = await query.CountAsync(cancellationToken);
 
-        // Calcular sumário considerando estritamente transações operacionais (não ignoradas nos totais)
-        var rawTotals = await query
-            .Where(t => !t.IsIgnoredInTotals)
+        // Calcular sumário considerando transações operacionais ou todas caso IncludeIgnoredInTotals seja true
+        var rawTotalsQuery = query.AsQueryable();
+        if (!filter.IncludeIgnoredInTotals)
+        {
+            rawTotalsQuery = rawTotalsQuery.Where(t => !t.IsIgnoredInTotals);
+        }
+
+        var rawTotals = await rawTotalsQuery
             .GroupBy(t => t.Type)
             .Select(g => new { Type = g.Key, Total = g.Sum(x => x.Amount.Amount) })
             .ToListAsync(cancellationToken);
