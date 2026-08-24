@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Search, Check, Tag, ChevronDown, ChevronRight, X } from 'lucide-react';
 import { cn } from '@/shared/utils/cn';
 import { useCategoriesQuery } from '../hooks/useCategoriesQuery';
+import { getCategoryIcon } from '../utils/categoryIcons';
 import type { CategoryDto } from '../types/transactions.types';
 
 export interface CategoryFilterSelectProps {
@@ -201,6 +202,7 @@ export const CategoryFilterSelect: React.FC<CategoryFilterSelectProps> = ({
                 filteredSearchCategories.map((category) => {
                   const isSelected = category.id === value;
                   const isSub = !!category.parentCategoryId;
+                  const ItemIcon = getCategoryIcon(category.iconKey);
 
                   return (
                     <button
@@ -217,7 +219,8 @@ export const CategoryFilterSelect: React.FC<CategoryFilterSelectProps> = ({
                     >
                       <span className="truncate flex items-center gap-1.5">
                         {isSub && <span className="text-slate-300 select-none">└</span>}
-                        {category.name}
+                        <ItemIcon className="w-3.5 h-3.5 text-slate-500 shrink-0" aria-hidden="true" />
+                        <span>{category.name}</span>
                       </span>
                       {isSelected && <Check className="w-3.5 h-3.5 text-brand shrink-0" />}
                     </button>
@@ -231,6 +234,7 @@ export const CategoryFilterSelect: React.FC<CategoryFilterSelectProps> = ({
                   const hasSub = !!(parent.subcategories && parent.subcategories.length > 0);
                   const isExpanded = expandedParentIds.has(parent.id);
                   const isParentSelected = parent.id === value;
+                  const ParentIcon = getCategoryIcon(parent.iconKey);
 
                   return (
                     <div key={parent.id} className="flex flex-col gap-0.5">
@@ -246,7 +250,10 @@ export const CategoryFilterSelect: React.FC<CategoryFilterSelectProps> = ({
                               : 'hover:bg-slate-100/80 text-slate-700 hover:text-slate-900'
                           )}
                         >
-                          <span className="truncate font-semibold">{parent.name}</span>
+                          <span className="truncate font-semibold flex items-center gap-2">
+                            <ParentIcon className="w-3.5 h-3.5 text-slate-500 shrink-0" aria-hidden="true" />
+                            <span>{parent.name}</span>
+                          </span>
                           {isParentSelected && <Check className="w-3.5 h-3.5 text-brand shrink-0" />}
                         </button>
 
@@ -276,6 +283,8 @@ export const CategoryFilterSelect: React.FC<CategoryFilterSelectProps> = ({
                         <div className="flex flex-col gap-0.5 pl-3 border-l-2 border-slate-200 ml-3.5 my-0.5 animate-in fade-in slide-in-from-top-1 duration-150">
                           {parent.subcategories!.map((sub) => {
                             const isSubSelected = sub.id === value;
+                            const SubIcon = getCategoryIcon(sub.iconKey);
+
                             return (
                               <button
                                 key={sub.id}
@@ -288,9 +297,10 @@ export const CategoryFilterSelect: React.FC<CategoryFilterSelectProps> = ({
                                     : 'hover:bg-slate-100/80 text-slate-600 hover:text-slate-900'
                                 )}
                               >
-                                <span className="truncate flex items-center gap-1">
+                                <span className="truncate flex items-center gap-1.5">
                                   <span className="text-slate-300 select-none">└</span>
-                                  {sub.name}
+                                  <SubIcon className="w-3.5 h-3.5 text-slate-400 shrink-0" aria-hidden="true" />
+                                  <span>{sub.name}</span>
                                 </span>
                                 {isSubSelected && <Check className="w-3.5 h-3.5 text-brand shrink-0" />}
                               </button>

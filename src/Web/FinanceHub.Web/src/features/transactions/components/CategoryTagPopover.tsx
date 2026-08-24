@@ -5,6 +5,7 @@ import { CategoryTag } from './CategoryTag';
 import { getCategoryIcon } from '../utils/categoryIcons';
 import { useCategoriesQuery } from '../hooks/useCategoriesQuery';
 import { useCategorizeTransactionMutation } from '../hooks/useCategorizeTransactionMutation';
+import { Checkbox } from '@/shared/components/Checkbox/Checkbox';
 import type { CategoryDto } from '../types/transactions.types';
 
 export interface CategoryTagPopoverProps {
@@ -311,26 +312,18 @@ export const CategoryTagPopover: React.FC<CategoryTagPopoverProps> = ({
             </div>
 
             {/* Opções de Automação de Categoria */}
-            <div className="pt-2 border-t border-border-subtle flex flex-col gap-1.5">
-              <label className="flex items-center gap-2 text-[11px] text-slate-600 hover:text-slate-800 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={createCustomRule}
-                  onChange={(e) => setCreateCustomRule(e.target.checked)}
-                  className="rounded border-slate-300 text-brand focus:ring-brand cursor-pointer"
-                />
-                <span>Criar regra para transações futuras similares</span>
-              </label>
+            <div className="pt-2.5 border-t border-border-subtle flex flex-col gap-2">
+              <Checkbox
+                checked={createCustomRule}
+                onChange={setCreateCustomRule}
+                label={<span className="text-[11px] font-medium text-slate-600">Criar regra para transações futuras similares</span>}
+              />
 
-              <label className="flex items-center gap-2 text-[11px] text-slate-600 hover:text-slate-800 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={applyToPastTransactions}
-                  onChange={(e) => setApplyToPastTransactions(e.target.checked)}
-                  className="rounded border-slate-300 text-brand focus:ring-brand cursor-pointer"
-                />
-                <span>Aplicar alteração em lançamentos passados similares</span>
-              </label>
+              <Checkbox
+                checked={applyToPastTransactions}
+                onChange={setApplyToPastTransactions}
+                label={<span className="text-[11px] font-medium text-slate-600">Aplicar alteração em lançamentos passados similares</span>}
+              />
             </div>
           </div>,
           document.body

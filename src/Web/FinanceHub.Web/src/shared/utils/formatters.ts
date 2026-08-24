@@ -68,21 +68,13 @@ export function formatTimeBR(dateString: DateInput): string {
   }).format(date);
 }
 
+import { parsePaymentMethodName } from '../constants/paymentMethods';
+
 /**
  * Traduz o canal/meio de pagamento para português padronizado ("Pix", "Crédito", "Débito", "Outro").
  */
 export function formatPaymentMethod(channel: string | null | undefined): string {
-  if (!channel) return 'Outro';
-  const normalized = channel
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]/g, '');
-
-  if (normalized.includes('pix')) return 'Pix';
-  if (normalized.includes('credit') || normalized.includes('credito')) return 'Crédito';
-  if (normalized.includes('debit') || normalized.includes('debito')) return 'Débito';
-  return 'Outro';
+  return parsePaymentMethodName(channel);
 }
 /**
  * Mascara CPF de acordo com a LGPD (ex: "123.456.789-00" -> "***.456.789-**").
