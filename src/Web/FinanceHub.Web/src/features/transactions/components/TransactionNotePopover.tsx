@@ -20,7 +20,7 @@ export const TransactionNotePopover: React.FC<TransactionNotePopoverProps> = ({
   const [coords, setCoords] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
 
   const triggerRef = useRef<HTMLButtonElement>(null);
-  const dialogRef = useRef<HTMLDialogElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const notesMutation = useUpdateTransactionNotesMutation();
   const hasNotes = Boolean(currentNotes && currentNotes.trim().length > 0);
@@ -32,14 +32,15 @@ export const TransactionNotePopover: React.FC<TransactionNotePopoverProps> = ({
   const updatePosition = useCallback(() => {
     if (!triggerRef.current) return;
     const rect = triggerRef.current.getBoundingClientRect();
-    const popoverWidth = 280;
+    const popoverWidth = 288; // w-72 (288px)
+    const popoverHeight = 220;
 
     let left = rect.right - popoverWidth;
     if (left < 16) left = 16;
 
     let top = rect.bottom + 6;
-    if (top + 220 > window.innerHeight) {
-      top = rect.top - 226;
+    if (top + popoverHeight > window.innerHeight && rect.top > popoverHeight) {
+      top = Math.max(16, rect.top - popoverHeight - 6);
     }
 
     setCoords({ top, left });
@@ -47,7 +48,7 @@ export const TransactionNotePopover: React.FC<TransactionNotePopoverProps> = ({
 
   const handleOpen = () => {
     updatePosition();
-    setIsOpen(true);
+    setIsOpen((prev) => !prev);
   };
 
   const handleClose = () => {
@@ -55,39 +56,27 @@ export const TransactionNotePopover: React.FC<TransactionNotePopoverProps> = ({
   };
 
   useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-
-    if (isOpen) {
-      if (!dialog.open) dialog.showModal();
-    } else {
-      if (dialog.open) dialog.close();
-    }
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const handleScrollOrResize = () => updatePosition();
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dialogRef.current &&
-        !dialogRef.current.contains(event.target as Node) &&
-        triggerRef.current &&
-        !triggerRef.current.contains(event.target as Node)
-      ) {
-        handleClose();
+      const target = event.target as Node;
+      const clickedTrigger = triggerRef.current?.contains(target);
+      const clickedMenu = menuRef.current?.contains(target);
+
+      if (!clickedTrigger && !clickedMenu) {
+        setIsOpen(false);
       }
     };
 
-    window.addEventListener('scroll', handleScrollOrResize, true);
-    window.addEventListener('resize', handleScrollOrResize);
-    document.addEventListener('mousedown', handleClickOutside);
+    if (isOpen) {
+      updatePosition();
+      document.addEventListener('mousedown', handleClickOutside);
+      window.addEventListener('scroll', updatePosition, true);
+      window.addEventListener('resize', updatePosition);
+    }
 
     return () => {
-      window.removeEventListener('scroll', handleScrollOrResize, true);
-      window.removeEventListener('resize', handleScrollOrResize);
       document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('scroll', updatePosition, true);
+      window.removeEventListener('resize', updatePosition);
     };
   }, [isOpen, updatePosition]);
 
@@ -135,13 +124,13 @@ export const TransactionNotePopover: React.FC<TransactionNotePopoverProps> = ({
 
       {isOpen &&
         ReactDOM.createPortal(
-          <dialog
-            ref={dialogRef}
-            onClose={handleClose}
-            className="fixed m-0 p-0 bg-transparent border-0 max-w-none max-h-none overflow-visible backdrop:bg-transparent z-50 animate-in fade-in zoom-in-95 duration-150"
+          <div
+            ref={menuRef}
+            className="fixed z-50 animate-in fade-in zoom-in-95 duration-150"
             style={{ top: `${coords.top}px`, left: `${coords.left}px` }}
           >
             <div className="w-72 bg-surface-card rounded-2xl border border-border-subtle shadow-dropdown p-4 flex flex-col gap-3">
+              {/* Header */}
               <div className="flex items-center justify-between pb-2 border-b border-border-subtle">
                 <div className="flex items-center gap-1.5 font-bold text-xs text-slate-800">
                   <MessageSquare className="w-4 h-4 text-secondary" />
@@ -150,33 +139,35 @@ export const TransactionNotePopover: React.FC<TransactionNotePopoverProps> = ({
                 <button
                   type="button"
                   onClick={handleClose}
-                  className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer"
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer transition-colors"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
               </div>
 
-              <div className="flex flex-col gap-1">
+              {/* Textarea Area */}
+              <div className="flex flex-col gap-1.5">
                 <textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   maxLength={500}
                   placeholder="Escreva uma anotação sobre esta transação..."
-                  className="w-full h-24 p-2.5 rounded-xl border border-border-subtle bg-surface-ground text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all resize-none"
+                  className="w-full h-24 p-3 rounded-lg border border-border-subtle bg-surface-ground text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all resize-none leading-relaxed"
                   autoFocus
                 />
-                <div className="flex justify-end text-[10px] text-slate-400 font-medium">
+                <div className="flex justify-end text-[10px] text-slate-400 font-medium px-0.5">
                   {notes.length}/500
                 </div>
               </div>
 
-              <div className="flex items-center justify-between pt-1 border-t border-border-subtle">
+              {/* Action Buttons Footer */}
+              <div className="flex items-center justify-between pt-2 border-t border-border-subtle">
                 {hasNotes ? (
                   <button
                     type="button"
                     onClick={handleRemove}
                     disabled={notesMutation.isPending}
-                    className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 hover:text-rose-600 text-xs font-semibold flex items-center gap-1 cursor-pointer transition-all"
+                    className="px-2 py-1.5 rounded-lg text-rose-500 hover:bg-rose-50 hover:text-rose-600 text-xs font-semibold flex items-center gap-1 cursor-pointer transition-all active:scale-95"
                     title="Excluir nota"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
@@ -186,11 +177,11 @@ export const TransactionNotePopover: React.FC<TransactionNotePopoverProps> = ({
                   <div />
                 )}
 
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-2">
                   <button
                     type="button"
                     onClick={handleClose}
-                    className="px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 text-xs font-semibold hover:bg-slate-200 cursor-pointer transition-all"
+                    className="px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 text-xs font-semibold hover:bg-slate-200 active:scale-95 cursor-pointer transition-all"
                   >
                     Cancelar
                   </button>
@@ -210,7 +201,7 @@ export const TransactionNotePopover: React.FC<TransactionNotePopoverProps> = ({
                 </div>
               </div>
             </div>
-          </dialog>,
+          </div>,
           document.body
         )}
     </>

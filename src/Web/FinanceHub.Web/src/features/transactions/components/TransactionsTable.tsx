@@ -128,7 +128,7 @@ export const TransactionsTable: React.FC<TransactionsTableProps> = ({
         {transactions.map((t) => (
           <tr
             key={t.id}
-            className="hover:bg-brand-light/35 transition-all duration-150 group"
+            className="hover:bg-slate-100/90 transition-all duration-150 group"
           >
             {/* Data e Hora - Alinhadas à esquerda */}
             <td className="px-6 py-4 text-left whitespace-nowrap">
