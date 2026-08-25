@@ -180,9 +180,20 @@ public class TransactionRepository : ITransactionRepository
 
         var page = filter.Page < 1 ? 1 : filter.Page;
         var pageSize = filter.PageSize < 1 ? 20 : filter.PageSize;
-        var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
 
-        var items = await query
+        // Quando IncludeIgnoredInTotals = false (padrão), filtra os items também para excluir
+        // transferências internas e lançamentos neutros da listagem, não apenas do sumário.
+        var itemsQuery = filter.IncludeIgnoredInTotals
+            ? query
+            : query.Where(t => !t.IsIgnoredInTotals);
+
+        var filteredItemsTotal = filter.IncludeIgnoredInTotals
+            ? totalItems
+            : await itemsQuery.CountAsync(cancellationToken);
+
+        var totalPages = (int)Math.Ceiling(filteredItemsTotal / (double)pageSize);
+
+        var items = await itemsQuery
             .OrderByDescending(t => t.TransactionDateUtc)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
@@ -193,13 +204,13 @@ public class TransactionRepository : ITransactionRepository
             totalIncome,
             totalExpense,
             netBalance,
-            totalItems,
+            filteredItemsTotal,
             realConsolidatedBalance,
             openCreditCards,
             projectedAvailable,
             lastSync);
 
-        return new PagedTransactionsResponseDto(items, summary, page, pageSize, totalItems, totalPages);
+        return new PagedTransactionsResponseDto(items, summary, page, pageSize, filteredItemsTotal, totalPages);
     }
 
     private static Expression<Func<CanonicalTransaction, bool>> BuildInstitutionFilterExpression(IReadOnlyList<string> keywords)
