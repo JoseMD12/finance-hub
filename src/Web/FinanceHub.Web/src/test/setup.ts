@@ -16,13 +16,13 @@ beforeAll(() => {
 });
 
 // Mock IntersectionObserver for jsdom
-if (typeof globalThis.IntersectionObserver === 'undefined') {
+if (globalThis.IntersectionObserver === undefined) {
   class MockIntersectionObserver implements IntersectionObserver {
     readonly root: Element | Document | null = null;
     readonly rootMargin: string = '';
     readonly scrollMargin: string = '';
     readonly thresholds: ReadonlyArray<number> = [];
-    private callback: IntersectionObserverCallback;
+    private readonly callback: IntersectionObserverCallback;
 
     constructor(callback: IntersectionObserverCallback) {
       this.callback = callback;
@@ -45,8 +45,14 @@ if (typeof globalThis.IntersectionObserver === 'undefined') {
       );
     }
 
-    unobserve(): void {}
-    disconnect(): void {}
+    unobserve(): void {
+      // Mock implementation for test runner
+    }
+
+    disconnect(): void {
+      // Mock implementation for test runner
+    }
+
     takeRecords(): IntersectionObserverEntry[] {
       return [];
     }

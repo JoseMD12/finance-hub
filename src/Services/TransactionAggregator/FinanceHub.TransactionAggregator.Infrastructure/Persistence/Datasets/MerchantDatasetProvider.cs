@@ -64,15 +64,13 @@ public class MerchantDatasetProvider : IMerchantDatasetProvider
             foreach (var pattern in merchant.Patterns)
             {
                 var normalizedPattern = pattern.ToUpperInvariant().Trim();
-                if (normalizedInput.Contains(normalizedPattern))
+                if (normalizedInput.Contains(normalizedPattern) &&
+                    (merchant.Priority > bestPriority ||
+                     (merchant.Priority == bestPriority && normalizedPattern.Length > bestPatternLength)))
                 {
-                    if (merchant.Priority > bestPriority ||
-                        (merchant.Priority == bestPriority && normalizedPattern.Length > bestPatternLength))
-                    {
-                        bestMatch = merchant;
-                        bestPriority = merchant.Priority;
-                        bestPatternLength = normalizedPattern.Length;
-                    }
+                    bestMatch = merchant;
+                    bestPriority = merchant.Priority;
+                    bestPatternLength = normalizedPattern.Length;
                 }
             }
         }

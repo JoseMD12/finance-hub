@@ -20,7 +20,8 @@ export const Switch: React.FC<SwitchProps> = ({
   className,
   id,
 }) => {
-  const switchId = id || React.useId();
+  const generatedId = React.useId();
+  const switchId = id ?? generatedId;
 
   return (
     <div className={cn('inline-flex items-center gap-2.5', className)}>

@@ -59,7 +59,26 @@ public class TransferPairMatchingEngine : ITransferPairMatchingEngine
         var matchedCredits = new HashSet<Guid>();
         var modifiedTransactions = new List<CanonicalTransaction>();
 
-        // FASE 1: Pareamento de Transferências Próprias (Contas distintas, mesmo valor, <= 96h)
+        MatchInternalTransfers(userId, debits, credits, matchedDebits, matchedCredits, modifiedTransactions);
+        MatchThirdPartyTransfers(userId, debits, credits, matchedDebits, matchedCredits, modifiedTransactions);
+        MatchTransitMoney(userId, debits, credits, matchedDebits, matchedCredits, modifiedTransactions);
+
+        if (modifiedTransactions.Count > 0)
+        {
+            await _repository.UpdateRangeAsync(modifiedTransactions, cancellationToken);
+        }
+
+        return (matchedDebits.Count + matchedCredits.Count) / 2;
+    }
+
+    private void MatchInternalTransfers(
+        string userId,
+        List<CanonicalTransaction> debits,
+        List<CanonicalTransaction> credits,
+        HashSet<Guid> matchedDebits,
+        HashSet<Guid> matchedCredits,
+        List<CanonicalTransaction> modifiedTransactions)
+    {
         foreach (var debit in debits)
         {
             if (matchedDebits.Contains(debit.Id))
@@ -67,12 +86,7 @@ public class TransferPairMatchingEngine : ITransferPairMatchingEngine
                 continue;
             }
 
-            var compatibleCredit = credits.FirstOrDefault(credit =>
-                !matchedCredits.Contains(credit.Id) &&
-                credit.Amount.Amount == debit.Amount.Amount &&
-                credit.Amount.Currency == debit.Amount.Currency &&
-                (credit.AccountInfo.AccountId != debit.AccountInfo.AccountId || credit.AccountInfo.InstitutionId != debit.AccountInfo.InstitutionId) &&
-                Math.Abs((credit.TransactionDateUtc - debit.TransactionDateUtc).TotalMilliseconds) <= MaxInternalTransferWindow.TotalMilliseconds);
+            var compatibleCredit = credits.FirstOrDefault(credit => IsInternalTransferMatch(debit, credit, matchedCredits));
 
             if (compatibleCredit != null)
             {
@@ -90,8 +104,25 @@ public class TransferPairMatchingEngine : ITransferPairMatchingEngine
                     userId, debit.Id, compatibleCredit.Id, debit.Amount.Amount, debit.Amount.Currency);
             }
         }
+    }
 
-        // FASE 2: Pareamento Recíproco com Terceiros (Repasses / Empréstimos: nome comum ou valor exato em <= 72h)
+    private static bool IsInternalTransferMatch(CanonicalTransaction debit, CanonicalTransaction credit, HashSet<Guid> matchedCredits)
+    {
+        return !matchedCredits.Contains(credit.Id) &&
+               credit.Amount.Amount == debit.Amount.Amount &&
+               credit.Amount.Currency == debit.Amount.Currency &&
+               (credit.AccountInfo.AccountId != debit.AccountInfo.AccountId || credit.AccountInfo.InstitutionId != debit.AccountInfo.InstitutionId) &&
+               Math.Abs((credit.TransactionDateUtc - debit.TransactionDateUtc).TotalMilliseconds) <= MaxInternalTransferWindow.TotalMilliseconds;
+    }
+
+    private void MatchThirdPartyTransfers(
+        string userId,
+        List<CanonicalTransaction> debits,
+        List<CanonicalTransaction> credits,
+        HashSet<Guid> matchedDebits,
+        HashSet<Guid> matchedCredits,
+        List<CanonicalTransaction> modifiedTransactions)
+    {
         foreach (var debit in debits)
         {
             if (matchedDebits.Contains(debit.Id))
@@ -100,42 +131,7 @@ public class TransferPairMatchingEngine : ITransferPairMatchingEngine
             }
 
             var debitName = ExtractPersonName(debit.Description.CleanText);
-
-            // Prioriza correspondência com mesmo nome de terceiro se disponível
-            var compatibleCredit = credits.FirstOrDefault(credit =>
-            {
-                if (matchedCredits.Contains(credit.Id))
-                {
-                    return false;
-                }
-
-                if (credit.Amount.Amount != debit.Amount.Amount || credit.Amount.Currency != debit.Amount.Currency)
-                {
-                    return false;
-                }
-
-                if (Math.Abs((credit.TransactionDateUtc - debit.TransactionDateUtc).TotalMilliseconds) > MaxThirdPartyReciprocalWindow.TotalMilliseconds)
-                {
-                    return false;
-                }
-
-                if (!string.IsNullOrWhiteSpace(debitName))
-                {
-                    var creditName = ExtractPersonName(credit.Description.CleanText);
-                    if (!string.IsNullOrWhiteSpace(creditName) && string.Equals(debitName, creditName, StringComparison.OrdinalIgnoreCase))
-                    {
-                        return true;
-                    }
-                }
-
-                // Se não tem nome de terceiro e for a mesma conta, não pareia como repasse de terceiro
-                if (credit.AccountInfo.AccountId == debit.AccountInfo.AccountId && credit.AccountInfo.InstitutionId == debit.AccountInfo.InstitutionId)
-                {
-                    return false;
-                }
-
-                return true;
-            });
+            var compatibleCredit = credits.FirstOrDefault(credit => IsThirdPartyMatch(debit, credit, debitName, matchedCredits));
 
             if (compatibleCredit != null)
             {
@@ -153,8 +149,40 @@ public class TransferPairMatchingEngine : ITransferPairMatchingEngine
                     userId, debit.Id, compatibleCredit.Id, debit.Amount.Amount, debit.Amount.Currency);
             }
         }
+    }
 
-        // FASE 3: Detecção de Dinheiro de Trânsito / Boleto Espelho (Entrada Pix/Transf seguida de saída/boleto com delta <= R$ 5,00 em <= 24h)
+    private static bool IsThirdPartyMatch(CanonicalTransaction debit, CanonicalTransaction credit, string debitName, HashSet<Guid> matchedCredits)
+    {
+        if (matchedCredits.Contains(credit.Id) || credit.Amount.Amount != debit.Amount.Amount || credit.Amount.Currency != debit.Amount.Currency)
+        {
+            return false;
+        }
+
+        if (Math.Abs((credit.TransactionDateUtc - debit.TransactionDateUtc).TotalMilliseconds) > MaxThirdPartyReciprocalWindow.TotalMilliseconds)
+        {
+            return false;
+        }
+
+        if (!string.IsNullOrWhiteSpace(debitName))
+        {
+            var creditName = ExtractPersonName(credit.Description.CleanText);
+            if (!string.IsNullOrWhiteSpace(creditName) && string.Equals(debitName, creditName, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return credit.AccountInfo.AccountId != debit.AccountInfo.AccountId || credit.AccountInfo.InstitutionId != debit.AccountInfo.InstitutionId;
+    }
+
+    private void MatchTransitMoney(
+        string userId,
+        List<CanonicalTransaction> debits,
+        List<CanonicalTransaction> credits,
+        HashSet<Guid> matchedDebits,
+        HashSet<Guid> matchedCredits,
+        List<CanonicalTransaction> modifiedTransactions)
+    {
         foreach (var credit in credits)
         {
             if (matchedCredits.Contains(credit.Id))
@@ -162,28 +190,7 @@ public class TransferPairMatchingEngine : ITransferPairMatchingEngine
                 continue;
             }
 
-            var compatibleDebit = debits.FirstOrDefault(debit =>
-            {
-                if (matchedDebits.Contains(debit.Id))
-                {
-                    return false;
-                }
-
-                if (credit.Amount.Currency != debit.Amount.Currency)
-                {
-                    return false;
-                }
-
-                var timeDiff = (debit.TransactionDateUtc - credit.TransactionDateUtc).TotalMilliseconds;
-                // Saída no mesmo dia ou até 24h após a entrada
-                if (timeDiff < 0 || timeDiff > MaxTransitMoneyWindow.TotalMilliseconds)
-                {
-                    return false;
-                }
-
-                var amountDiff = Math.Abs(credit.Amount.Amount - debit.Amount.Amount);
-                return amountDiff <= MaxTransitMoneyDifferenceBrl;
-            });
+            var compatibleDebit = debits.FirstOrDefault(debit => IsTransitMoneyMatch(credit, debit, matchedDebits));
 
             if (compatibleDebit != null)
             {
@@ -201,13 +208,23 @@ public class TransferPairMatchingEngine : ITransferPairMatchingEngine
                     userId, credit.Id, compatibleDebit.Id, Math.Abs(credit.Amount.Amount - compatibleDebit.Amount.Amount), credit.Amount.Currency);
             }
         }
+    }
 
-        if (modifiedTransactions.Count > 0)
+    private static bool IsTransitMoneyMatch(CanonicalTransaction credit, CanonicalTransaction debit, HashSet<Guid> matchedDebits)
+    {
+        if (matchedDebits.Contains(debit.Id) || credit.Amount.Currency != debit.Amount.Currency)
         {
-            await _repository.UpdateRangeAsync(modifiedTransactions, cancellationToken);
+            return false;
         }
 
-        return (matchedDebits.Count + matchedCredits.Count) / 2;
+        var timeDiff = (debit.TransactionDateUtc - credit.TransactionDateUtc).TotalMilliseconds;
+        if (timeDiff < 0 || timeDiff > MaxTransitMoneyWindow.TotalMilliseconds)
+        {
+            return false;
+        }
+
+        var amountDiff = Math.Abs(credit.Amount.Amount - debit.Amount.Amount);
+        return amountDiff <= MaxTransitMoneyDifferenceBrl;
     }
 
     private static string ExtractPersonName(string description)

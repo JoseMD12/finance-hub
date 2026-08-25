@@ -50,6 +50,7 @@ export const ConnectionsPage: React.FC = () => {
 
   const connectedItems = items ?? [];
   const hasPluggyItems = connectedItems.length > 0;
+  const instCountText = hasPluggyItems ? connectedItems.length : groupedSavedInstitutions.length;
 
   // Agrupa contas salvas no banco por instituição
   const savedBalances = (dashboard?.accountBalances as any[]) ?? [];
@@ -58,7 +59,12 @@ export const ConnectionsPage: React.FC = () => {
 
     for (const acc of savedBalances) {
       const instName = acc?.institutionName || acc?.institutionId || 'Outros';
-      const balance = typeof acc?.balanceBrl === 'number' ? acc.balanceBrl : (typeof acc?.amount === 'number' ? acc.amount : 0);
+      let balance = 0;
+      if (typeof acc?.balanceBrl === 'number') {
+        balance = acc.balanceBrl;
+      } else if (typeof acc?.amount === 'number') {
+        balance = acc.amount;
+      }
       const existing = map.get(instName) || { totalBalance: 0, totalCredit: 0, accountsCount: 0 };
       if (balance >= 0) {
         existing.totalBalance += balance;
@@ -152,7 +158,7 @@ export const ConnectionsPage: React.FC = () => {
       <section className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <h2 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-            Instituições Conectadas {hasAnyInstitutions ? `(${hasPluggyItems ? connectedItems.length : groupedSavedInstitutions.length})` : ''}
+            {hasAnyInstitutions ? `Instituições Conectadas (${instCountText})` : 'Instituições Conectadas'}
           </h2>
         </div>
 

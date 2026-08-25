@@ -19,6 +19,12 @@ export interface DropdownMenuProps {
   className?: string;
 }
 
+function getItemVariantClass(variant?: 'default' | 'danger' | 'brand'): string {
+  if (variant === 'danger') return 'text-status-danger hover:bg-status-danger-bg';
+  if (variant === 'brand') return 'text-brand hover:bg-brand-light';
+  return 'text-slate-700 hover:bg-surface-ground hover:text-slate-900';
+}
+
 export const DropdownMenu: React.FC<DropdownMenuProps> = ({
   trigger,
   items,
@@ -111,11 +117,7 @@ export const DropdownMenu: React.FC<DropdownMenuProps> = ({
                 }}
                 className={cn(
                   'flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-left transition-colors cursor-pointer w-full',
-                  item.variant === 'danger'
-                    ? 'text-status-danger hover:bg-status-danger-bg'
-                    : item.variant === 'brand'
-                    ? 'text-brand hover:bg-brand-light'
-                    : 'text-slate-700 hover:bg-surface-ground hover:text-slate-900',
+                  getItemVariantClass(item.variant),
                   item.checked && 'bg-brand-light text-brand-dark font-bold',
                   item.disabled && 'opacity-50 cursor-not-allowed'
                 )}

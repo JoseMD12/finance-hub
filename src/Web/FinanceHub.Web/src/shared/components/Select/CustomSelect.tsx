@@ -23,6 +23,12 @@ export interface CustomSelectProps {
   direction?: 'down' | 'up';
 }
 
+function getOptionStateClass(isSelected: boolean, isFocused: boolean): string {
+  if (isSelected) return 'bg-brand-light text-brand-dark font-bold border-brand/20 shadow-2xs';
+  if (isFocused) return 'bg-slate-100/80 text-slate-900 font-semibold';
+  return 'hover:bg-slate-100/80 text-slate-700 hover:text-slate-900';
+}
+
 export const CustomSelect: React.FC<CustomSelectProps> = ({
   options,
   value,
@@ -183,11 +189,7 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
                   onMouseEnter={() => setFocusedIndex(idx)}
                   className={cn(
                     'flex items-center justify-between w-full px-3 py-2 text-xs font-medium rounded-xl cursor-pointer transition-all duration-150 outline-none text-left border border-transparent',
-                    isSelected
-                      ? 'bg-brand-light text-brand-dark font-bold border-brand/20 shadow-2xs'
-                      : isFocused
-                      ? 'bg-slate-100/80 text-slate-900 font-semibold'
-                      : 'hover:bg-slate-100/80 text-slate-700 hover:text-slate-900'
+                    getOptionStateClass(isSelected, isFocused)
                   )}
                 >
                   <span className="flex items-center gap-2.5 truncate">

@@ -102,15 +102,12 @@ public class IngestTransactionCommandHandler : IIngestTransactionCommandHandler
         }
 
         if (categorization.CategoryId == transferCategoryId || 
-            ((descUpper.Contains("JOSE HENRIQUE MARTINS DOTTA") || descUpper.Contains("JOSÉ HENRIQUE MARTINS DOTTA")) && !descUpper.Contains("WELLHUB")))
-        {
-            transaction.ToggleIgnoreInTotals(true);
-        }
-        else if (categorization.CategoryId == investmentsCategoryId || 
-                 descUpper.Contains("NOSSA GRANA") || 
-                 descUpper.Contains("DINHEIRO RETIRADO") || 
-                 descUpper.Contains("DINHEIRO GUARDADO") ||
-                 descUpper.Contains("COFRINHO"))
+            categorization.CategoryId == investmentsCategoryId || 
+            ((descUpper.Contains("JOSE HENRIQUE MARTINS DOTTA") || descUpper.Contains("JOSÉ HENRIQUE MARTINS DOTTA")) && !descUpper.Contains("WELLHUB")) ||
+            descUpper.Contains("NOSSA GRANA") || 
+            descUpper.Contains("DINHEIRO RETIRADO") || 
+            descUpper.Contains("DINHEIRO GUARDADO") ||
+            descUpper.Contains("COFRINHO"))
         {
             transaction.ToggleIgnoreInTotals(true);
         }
