@@ -25,15 +25,14 @@ public class UserCustomRuleCategoryResolver : ICategoryResolver
         if (string.IsNullOrWhiteSpace(description.CleanText))
             return null;
 
-        var firstWord = description.CleanText.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault()?.ToUpperInvariant();
-        if (string.IsNullOrWhiteSpace(firstWord))
+        var cleanTextUpper = description.CleanText.Trim().ToUpperInvariant();
+        var rules = await _userRuleRepository.GetByUserIdAsync(userId, cancellationToken);
+
+        var matchingRule = rules.FirstOrDefault(r => cleanTextUpper.Contains(r.Pattern));
+        if (matchingRule == null)
             return null;
 
-        var rule = await _userRuleRepository.FindByPatternAsync(userId, firstWord, cancellationToken);
-        if (rule == null)
-            return null;
-
-        return new CategorizationResult(rule.CategoryId, CategorizationSource.UserRule);
+        return new CategorizationResult(matchingRule.CategoryId, CategorizationSource.UserRule);
     }
 }
 
