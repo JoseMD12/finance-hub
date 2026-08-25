@@ -1,8 +1,8 @@
 using FinanceHub.PluggyIntegration.Application.Commands.SyncAllPluggyAccounts;
 using FinanceHub.PluggyIntegration.Application.DTOs;
-using FinanceHub.PluggyIntegration.Application.Interfaces;
 using FinanceHub.PluggyIntegration.Application.Queries.GetPluggyAccounts;
 using FinanceHub.PluggyIntegration.Application.Queries.GetPluggyItems;
+using FinanceHub.PluggyIntegration.Application.Services;
 using FinanceHub.PluggyIntegration.Domain.Constants;
 using FinanceHub.PluggyIntegration.Domain.Exceptions;
 using Microsoft.AspNetCore.Builder;
@@ -59,6 +59,7 @@ public static class PluggyEndpoints
             string? userId,
             HttpContext httpContext,
             ISyncAllPluggyAccountsCommandHandler handler,
+            ISyncJobStore jobStore,
             CancellationToken cancellationToken) =>
         {
             if (string.IsNullOrWhiteSpace(userId))
@@ -75,15 +76,18 @@ public static class PluggyEndpoints
             var jobId = Guid.NewGuid();
             var command = new SyncAllPluggyAccountsCommand(userId, pluggyToken);
 
+            jobStore.CreateJob(jobId, userId);
+
             _ = Task.Run(async () =>
             {
                 try
                 {
-                    await handler.HandleAsync(command, CancellationToken.None);
+                    var summary = await handler.HandleAsync(command, CancellationToken.None);
+                    jobStore.SetCompleted(jobId, summary);
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // Swallowed in background task execution; logged by handler
+                    jobStore.SetFailed(jobId, ex.Message);
                 }
             });
 
@@ -98,6 +102,16 @@ public static class PluggyEndpoints
         })
         .WithName("SyncPluggyAccounts")
         .WithSummary("Dispara a sincronização assíncrona (202 Accepted) de todas as contas e transações via Meu.Pluggy.");
+
+        group.MapGet("/sync/jobs/{jobId:guid}", (
+            Guid jobId,
+            ISyncJobStore jobStore) =>
+        {
+            var job = jobStore.GetJob(jobId);
+            return job is not null ? Results.Ok(job) : Results.NotFound();
+        })
+        .WithName("GetPluggySyncJobStatus")
+        .WithSummary("Consulta o status e o resultado de um job de sincronização assíncrono.");
 
         return app;
     }

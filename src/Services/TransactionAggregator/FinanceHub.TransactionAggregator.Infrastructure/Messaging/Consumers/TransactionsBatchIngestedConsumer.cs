@@ -1,5 +1,6 @@
 using FinanceHub.Shared.Messaging.Events;
 using FinanceHub.TransactionAggregator.Application.Commands.IngestTransaction;
+using FinanceHub.TransactionAggregator.Application.Interfaces;
 using FinanceHub.TransactionAggregator.Domain.Entities;
 using FinanceHub.TransactionAggregator.Domain.ValueObjects;
 using MassTransit;
@@ -10,13 +11,16 @@ namespace FinanceHub.TransactionAggregator.Infrastructure.Messaging.Consumers;
 public class TransactionsBatchIngestedConsumer : IConsumer<TransactionsBatchIngested>
 {
     private readonly IIngestTransactionCommandHandler _handler;
+    private readonly ITransferPairMatchingEngine _matchingEngine;
     private readonly ILogger<TransactionsBatchIngestedConsumer> _logger;
 
     public TransactionsBatchIngestedConsumer(
         IIngestTransactionCommandHandler handler,
+        ITransferPairMatchingEngine matchingEngine,
         ILogger<TransactionsBatchIngestedConsumer> logger)
     {
         _handler = handler;
+        _matchingEngine = matchingEngine;
         _logger = logger;
     }
 
@@ -67,6 +71,12 @@ public class TransactionsBatchIngestedConsumer : IConsumer<TransactionsBatchInge
             );
 
             await _handler.Handle(command, context.CancellationToken);
+        }
+
+        if (batch.ChunkIndex >= batch.TotalChunks - 1)
+        {
+            _logger.LogInformation("Executando motor de reconciliação e pareamento de transferências para UserId: {UserId}", userId);
+            await _matchingEngine.MatchAndPairAsync(userId, context.CancellationToken);
         }
 
         _logger.LogInformation("Lote TransactionsBatchIngested [BatchId: {BatchId}] processado com sucesso.", batch.BatchId);

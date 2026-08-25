@@ -1,13 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
-import { transactionKeys } from '../api/transactionKeys';
+import { transactionsKeys } from '../api/transactionsKeys';
 import { getTransactionsApi } from '../api/transactionsApi';
-import type { PaginatedTransactionsDto } from '../types/transactions.types';
+import type { PaginatedTransactionsDto, TransactionFilterParams } from '../types/transactions.types';
 import type { ApiError } from '@/shared/types/api.types';
 
-export function useTransactionsQuery(page: number = 1, bankFilter?: string) {
+export function useTransactionsQuery(filters: TransactionFilterParams = {}) {
   return useQuery<PaginatedTransactionsDto, ApiError>({
-    queryKey: transactionKeys.list(bankFilter, page),
-    queryFn: ({ signal }) => getTransactionsApi(page, 20, signal),
+    queryKey: transactionsKeys.list(filters),
+    queryFn: ({ signal }) => getTransactionsApi(filters, signal),
     staleTime: 1000 * 60 * 2, // 2 minutos
   });
 }

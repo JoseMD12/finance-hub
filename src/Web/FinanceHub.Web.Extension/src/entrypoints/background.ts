@@ -6,19 +6,11 @@ import { STORAGE_KEYS } from '../shared/contracts/storage';
 import { clearSession, saveToken, setLogoutLock } from '../shared/storage/sessionStorage';
 import { isJwtShape } from '../shared/security/token';
 
-function isMeuPluggyUrl(url: string | undefined): boolean {
-  try {
-    return new URL(url ?? '').hostname === RUNTIME_CONSTANTS.pluggyHost;
-  } catch {
-    return false;
-  }
-}
-
 export default defineBackground(() => {
   let logoutLockUntil = 0;
 
   browser.action.onClicked.addListener(async (tab) => {
-    if (!tab.id || !isMeuPluggyUrl(tab.url)) return;
+    if (!tab.id) return;
     await browser.sidePanel.open({ tabId: tab.id });
   });
 

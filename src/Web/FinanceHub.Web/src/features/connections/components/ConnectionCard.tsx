@@ -1,9 +1,9 @@
-import { Card } from '@/shared/components/Card/Card';
 import { formatCurrencyBRL, formatDateTimeBR } from '@/shared/utils/formatters';
 import { CreditCard, Wallet } from 'lucide-react';
 import React from 'react';
 import type { PluggyItemDto } from '../types/connections.types';
 import { InstitutionLogo } from './InstitutionLogo';
+import { GlowCard } from '@/shared/components/motion';
 
 interface ConnectionCardProps {
   item: PluggyItemDto;
@@ -11,7 +11,10 @@ interface ConnectionCardProps {
 
 export const ConnectionCard: React.FC<ConnectionCardProps> = ({ item }) => {
   return (
-    <Card className="flex flex-col justify-between gap-4 hoverable border-slate-200/80">
+    <GlowCard
+      glowRgb="224, 86, 151"
+      className="flex flex-col justify-between gap-4 border-slate-200/80 hoverable"
+    >
       <div className="flex flex-col gap-3">
         <div className="flex items-start justify-between gap-3">
           <div className="flex flex-col items-center gap-1.5 min-w-0 text-center">
@@ -35,7 +38,7 @@ export const ConnectionCard: React.FC<ConnectionCardProps> = ({ item }) => {
             <span>Saldo Total</span>
           </div>
           <span
-            className={`text-sm font-bold ${
+            className={`text-sm font-bold tabular-nums ${
               item.totalBalance < 0 ? 'text-status-danger' : 'text-slate-800'
             }`}
           >
@@ -47,11 +50,13 @@ export const ConnectionCard: React.FC<ConnectionCardProps> = ({ item }) => {
             <CreditCard className="w-3.5 h-3.5 text-slate-400" />
             <span>Crédito Total</span>
           </div>
-          <span className="text-sm font-bold text-slate-800">
+          <span className="text-sm font-bold text-slate-800 tabular-nums">
             {formatCurrencyBRL(item.totalCredit)}
           </span>
         </div>
       </div>
-    </Card>
+    </GlowCard>
   );
 };
+
+

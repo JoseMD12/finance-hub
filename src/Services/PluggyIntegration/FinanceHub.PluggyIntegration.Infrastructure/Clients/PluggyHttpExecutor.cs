@@ -58,7 +58,8 @@ public sealed class PluggyHttpExecutor(
             if (!response.IsSuccessStatusCode)
             {
                 var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
-                logger.LogError("Erro na comunicação com Pluggy API: {StatusCode} - {Error}", response.StatusCode, errorBody);
+                var safeError = errorBody?.Length > 500 ? errorBody[..500] + "..." : errorBody;
+                logger.LogError("Erro na comunicação com Pluggy API: {StatusCode} - {Error}", response.StatusCode, safeError);
                 throw new PluggyApiCommunicationDomainException($"Erro HTTP {(int)response.StatusCode} ao comunicar com a API da Pluggy: {errorBody}");
             }
 

@@ -61,6 +61,67 @@ public class EntitiesTests
     }
 
     [Fact]
+    public void CanonicalTransaction_DefaultState_ShouldBeOperatingAndNotIgnored()
+    {
+        // Arrange & Act
+        var transaction = CreateSampleTransaction();
+
+        // Assert
+        transaction.Nature.Should().Be(TransactionNature.Operating);
+        transaction.IsIgnoredInTotals.Should().BeFalse();
+        transaction.PairedTransactionId.Should().BeNull();
+    }
+
+    [Fact]
+    public void CanonicalTransaction_MarkAsInternalTransfer_ShouldSetNatureAndPairedIdAndIgnoreInTotals()
+    {
+        // Arrange
+        var transaction = CreateSampleTransaction();
+        var pairedId = Guid.NewGuid();
+
+        // Act
+        transaction.MarkAsInternalTransfer(pairedId);
+
+        // Assert
+        transaction.Nature.Should().Be(TransactionNature.Transfer);
+        transaction.IsIgnoredInTotals.Should().BeTrue();
+        transaction.PairedTransactionId.Should().Be(pairedId);
+    }
+
+    [Fact]
+    public void CanonicalTransaction_MarkAsBillPayment_ShouldSetNatureAndIgnoreInTotals()
+    {
+        // Arrange
+        var transaction = CreateSampleTransaction();
+
+        // Act
+        transaction.MarkAsBillPayment();
+
+        // Assert
+        transaction.Nature.Should().Be(TransactionNature.BillPayment);
+        transaction.IsIgnoredInTotals.Should().BeTrue();
+    }
+
+    [Fact]
+    public void CanonicalTransaction_ToggleIgnoreInTotals_ShouldUpdateFlag()
+    {
+        // Arrange
+        var transaction = CreateSampleTransaction();
+
+        // Act
+        transaction.ToggleIgnoreInTotals(true);
+
+        // Assert
+        transaction.IsIgnoredInTotals.Should().BeTrue();
+
+        // Act
+        transaction.ToggleIgnoreInTotals(false);
+
+        // Assert
+        transaction.IsIgnoredInTotals.Should().BeFalse();
+    }
+
+    [Fact]
     public void AccountBalance_ApplyTransaction_Credit_ShouldIncreaseBalance()
     {
         // Arrange

@@ -98,6 +98,8 @@ flowchart LR
    * `IngestionId`, `Source`, `AccountId`, `BankTransactionId`, `Amount`, `TransactionDate`, `Description`, `Currency`, `RawPayloadJson`, `OccurredAtUtc`.
 2. **`InvoiceItemIngested`**:
    * `IngestionId`, `Source`, `CreditCardAccountId`, `CardLastFourDigits`, `BankTransactionId`, `Amount`, `TransactionDate`, `Description`, `Category`, `CurrentInstallment`, `TotalInstallments`, `InvoiceDueDate`, `Currency`, `RawPayloadJson`, `OccurredAtUtc`.
+3. **`AccountBalanceSnapshotSynchronized`**:
+   * `UserId`, `InstitutionId`, `AccountId`, `BalanceBrl`, `Currency`, `SynchronizedAtUtc`.
 
 ---
 

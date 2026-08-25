@@ -1,5 +1,9 @@
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 using FinanceHub.Shared.Messaging.Events;
 using FinanceHub.TransactionAggregator.Application.Commands.IngestTransaction;
+using FinanceHub.TransactionAggregator.Application.Interfaces;
 using FinanceHub.TransactionAggregator.Infrastructure.Messaging.Consumers;
 using FluentAssertions;
 using MassTransit;
@@ -12,11 +16,15 @@ namespace FinanceHub.Tests.Services.TransactionAggregator.Infrastructure;
 public class TransactionsBatchIngestedConsumerTests
 {
     private readonly IIngestTransactionCommandHandler _handler = Substitute.For<IIngestTransactionCommandHandler>();
+    private readonly ITransferPairMatchingEngine _matchingEngine = Substitute.For<ITransferPairMatchingEngine>();
     private readonly TransactionsBatchIngestedConsumer _consumer;
 
     public TransactionsBatchIngestedConsumerTests()
     {
-        _consumer = new TransactionsBatchIngestedConsumer(_handler, NullLogger<TransactionsBatchIngestedConsumer>.Instance);
+        _consumer = new TransactionsBatchIngestedConsumer(
+            _handler,
+            _matchingEngine,
+            NullLogger<TransactionsBatchIngestedConsumer>.Instance);
     }
 
     [Fact]
@@ -59,7 +67,7 @@ public class TransactionsBatchIngestedConsumerTests
         var batchEvent = new TransactionsBatchIngested(
             BatchId: Guid.NewGuid(),
             UserId: "user-01",
-            ChunkIndex: 1,
+            ChunkIndex: 0,
             TotalChunks: 1,
             CheckingTransactions: new[] { checkingTx },
             CardTransactions: new[] { cardTx },
@@ -78,5 +86,6 @@ public class TransactionsBatchIngestedConsumerTests
 
         // Assert
         await _handler.Received(2).Handle(Arg.Any<IngestTransactionCommand>(), Arg.Any<CancellationToken>());
+        await _matchingEngine.Received(1).MatchAndPairAsync("user-01", Arg.Any<CancellationToken>());
     }
 }

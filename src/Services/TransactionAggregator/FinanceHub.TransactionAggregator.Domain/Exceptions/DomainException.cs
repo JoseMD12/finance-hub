@@ -70,3 +70,11 @@ public class InvalidCategoryIdDomainException : TransactionAggregatorDomainExcep
     {
     }
 }
+
+public class MethodReflectionFailedDomainException : TransactionAggregatorDomainException
+{
+    public MethodReflectionFailedDomainException(string methodName)
+        : base($"Falha de reflexao ao obter o metodo {methodName}.", "METHOD_REFLECTION_FAILED", 500)
+    {
+    }
+}

@@ -1,17 +1,23 @@
 import React, { useEffect, useRef } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
 import { usePluggyToken } from '../hooks/usePluggyToken';
 import { useSyncPluggyMutation } from '../hooks/useSyncPluggyMutation';
 import { useConnectedInstitutionsQuery } from '../hooks/useConnectedInstitutionsQuery';
+import { useDashboardQuery } from '@/features/dashboard/hooks/useDashboardQuery';
 import { PluggySyncPanel } from '../components/PluggySyncPanel';
 import { SyncSummaryBanner } from '../components/SyncSummaryBanner';
 import { ConnectionCard } from '../components/ConnectionCard';
+import { SavedInstitutionCard } from '../components/SavedInstitutionCard';
 import { EmptyConnectionsState } from '../components/EmptyConnectionsState';
 import { FileImporterCard } from '../components/FileImporterCard';
 import { Skeleton } from '@/shared/components/Skeleton/Skeleton';
+import { PageContainer } from '@/shared/components/PageContainer/PageContainer';
 
 export const ConnectionsPage: React.FC = () => {
+  const prefersReduced = useReducedMotion();
   const { token, hasToken, lastSync, saveToken, saveLastSync, clearToken } = usePluggyToken();
   const { data: items, isLoading: isLoadingItems } = useConnectedInstitutionsQuery(token);
+  const { data: dashboard, isLoading: isLoadingDashboard } = useDashboardQuery();
   const autoSyncTokenRef = useRef<string | null>(null);
 
   const { mutate: syncAccounts, isPending: isSyncing } = useSyncPluggyMutation({
@@ -43,10 +49,45 @@ export const ConnectionsPage: React.FC = () => {
   }, [isSyncing, items, lastSync, syncAccounts, token]);
 
   const connectedItems = items ?? [];
-  const hasInstitutions = connectedItems.length > 0;
+  const hasPluggyItems = connectedItems.length > 0;
+
+  // Agrupa contas salvas no banco por instituição
+  const savedBalances = (dashboard?.accountBalances as any[]) ?? [];
+  const groupedSavedInstitutions = React.useMemo(() => {
+    const map = new Map<string, { totalBalance: number; totalCredit: number; accountsCount: number }>();
+
+    for (const acc of savedBalances) {
+      const instName = acc?.institutionName || acc?.institutionId || 'Outros';
+      let balance = 0;
+      if (typeof acc?.balanceBrl === 'number') {
+        balance = acc.balanceBrl;
+      } else if (typeof acc?.amount === 'number') {
+        balance = acc.amount;
+      }
+      const existing = map.get(instName) || { totalBalance: 0, totalCredit: 0, accountsCount: 0 };
+      if (balance >= 0) {
+        existing.totalBalance += balance;
+      } else {
+        existing.totalCredit += Math.abs(balance);
+      }
+      existing.accountsCount += 1;
+      map.set(instName, existing);
+    }
+
+    return Array.from(map.entries()).map(([name, data]) => ({
+      name,
+      totalBalance: data.totalBalance,
+      totalCredit: data.totalCredit,
+      accountsCount: data.accountsCount,
+    }));
+  }, [savedBalances]);
+
+  const hasSavedInstitutions = groupedSavedInstitutions.length > 0;
+  const hasAnyInstitutions = hasPluggyItems || hasSavedInstitutions;
+  const instCountText = hasPluggyItems ? connectedItems.length : groupedSavedInstitutions.length;
 
   const renderInstitutionsContent = () => {
-    if (isLoadingItems) {
+    if (isLoadingItems || (isLoadingDashboard && !hasSavedInstitutions)) {
       return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Skeleton className="h-32 rounded-2xl" />
@@ -56,14 +97,39 @@ export const ConnectionsPage: React.FC = () => {
       );
     }
 
-    if (hasInstitutions) {
+    if (hasPluggyItems) {
       return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {connectedItems.map((item) => (
-            <ConnectionCard
+          {connectedItems.map((item, index) => (
+            <motion.div
               key={item.id}
-              item={item}
-            />
+              initial={prefersReduced ? undefined : { opacity: 0, y: 12 }}
+              animate={prefersReduced ? undefined : { opacity: 1, y: 0 }}
+              transition={prefersReduced ? undefined : { delay: index * 0.08, duration: 0.3 }}
+            >
+              <ConnectionCard item={item} />
+            </motion.div>
+          ))}
+        </div>
+      );
+    }
+
+    if (hasSavedInstitutions) {
+      return (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {groupedSavedInstitutions.map((inst, index) => (
+            <motion.div
+              key={inst.name}
+              initial={prefersReduced ? undefined : { opacity: 0, y: 12 }}
+              animate={prefersReduced ? undefined : { opacity: 1, y: 0 }}
+              transition={prefersReduced ? undefined : { delay: index * 0.08, duration: 0.3 }}
+            >
+              <SavedInstitutionCard
+                institutionName={inst.name}
+                totalBalance={inst.totalBalance}
+                totalCredit={inst.totalCredit}
+              />
+            </motion.div>
           ))}
         </div>
       );
@@ -73,21 +139,15 @@ export const ConnectionsPage: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-xl font-extrabold text-secondary">
-          Conexões
-        </h1>
-        <p className="text-xs text-slate-500 font-medium">
-          Instituições bancárias e extratos conectados
-        </p>
-      </div>
-
+    <PageContainer
+      title="Conexões"
+      description="Instituições bancárias e extratos conectados"
+    >
       {lastSync && <SyncSummaryBanner summary={lastSync} />}
 
       <PluggySyncPanel
         token={token}
-        isConnected={hasInstitutions || Boolean(lastSync)}
+        isConnected={hasToken}
         isSyncing={isSyncing}
         lastSync={lastSync}
         onSync={handleSync}
@@ -98,7 +158,7 @@ export const ConnectionsPage: React.FC = () => {
       <section className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <h2 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-            Instituições Conectadas {hasInstitutions ? `(${connectedItems.length})` : ''}
+            {hasAnyInstitutions ? `Instituições Conectadas (${instCountText})` : 'Instituições Conectadas'}
           </h2>
         </div>
 
@@ -106,7 +166,7 @@ export const ConnectionsPage: React.FC = () => {
       </section>
 
       <FileImporterCard />
-    </div>
+    </PageContainer>
   );
 };
 
