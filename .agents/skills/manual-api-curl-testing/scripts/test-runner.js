@@ -187,7 +187,9 @@ async function runTestSuite() {
   }
 }
 
-runTestSuite().catch((err) => {
+try {
+  await runTestSuite();
+} catch (err) {
   console.error('Fatal error during test suite execution:', err);
   process.exit(1);
-});
+}

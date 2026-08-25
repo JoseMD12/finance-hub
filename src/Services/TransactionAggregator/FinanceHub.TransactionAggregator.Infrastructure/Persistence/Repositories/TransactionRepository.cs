@@ -8,6 +8,7 @@ using FinanceHub.TransactionAggregator.Application.DTOs;
 using FinanceHub.TransactionAggregator.Application.Interfaces;
 using FinanceHub.TransactionAggregator.Domain.Constants;
 using FinanceHub.TransactionAggregator.Domain.Entities;
+using FinanceHub.TransactionAggregator.Domain.Exceptions;
 using FinanceHub.TransactionAggregator.Domain.ValueObjects;
 using FinanceHub.TransactionAggregator.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -219,8 +220,10 @@ public class TransactionRepository : ITransactionRepository
         var accountInfoProperty = Expression.Property(parameter, nameof(CanonicalTransaction.AccountInfo));
         var institutionIdProperty = Expression.Property(accountInfoProperty, nameof(AccountIdentifier.InstitutionId));
 
-        var toLowerMethod = typeof(string).GetMethod(nameof(string.ToLower), Type.EmptyTypes)!;
-        var containsMethod = typeof(string).GetMethod(nameof(string.Contains), [typeof(string)])!;
+        var toLowerMethod = typeof(string).GetMethod(nameof(string.ToLower), Type.EmptyTypes)
+            ?? throw new MethodReflectionFailedDomainException("string.ToLower");
+        var containsMethod = typeof(string).GetMethod(nameof(string.Contains), [typeof(string)])
+            ?? throw new MethodReflectionFailedDomainException("string.Contains");
 
         var lowerInstitutionId = Expression.Call(institutionIdProperty, toLowerMethod);
 
