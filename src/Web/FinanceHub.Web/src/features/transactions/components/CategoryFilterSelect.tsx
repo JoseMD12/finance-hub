@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { Search, Check, Tag, ChevronDown, ChevronRight, X } from 'lucide-react';
+import { Search, Check, Tag, ChevronDown, X } from 'lucide-react';
 import { cn } from '@/shared/utils/cn';
 import { useCategoriesQuery } from '../hooks/useCategoriesQuery';
-import { getCategoryIcon } from '../utils/categoryIcons';
+import { CategoryCatalogList } from './CategoryCatalogList';
 import type { CategoryDto } from '../types/transactions.types';
 
 export interface CategoryFilterSelectProps {
@@ -166,13 +166,8 @@ export const CategoryFilterSelect: React.FC<CategoryFilterSelectProps> = ({
               />
             </div>
 
-            {/* Lista de Categorias */}
+            {/* Lista de Categorias Reutilizável */}
             <div className="max-h-60 overflow-y-auto flex flex-col gap-1 pr-1">
-              {isLoading && (
-                <div className="py-6 text-center text-xs text-slate-400">Carregando catálogo...</div>
-              )}
-
-              {/* Opção Padrão: Todas as Categorias (sempre visível quando não está buscando) */}
               {!isLoading && !isSearching && (
                 <button
                   type="button"
@@ -192,125 +187,16 @@ export const CategoryFilterSelect: React.FC<CategoryFilterSelectProps> = ({
                 </button>
               )}
 
-              {!isLoading && isSearching && filteredSearchCategories.length === 0 && (
-                <div className="py-6 text-center text-xs text-slate-400">Nenhuma categoria encontrada</div>
-              )}
-
-              {/* Modo de Busca: exibe lista filtrada direta */}
-              {!isLoading &&
-                isSearching &&
-                filteredSearchCategories.map((category) => {
-                  const isSelected = category.id === value;
-                  const isSub = !!category.parentCategoryId;
-                  const ItemIcon = getCategoryIcon(category.iconKey);
-
-                  return (
-                    <button
-                      key={category.id}
-                      type="button"
-                      onClick={() => handleSelect(category.id)}
-                      className={cn(
-                        'flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-medium text-left transition-all cursor-pointer',
-                        isSelected
-                          ? 'bg-brand-light text-brand-dark font-bold shadow-2xs'
-                          : 'hover:bg-slate-100/80 text-slate-700 hover:text-slate-900',
-                        isSub && 'pl-5 text-slate-600'
-                      )}
-                    >
-                      <span className="truncate flex items-center gap-1.5">
-                        {isSub && <span className="text-slate-300 select-none">└</span>}
-                        <ItemIcon className="w-3.5 h-3.5 text-slate-500 shrink-0" aria-hidden="true" />
-                        <span>{category.name}</span>
-                      </span>
-                      {isSelected && <Check className="w-3.5 h-3.5 text-brand shrink-0" />}
-                    </button>
-                  );
-                })}
-
-              {/* Modo Padrão: Categorias principais com subcategorias colapsáveis */}
-              {!isLoading &&
-                !isSearching &&
-                categories.map((parent) => {
-                  const hasSub = !!(parent.subcategories && parent.subcategories.length > 0);
-                  const isExpanded = expandedParentIds.has(parent.id);
-                  const isParentSelected = parent.id === value;
-                  const ParentIcon = getCategoryIcon(parent.iconKey);
-
-                  return (
-                    <div key={parent.id} className="flex flex-col gap-0.5">
-                      {/* Item Principal */}
-                      <div className="flex items-center justify-between rounded-lg">
-                        <button
-                          type="button"
-                          onClick={() => handleSelect(parent.id)}
-                          className={cn(
-                            'flex-1 flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-medium text-left transition-all cursor-pointer',
-                            isParentSelected
-                              ? 'bg-brand-light text-brand-dark font-bold shadow-2xs'
-                              : 'hover:bg-slate-100/80 text-slate-700 hover:text-slate-900'
-                          )}
-                        >
-                          <span className="truncate font-semibold flex items-center gap-2">
-                            <ParentIcon className="w-3.5 h-3.5 text-slate-500 shrink-0" aria-hidden="true" />
-                            <span>{parent.name}</span>
-                          </span>
-                          {isParentSelected && <Check className="w-3.5 h-3.5 text-brand shrink-0" />}
-                        </button>
-
-                        {hasSub && (
-                          <button
-                            type="button"
-                            onClick={(e) => toggleExpand(parent.id, e)}
-                            aria-label={
-                              isExpanded
-                                ? `Recolher subcategorias de ${parent.name}`
-                                : `Expandir subcategorias de ${parent.name}`
-                            }
-                            title={isExpanded ? 'Recolher subcategorias' : 'Ver subcategorias'}
-                            className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-brand hover:bg-brand-light active:scale-95 transition-all cursor-pointer shrink-0 ml-1"
-                          >
-                            {isExpanded ? (
-                              <ChevronDown className="w-4 h-4" />
-                            ) : (
-                              <ChevronRight className="w-4 h-4" />
-                            )}
-                          </button>
-                        )}
-                      </div>
-
-                      {/* Subcategorias expandidas */}
-                      {hasSub && isExpanded && (
-                        <div className="flex flex-col gap-0.5 pl-3 border-l-2 border-slate-200 ml-3.5 my-0.5 animate-in fade-in slide-in-from-top-1 duration-150">
-                          {parent.subcategories!.map((sub) => {
-                            const isSubSelected = sub.id === value;
-                            const SubIcon = getCategoryIcon(sub.iconKey);
-
-                            return (
-                              <button
-                                key={sub.id}
-                                type="button"
-                                onClick={() => handleSelect(sub.id)}
-                                className={cn(
-                                  'flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium text-left transition-all cursor-pointer',
-                                  isSubSelected
-                                    ? 'bg-brand-light text-brand-dark font-bold'
-                                    : 'hover:bg-slate-100/80 text-slate-600 hover:text-slate-900'
-                                )}
-                              >
-                                <span className="truncate flex items-center gap-1.5">
-                                  <span className="text-slate-300 select-none">└</span>
-                                  <SubIcon className="w-3.5 h-3.5 text-slate-400 shrink-0" aria-hidden="true" />
-                                  <span>{sub.name}</span>
-                                </span>
-                                {isSubSelected && <Check className="w-3.5 h-3.5 text-brand shrink-0" />}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+              <CategoryCatalogList
+                isLoading={isLoading}
+                isSearching={isSearching}
+                categories={categories}
+                filteredSearchCategories={filteredSearchCategories}
+                selectedCategoryId={value}
+                expandedParentIds={expandedParentIds}
+                onSelectCategory={(id) => handleSelect(id)}
+                onToggleExpand={toggleExpand}
+              />
             </div>
           </dialog>
         )}
