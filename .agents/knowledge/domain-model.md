@@ -49,22 +49,42 @@ Represents a banking or financial institution participating in Open Finance or c
   - `SuportaOpenFinance`: `bool`
   - `TipoConector`: `TipoConectorEnum` (`OpenFinanceBrasil`, `ItauDirect`, `BancoInterDirect`, `MercadoPagoApi`, `Manual`)
 
-### 1.3 `Transacao` (Aggregate Root — `TransactionAggregator`)
+### 1.3 `Transacao` (`CanonicalTransaction` — Aggregate Root — `TransactionAggregator`)
 Represents a monetary entry (Debit or Credit) recorded in an account.
 - **Properties**:
-  - `Id`: `TransacaoId`
-  - `ContaId`: `ContaId`
-  - `CategoriaId`: `CategoriaId?`
-  - `Valor`: `Money`
-  - `Tipo`: `TipoTransacaoEnum` (`Debito`, `Credito`)
-  - `Status`: `StatusTransacaoEnum` (`Pendente`, `Concluida`, `Cancelada`, `Estornada`)
-  - `DescricaoOriginal`: `string`
-  - `DescricaoPersonalizada`: `string?`
-  - `DataTransacao`: `DateTimeOffset`
-  - `DataEfetivacao`: `DateTimeOffset?`
-  - `HashUnico`: `string` (Calculated for deduplication: SHA256 of AccountId + Date + Amount + OriginalDescription + ExternalId)
-  - `ExternalId`: `string?` (ID provided by Open Finance / Bank API)
-  - `Metadados`: `Dictionary<string, string>` (Store raw categorization signals, merchant details, etc.)
+  - `Id`: `CanonicalTransactionId` (Guid)
+  - `UserId`: `string`
+  - `AccountInfo`: `AccountIdentifier` (InstitutionId, AccountId)
+  - `Hash`: `TransactionHash` (SHA-256 for deduplication)
+  - `Amount`: `Money`
+  - `Type`: `TransactionType` (`Credit`, `Debit`)
+  - `Description`: `SanitizedDescription`
+  - `CategoryId`: `Guid`
+  - `CategorizationSource`: `CategorizationSource` (`UserRule`, `GlobalPattern`, `UserManual`, `DefaultFallback`)
+  - `IsManuallyCategorized`: `bool`
+  - `TransactionDateUtc`: `DateTime`
+  - `BankDetails`: `BankTransactionDetails` (Channel, MerchantName)
+  - `Nature`: `TransactionNature` (`Operating`, `Transfer`, `BillPayment`)
+  - `IsBillPayment`: `bool`
+  - `IsIgnoredInTotals`: `bool`
+  - `PairedTransactionId`: `Guid?` (Linked pair ID for internal transfers)
+
+- **Business Rules & State Flags (Transactions Screen Filtering & Cash Flow Rules)**:
+  1. **Operational vs. Non-Operational Transactions (`IsIgnoredInTotals`)**:
+     - When `IsIgnoredInTotals = false`, the transaction is **Operating** (Revenue/Income or Expense) and enters the period cash flow calculations (Total Income, Total Expense, Net Balance).
+     - When `IsIgnoredInTotals = true`, the transaction is marked as **Neutral / Transit Money**, meaning it is excluded from cash flow totals so it does not distort real operational income/expenses.
+  2. **Internal Transfers (`Nature = Transfer`)**:
+     - Occurs when money moves between the user's own accounts (e.g. Itaú Checking -> Inter Checking).
+     - Automatically sets `IsIgnoredInTotals = true` and pairs with the target leg via `PairedTransactionId`.
+     - Displays the **Transferência** badge in the UI.
+  3. **Credit Card Bill Payments (`IsBillPayment = true`)**:
+     - Represents the settlement of a credit card statement balance from a checking account.
+     - Automatically sets `IsBillPayment = true` and `IsIgnoredInTotals = true` via `MarkAsBillPayment()`.
+     - **Dual Badge Behavior**: Displays both **Fatura** (blue) and **Neutro** (slate) badges in the UI, as bill payments are non-operational settlements (expenses already occurred when individual card purchases were made).
+     - Can be toggled manually via the transaction actions dropdown (`PATCH /api/v1/transactions/{id}/bill-payment`).
+  4. **Listing Filter Mode (`IncludeIgnoredInTotals`)**:
+     - **Default Mode (`IncludeIgnoredInTotals = false`)**: The backend filters out all transactions where `IsIgnoredInTotals = true` (transfers, transit money, and bill payments) from **both** the Summary Cards AND the transaction list table.
+     - **Full Mode (`IncludeIgnoredInTotals = true`)**: When the user switches on *"Incluir Transferências / Neutros nos Totais"*, all transactions are returned in the table list and computed in the summary cards.
 
 ### 1.4 `Categoria` (Entity / Aggregate Root — `TransactionAggregator`)
 Defines transaction classification for budgeting and reporting.
