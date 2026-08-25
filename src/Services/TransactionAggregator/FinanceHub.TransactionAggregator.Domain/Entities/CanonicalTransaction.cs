@@ -105,6 +105,7 @@ public class CanonicalTransaction
 
     public void MarkAsBillPayment()
     {
+        Nature = TransactionNature.BillPayment;
         IsBillPayment = true;
         IsIgnoredInTotals = true;
         AuditInfo = new TransactionAuditInfo(AuditInfo.CreatedAtUtc, DateTime.UtcNow);

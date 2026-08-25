@@ -19,8 +19,8 @@ public class CategoryResolverPipelineTests
         // Arrange
         var userRepo = Substitute.For<IUserCategoryRuleRepository>();
         var userCategoryId = Guid.NewGuid();
-        userRepo.FindByPatternAsync("user-1", "SMARTFIT", Arg.Any<CancellationToken>())
-            .Returns(UserCategoryRule.Create("user-1", "SMARTFIT", userCategoryId));
+        userRepo.GetByUserIdAsync("user-1", Arg.Any<CancellationToken>())
+            .Returns(new[] { UserCategoryRule.Create("user-1", "SMARTFIT", userCategoryId) });
 
         var merchantProvider = Substitute.For<IMerchantDatasetProvider>();
         var resolvers = new List<ICategoryResolver>
