@@ -32,6 +32,7 @@ export interface TransactionDto {
   readonly isBillPayment?: boolean;
   readonly isIgnoredInTotals?: boolean;
   readonly pairedTransactionId?: string | null;
+  readonly notes?: string | null;
 }
 
 export interface TransactionSummaryDto {

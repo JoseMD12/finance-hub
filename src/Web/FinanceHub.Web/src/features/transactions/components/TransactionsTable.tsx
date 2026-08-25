@@ -4,7 +4,7 @@ import { Skeleton } from '@/shared/components/Skeleton/Skeleton';
 import { formatCurrencyBRL, formatDateBR, formatTimeBR, formatPaymentMethod, maskSensitiveAccount } from '@/shared/utils/formatters';
 import { getInstitutionInfo } from '@/shared/constants/institutions';
 import { cn } from '@/shared/utils/cn';
-import { Landmark, ArrowUpRight, ArrowDownRight, ArrowLeftRight, Receipt, SearchX } from 'lucide-react';
+import { Landmark, ArrowUpRight, ArrowDownRight, ArrowLeftRight, Receipt, SearchX, MessageSquare } from 'lucide-react';
 import { CategoryTagPopover } from './CategoryTagPopover';
 import { TransactionActionDropdown } from './TransactionActionDropdown';
 import type { TransactionDto } from '../types/transactions.types';
@@ -173,6 +173,15 @@ export const TransactionsTable: React.FC<TransactionsTableProps> = ({
                       className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-500 border border-slate-200"
                     >
                       Neutro
+                    </span>
+                  )}
+                  {t.notes && (
+                    <span
+                      title={`Observação: ${t.notes}`}
+                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-purple-50 text-purple-700 border border-purple-200"
+                    >
+                      <MessageSquare className="w-2.5 h-2.5 text-purple-600" aria-hidden="true" />
+                      Nota
                     </span>
                   )}
                 </div>

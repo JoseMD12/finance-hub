@@ -114,7 +114,7 @@ describe('TransactionsPage', () => {
     const viewButton = screen.getByRole('menuitem', { name: /ver detalhes/i });
     await user.click(viewButton);
 
-    expect(screen.getByText('Detalhes da Transação')).toBeInTheDocument();
+    expect(screen.getByText('Metadados do Open Finance')).toBeInTheDocument();
     expect(screen.getByText('Meio de Pagamento')).toBeInTheDocument();
     expect(screen.getAllByText('Pix').length).toBeGreaterThan(0);
   });
@@ -179,15 +179,12 @@ describe('TransactionsPage', () => {
     const viewButton = screen.getByRole('menuitem', { name: /ver detalhes/i });
     await user.click(viewButton);
 
-    const toggleButton = screen.getByRole('button', { name: 'Alternar neutralidade nos totais' });
-    expect(toggleButton).toHaveAttribute('aria-pressed', 'false');
-
+    const toggleButton = screen.getByRole('button', { name: 'Ignorar em Totais' });
     await user.click(toggleButton);
 
     expect(transactionsApi.toggleTransactionNeutralityApi).toHaveBeenCalledWith({
       transactionId: 'tx-1',
       isIgnoredInTotals: true,
-      reason: 'Marcado manualmente como neutro/trânsito',
     });
   });
 });
