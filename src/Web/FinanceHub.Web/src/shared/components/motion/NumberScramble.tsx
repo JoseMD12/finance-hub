@@ -34,10 +34,15 @@ export const NumberScramble = ({
       const progress = Math.min(elapsed / duration, 1);
 
       if (progress < 0.85) {
-        // Scramble phase
-        const randomMultiplier = 0.5 + Math.random() * 1.5;
+        // Scramble phase with cryptographically secure random value for animation
+        const randomArray = new Uint32Array(2);
+        crypto.getRandomValues(randomArray);
+        const rand1 = randomArray[0] / (0xffffffff + 1);
+        const rand2 = randomArray[1] / (0xffffffff + 1);
+
+        const randomMultiplier = 0.5 + rand1 * 1.5;
         const randomSign = targetValue < 0 ? -1 : 1;
-        const scrambled = randomSign * (Math.random() * baseMagnitude * randomMultiplier);
+        const scrambled = randomSign * (rand2 * baseMagnitude * randomMultiplier);
         setDisplayValue(format(scrambled));
       } else if (progress < 1) {
         // Interpolation phase with cubic ease out

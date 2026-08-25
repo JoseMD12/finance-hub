@@ -63,14 +63,13 @@ export const TransactionsSummaryCards: React.FC<TransactionsSummaryCardsProps> =
             <div className="flex items-center gap-1.5">
               <span className="text-xs font-semibold text-slate-500">Saldo em Contas</span>
               <Tooltip content="Compras podem demorar até 48h para entrar no seu histórico" position="right">
-                <span
-                  tabIndex={0}
-                  role="button"
+                <button
+                  type="button"
                   aria-label="Informações sobre o prazo de sincronização"
-                  className="p-0.5 rounded-full text-slate-400 hover:text-brand transition-colors cursor-help focus:outline-none"
+                  className="p-0.5 rounded-full text-slate-400 hover:text-brand transition-colors cursor-help focus:outline-none bg-transparent border-0"
                 >
                   <Info className="w-3.5 h-3.5" aria-hidden="true" />
-                </span>
+                </button>
               </Tooltip>
             </div>
             <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 ring-1 ring-blue-500/20 shrink-0">

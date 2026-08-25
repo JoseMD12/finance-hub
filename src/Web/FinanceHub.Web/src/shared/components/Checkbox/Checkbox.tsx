@@ -32,25 +32,14 @@ export const Checkbox: React.FC<CheckboxProps> = ({
           checked={checked}
           disabled={disabled}
           onChange={(e) => !disabled && onChange(e.target.checked)}
-          className="sr-only"
-          {...props}
-        />
-        <button
-          type="button"
-          role="checkbox"
-          aria-checked={checked}
-          disabled={disabled}
-          onClick={() => !disabled && onChange(!checked)}
           className={cn(
-            'w-4 h-4 rounded border flex items-center justify-center transition-all duration-150 cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand/30',
-            checked
-              ? 'bg-brand border-brand text-white shadow-2xs'
-              : 'bg-surface-card border-border-subtle hover:border-slate-400 text-transparent',
+            'peer appearance-none w-4 h-4 rounded border transition-all duration-150 cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand/30',
+            'bg-surface-card border-border-subtle checked:bg-brand checked:border-brand',
             disabled && 'opacity-50 cursor-not-allowed'
           )}
-        >
-          <Check className={cn('w-3 h-3 stroke-[3]', checked ? 'opacity-100 scale-100' : 'opacity-0 scale-75', 'transition-all duration-150')} />
-        </button>
+          {...props}
+        />
+        <Check className={cn('pointer-events-none absolute left-0.5 top-0.5 w-3 h-3 stroke-[3] text-white opacity-0 peer-checked:opacity-100 transition-opacity duration-150')} />
       </div>
 
       {(label || description) && (

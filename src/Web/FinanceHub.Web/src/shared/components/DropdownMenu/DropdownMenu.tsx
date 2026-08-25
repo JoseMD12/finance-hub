@@ -85,9 +85,13 @@ export const DropdownMenu: React.FC<DropdownMenuProps> = ({
 
   return (
     <div className={cn('relative inline-block', className)} ref={triggerRef}>
-      <div onClick={() => setIsOpen((prev) => !prev)} className="cursor-pointer">
+      <button
+        type="button"
+        onClick={() => setIsOpen((prev) => !prev)}
+        className="cursor-pointer bg-transparent border-0 p-0 text-left focus:outline-none"
+      >
         {trigger}
-      </div>
+      </button>
 
       {isOpen &&
         position &&

@@ -124,6 +124,7 @@ export const AuroraBackground = ({ className }: AuroraBackgroundProps) => {
     <canvas
       ref={canvasRef}
       aria-hidden="true"
+      tabIndex={-1}
       className={cn('pointer-events-none absolute inset-0 h-full w-full', className)}
     />
   );
