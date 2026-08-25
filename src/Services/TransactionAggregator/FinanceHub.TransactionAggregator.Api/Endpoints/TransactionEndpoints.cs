@@ -122,6 +122,24 @@ public static class TransactionEndpoints
         .Produces(StatusCodes.Status204NoContent)
         .ProducesProblem(StatusCodes.Status404NotFound);
 
+        group.MapPatch("/{id:guid}/notes", async (
+            Guid id,
+            UpdateTransactionNotesRequest request,
+            FinanceHub.TransactionAggregator.Application.Commands.UpdateTransactionNotes.IUpdateTransactionNotesCommandHandler handler,
+            CancellationToken cancellationToken) =>
+        {
+            var command = new FinanceHub.TransactionAggregator.Application.Commands.UpdateTransactionNotes.UpdateTransactionNotesCommand(
+                id,
+                request.UserId,
+                request.Notes);
+
+            await handler.Handle(command, cancellationToken);
+            return Results.NoContent();
+        })
+        .WithName("UpdateTransactionNotes")
+        .Produces(StatusCodes.Status204NoContent)
+        .ProducesProblem(StatusCodes.Status404NotFound);
+
         return endpoints;
     }
 }
@@ -140,3 +158,7 @@ public record ToggleTransactionNeutralityRequest(
 public record ToggleTransactionBillPaymentRequest(
     string UserId,
     bool IsBillPayment);
+
+public record UpdateTransactionNotesRequest(
+    string UserId,
+    string? Notes);

@@ -126,6 +126,16 @@ public class TransactionAggregatorServiceClient : ITransactionAggregatorServiceC
         await _httpClient.SendOrThrowAsync(request, ServiceName, _logger, null, ct);
     }
 
+    public async Task UpdateTransactionNotesAsync(Guid transactionId, string userId, string? notes, CancellationToken ct = default)
+    {
+        var payload = new { UserId = userId, Notes = notes };
+        using var request = new HttpRequestMessage(HttpMethod.Patch, $"/api/v1/transactions/{transactionId}/notes")
+        {
+            Content = JsonContent.Create(payload)
+        };
+        await _httpClient.SendOrThrowAsync(request, ServiceName, _logger, null, ct);
+    }
+
     public async Task<bool> HealthCheckAsync(CancellationToken ct = default)
     {
         try

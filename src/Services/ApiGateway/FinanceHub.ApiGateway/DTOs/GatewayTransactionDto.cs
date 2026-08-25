@@ -18,7 +18,8 @@ public record GatewayTransactionDto(
     string Nature = "Operating",
     bool IsBillPayment = false,
     bool IsIgnoredInTotals = false,
-    Guid? PairedTransactionId = null);
+    Guid? PairedTransactionId = null,
+    string? Notes = null);
 
 public record GatewayConsolidatedBalanceDto(
     string UserId,
