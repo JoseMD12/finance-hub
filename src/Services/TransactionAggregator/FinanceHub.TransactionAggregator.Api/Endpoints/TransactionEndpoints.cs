@@ -104,6 +104,24 @@ public static class TransactionEndpoints
         .Produces(StatusCodes.Status204NoContent)
         .ProducesProblem(StatusCodes.Status404NotFound);
 
+        group.MapPatch("/{id:guid}/bill-payment", async (
+            Guid id,
+            ToggleTransactionBillPaymentRequest request,
+            FinanceHub.TransactionAggregator.Application.Commands.ToggleBillPayment.IToggleBillPaymentCommandHandler handler,
+            CancellationToken cancellationToken) =>
+        {
+            var command = new FinanceHub.TransactionAggregator.Application.Commands.ToggleBillPayment.ToggleBillPaymentCommand(
+                id,
+                request.UserId,
+                request.IsBillPayment);
+
+            await handler.Handle(command, cancellationToken);
+            return Results.NoContent();
+        })
+        .WithName("ToggleTransactionBillPayment")
+        .Produces(StatusCodes.Status204NoContent)
+        .ProducesProblem(StatusCodes.Status404NotFound);
+
         return endpoints;
     }
 }
@@ -118,3 +136,7 @@ public record ToggleTransactionNeutralityRequest(
     string UserId,
     bool IsIgnoredInTotals,
     string? Reason = null);
+
+public record ToggleTransactionBillPaymentRequest(
+    string UserId,
+    bool IsBillPayment);

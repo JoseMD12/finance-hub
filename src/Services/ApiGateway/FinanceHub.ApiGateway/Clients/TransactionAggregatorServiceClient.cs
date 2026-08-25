@@ -116,6 +116,16 @@ public class TransactionAggregatorServiceClient : ITransactionAggregatorServiceC
         await _httpClient.SendOrThrowAsync(request, ServiceName, _logger, null, ct);
     }
 
+    public async Task ToggleBillPaymentAsync(Guid transactionId, string userId, bool isBillPayment, CancellationToken ct = default)
+    {
+        var payload = new { UserId = userId, IsBillPayment = isBillPayment };
+        using var request = new HttpRequestMessage(HttpMethod.Patch, $"/api/v1/transactions/{transactionId}/bill-payment")
+        {
+            Content = JsonContent.Create(payload)
+        };
+        await _httpClient.SendOrThrowAsync(request, ServiceName, _logger, null, ct);
+    }
+
     public async Task<bool> HealthCheckAsync(CancellationToken ct = default)
     {
         try

@@ -7,13 +7,14 @@ export interface TransactionActionDropdownProps {
   transaction: TransactionDto;
   onSelectTransaction: (transaction: TransactionDto) => void;
   onToggleNeutrality: (transaction: TransactionDto) => void;
-  onToggleBillPayment?: (transaction: TransactionDto) => void;
+  onToggleBillPayment: (transaction: TransactionDto) => void;
 }
 
 export const TransactionActionDropdown: React.FC<TransactionActionDropdownProps> = ({
   transaction,
   onSelectTransaction,
   onToggleNeutrality,
+  onToggleBillPayment,
 }) => {
   const items: DropdownMenuItem[] = [
     {
@@ -35,13 +36,11 @@ export const TransactionActionDropdown: React.FC<TransactionActionDropdownProps>
     },
     {
       key: 'billPayment',
-      label: transaction.isBillPayment ? 'É Fatura (Ativo)' : 'Marcar como Fatura',
-      icon: <Receipt className="w-4 h-4 text-brand shrink-0" />,
+      label: transaction.isBillPayment ? 'Desmarcar Fatura' : 'Marcar como Fatura',
+      icon: <Receipt className="w-4 h-4 text-blue-600 shrink-0" />,
       variant: transaction.isBillPayment ? 'brand' : 'default',
       checked: Boolean(transaction.isBillPayment),
-      onClick: () => {
-        onToggleNeutrality(transaction);
-      },
+      onClick: () => onToggleBillPayment(transaction),
     },
   ];
 

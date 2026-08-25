@@ -1,5 +1,6 @@
 using FinanceHub.TransactionAggregator.Application.Commands.CategorizeTransaction;
 using FinanceHub.TransactionAggregator.Application.Commands.IngestTransaction;
+using FinanceHub.TransactionAggregator.Application.Commands.ToggleBillPayment;
 using FinanceHub.TransactionAggregator.Application.Interfaces;
 using FinanceHub.TransactionAggregator.Application.Queries.GetCategories;
 using FinanceHub.TransactionAggregator.Application.Queries.GetConsolidatedBalance;
@@ -27,6 +28,7 @@ public static class DependencyInjection
         services.AddScoped<IIngestTransactionCommandHandler, IngestTransactionCommandHandler>();
         services.AddScoped<ICategorizeTransactionCommandHandler, CategorizeTransactionCommandHandler>();
         services.AddScoped<FinanceHub.TransactionAggregator.Application.Commands.ToggleTransactionNeutrality.IToggleTransactionNeutralityCommandHandler, FinanceHub.TransactionAggregator.Application.Commands.ToggleTransactionNeutrality.ToggleTransactionNeutralityCommandHandler>();
+        services.AddScoped<IToggleBillPaymentCommandHandler, ToggleBillPaymentCommandHandler>();
         services.AddScoped<IGetTransactionsQueryHandler, GetTransactionsQueryHandler>();
         services.AddScoped<IGetCategoriesQueryHandler, GetCategoriesQueryHandler>();
         services.AddScoped<IGetConsolidatedBalanceQueryHandler, GetConsolidatedBalanceQueryHandler>();

@@ -110,6 +110,13 @@ public class CanonicalTransaction
         AuditInfo = new TransactionAuditInfo(AuditInfo.CreatedAtUtc, DateTime.UtcNow);
     }
 
+    public void UnmarkBillPayment()
+    {
+        IsBillPayment = false;
+        IsIgnoredInTotals = false;
+        AuditInfo = new TransactionAuditInfo(AuditInfo.CreatedAtUtc, DateTime.UtcNow);
+    }
+
     public void MarkAsTransitMoney(Guid? pairedTransactionId = null)
     {
         IsIgnoredInTotals = true;

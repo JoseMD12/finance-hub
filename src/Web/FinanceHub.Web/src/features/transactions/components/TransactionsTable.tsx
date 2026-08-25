@@ -14,6 +14,7 @@ export interface TransactionsTableProps {
   isLoading: boolean;
   onSelectTransaction: (transaction: TransactionDto) => void;
   onToggleNeutrality: (transaction: TransactionDto) => void;
+  onToggleBillPayment: (transaction: TransactionDto) => void;
 }
 
 const BankLogoTag: React.FC<{ institutionId: string }> = ({ institutionId }) => {
@@ -48,6 +49,7 @@ export const TransactionsTable: React.FC<TransactionsTableProps> = ({
   isLoading,
   onSelectTransaction,
   onToggleNeutrality,
+  onToggleBillPayment,
 }) => {
   const renderTableContent = () => {
     if (isLoading) {
@@ -239,6 +241,7 @@ export const TransactionsTable: React.FC<TransactionsTableProps> = ({
                   transaction={t}
                   onSelectTransaction={onSelectTransaction}
                   onToggleNeutrality={onToggleNeutrality}
+                  onToggleBillPayment={onToggleBillPayment}
                 />
               </div>
             </td>

@@ -78,3 +78,8 @@ export interface ToggleNeutralityPayload {
   readonly isIgnoredInTotals: boolean;
   readonly reason?: string;
 }
+
+export interface ToggleBillPaymentPayload {
+  readonly transactionId: string;
+  readonly isBillPayment: boolean;
+}

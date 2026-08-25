@@ -8,6 +8,7 @@ import { TransactionsTable } from '../components/TransactionsTable';
 import { TransactionsPagination } from '../components/TransactionsPagination';
 import { PageContainer } from '@/shared/components/PageContainer/PageContainer';
 import { useToggleNeutralityMutation } from '../hooks/useToggleNeutralityMutation';
+import { useToggleBillPaymentMutation } from '../hooks/useToggleBillPaymentMutation';
 import { ArrowLeftRight } from 'lucide-react';
 import type { TransactionDto, TransactionFilterParams } from '../types/transactions.types';
 
@@ -26,6 +27,7 @@ export const TransactionsPage: React.FC = () => {
 
   const { data, isLoading } = useTransactionsQuery(filters);
   const toggleNeutralityMutation = useToggleNeutralityMutation();
+  const toggleBillPaymentMutation = useToggleBillPaymentMutation();
 
   const transactions = data?.items ?? [];
   const summary = data?.summary;
@@ -61,6 +63,17 @@ export const TransactionsPage: React.FC = () => {
     setSelectedTransaction((prev) => prev ? { ...prev, isIgnoredInTotals: nextIgnored } : null);
   };
 
+  const handleToggleBillPayment = async (transaction: TransactionDto) => {
+    const nextIsBillPayment = !transaction.isBillPayment;
+    await toggleBillPaymentMutation.mutateAsync({
+      transactionId: transaction.id,
+      isBillPayment: nextIsBillPayment,
+    });
+    setSelectedTransaction((prev) =>
+      prev ? { ...prev, isBillPayment: nextIsBillPayment, isIgnoredInTotals: nextIsBillPayment } : null
+    );
+  };
+
   return (
     <PageContainer
       title="Extrato de Transações"
@@ -84,6 +97,7 @@ export const TransactionsPage: React.FC = () => {
         isLoading={isLoading}
         onSelectTransaction={setSelectedTransaction}
         onToggleNeutrality={handleToggleNeutrality}
+        onToggleBillPayment={handleToggleBillPayment}
       />
 
       {/* Paginação Clássica */}

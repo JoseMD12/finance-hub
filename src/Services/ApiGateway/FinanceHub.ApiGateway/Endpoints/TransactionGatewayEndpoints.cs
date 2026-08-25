@@ -106,9 +106,33 @@ public static class TransactionGatewayEndpoints
         .ProducesProblem(StatusCodes.Status401Unauthorized)
         .ProducesProblem(StatusCodes.Status404NotFound);
 
+        group.MapPatch("/{id:guid}/bill-payment", async (
+            Guid id,
+            ToggleBillPaymentRequest request,
+            ClaimsPrincipal user,
+            ITransactionAggregatorServiceClient transactionClient,
+            CancellationToken ct) =>
+        {
+            var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                      ?? user.FindFirst("sub")?.Value;
+
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                return Results.Unauthorized();
+            }
+
+            await transactionClient.ToggleBillPaymentAsync(id, userId, request.IsBillPayment, ct);
+            return Results.NoContent();
+        })
+        .WithName("ToggleGatewayTransactionBillPayment")
+        .Produces(StatusCodes.Status204NoContent)
+        .ProducesProblem(StatusCodes.Status401Unauthorized)
+        .ProducesProblem(StatusCodes.Status404NotFound);
+
         return endpoints;
     }
 
     public record CategorizeRequest(Guid CategoryId, bool CreateCustomRule, bool ApplyToPastTransactions = false);
     public record ToggleNeutralityRequest(bool IsIgnoredInTotals, string? Reason = null);
+    public record ToggleBillPaymentRequest(bool IsBillPayment);
 }

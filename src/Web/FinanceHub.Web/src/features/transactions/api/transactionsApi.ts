@@ -5,6 +5,7 @@ import type {
   CategorizeTransactionPayload,
   PaginatedTransactionsDto,
   TransactionFilterParams,
+  ToggleBillPaymentPayload,
 } from '../types/transactions.types';
 
 export const getTransactionsApi = async (
@@ -41,5 +42,13 @@ export const toggleTransactionNeutralityApi = async (
   await httpClient.patch(API_ENDPOINTS.TRANSACTIONS.TOGGLE_NEUTRALITY(payload.transactionId), {
     isIgnoredInTotals: payload.isIgnoredInTotals,
     reason: payload.reason,
+  });
+};
+
+export const toggleTransactionBillPaymentApi = async (
+  payload: ToggleBillPaymentPayload
+): Promise<void> => {
+  await httpClient.patch(API_ENDPOINTS.TRANSACTIONS.TOGGLE_BILL_PAYMENT(payload.transactionId), {
+    isBillPayment: payload.isBillPayment,
   });
 };
