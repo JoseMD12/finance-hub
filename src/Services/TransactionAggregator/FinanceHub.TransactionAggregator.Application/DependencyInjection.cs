@@ -1,8 +1,11 @@
 using FinanceHub.TransactionAggregator.Application.Commands.CategorizeTransaction;
 using FinanceHub.TransactionAggregator.Application.Commands.IngestTransaction;
+using FinanceHub.TransactionAggregator.Application.Commands.ToggleBillPayment;
+using FinanceHub.TransactionAggregator.Application.Interfaces;
 using FinanceHub.TransactionAggregator.Application.Queries.GetCategories;
 using FinanceHub.TransactionAggregator.Application.Queries.GetConsolidatedBalance;
 using FinanceHub.TransactionAggregator.Application.Queries.GetTransactions;
+using FinanceHub.TransactionAggregator.Application.Services;
 using FinanceHub.TransactionAggregator.Application.Services.Categorization;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -18,9 +21,14 @@ public static class DependencyInjection
         services.AddScoped<ICategoryResolver, DefaultFallbackCategoryResolver>();
         services.AddScoped<ICategoryResolverPipeline, CategoryResolverPipeline>();
 
+        // Matching Engine
+        services.AddScoped<ITransferPairMatchingEngine, TransferPairMatchingEngine>();
+
         // Command & Query Handlers
         services.AddScoped<IIngestTransactionCommandHandler, IngestTransactionCommandHandler>();
         services.AddScoped<ICategorizeTransactionCommandHandler, CategorizeTransactionCommandHandler>();
+        services.AddScoped<FinanceHub.TransactionAggregator.Application.Commands.ToggleTransactionNeutrality.IToggleTransactionNeutralityCommandHandler, FinanceHub.TransactionAggregator.Application.Commands.ToggleTransactionNeutrality.ToggleTransactionNeutralityCommandHandler>();
+        services.AddScoped<IToggleBillPaymentCommandHandler, ToggleBillPaymentCommandHandler>();
         services.AddScoped<IGetTransactionsQueryHandler, GetTransactionsQueryHandler>();
         services.AddScoped<IGetCategoriesQueryHandler, GetCategoriesQueryHandler>();
         services.AddScoped<IGetConsolidatedBalanceQueryHandler, GetConsolidatedBalanceQueryHandler>();

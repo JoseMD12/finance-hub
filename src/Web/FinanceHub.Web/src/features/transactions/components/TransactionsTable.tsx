@@ -4,14 +4,17 @@ import { Skeleton } from '@/shared/components/Skeleton/Skeleton';
 import { formatCurrencyBRL, formatDateBR, formatTimeBR, formatPaymentMethod, maskSensitiveAccount } from '@/shared/utils/formatters';
 import { getInstitutionInfo } from '@/shared/constants/institutions';
 import { cn } from '@/shared/utils/cn';
-import { Landmark, ArrowUpRight, ArrowDownRight, Eye, SearchX } from 'lucide-react';
+import { Landmark, ArrowUpRight, ArrowDownRight, ArrowLeftRight, Receipt, SearchX } from 'lucide-react';
 import { CategoryTagPopover } from './CategoryTagPopover';
+import { TransactionActionDropdown } from './TransactionActionDropdown';
 import type { TransactionDto } from '../types/transactions.types';
 
 export interface TransactionsTableProps {
   transactions: TransactionDto[];
   isLoading: boolean;
   onSelectTransaction: (transaction: TransactionDto) => void;
+  onToggleNeutrality: (transaction: TransactionDto) => void;
+  onToggleBillPayment: (transaction: TransactionDto) => void;
 }
 
 const BankLogoTag: React.FC<{ institutionId: string }> = ({ institutionId }) => {
@@ -45,179 +48,217 @@ export const TransactionsTable: React.FC<TransactionsTableProps> = ({
   transactions,
   isLoading,
   onSelectTransaction,
+  onToggleNeutrality,
+  onToggleBillPayment,
 }) => {
-  const renderTableBody = () => {
+  const renderTableContent = () => {
     if (isLoading) {
-      // Structured Skeleton Loading (5 rows)
-      return Array.from({ length: 5 }).map((_, idx) => (
-        <tr key={`skeleton-${idx}`} className="animate-pulse">
-          <td className="px-6 py-4 text-left whitespace-nowrap">
-            <div className="flex flex-col gap-1">
-              <Skeleton className="h-4 w-20 rounded-md" />
-              <Skeleton className="h-3 w-12 rounded-md" />
-            </div>
-          </td>
-          <td className="px-6 py-4 text-left">
-            <div className="flex flex-col gap-1.5">
-              <Skeleton className="h-4 w-44 rounded-md" />
-              <Skeleton className="h-3 w-28 rounded-md" />
-            </div>
-          </td>
-          <td className="px-6 py-4 text-left whitespace-nowrap">
-            <div className="flex flex-col gap-1.5">
-              <Skeleton className="h-5 w-28 rounded-md" />
-              <Skeleton className="h-3 w-20 rounded-md" />
-            </div>
-          </td>
-          <td className="px-6 py-4 text-left whitespace-nowrap">
-            <Skeleton className="h-6 w-28 rounded-md" />
-          </td>
-          <td className="px-6 py-4 text-left whitespace-nowrap">
-            <Skeleton className="h-5 w-16 rounded-md" />
-          </td>
-          <td className="px-6 py-4 text-center whitespace-nowrap min-w-[150px]">
-            <div className="flex items-center justify-center">
-              <Skeleton className="h-5 w-24 rounded-md" />
-            </div>
-          </td>
-          <td className="px-6 py-4 text-center whitespace-nowrap min-w-[80px]">
-            <div className="flex items-center justify-center">
-              <Skeleton className="h-7 w-7 rounded-lg" />
-            </div>
-          </td>
-        </tr>
-      ));
+      // Structured Skeleton Loading (8 rows)
+      return (
+        <tbody className="divide-y divide-border-subtle bg-surface-card">
+          {Array.from({ length: 8 }).map((_, idx) => (
+            <tr key={`skeleton-${idx}`} className="animate-pulse">
+              <td className="px-6 py-4 text-left whitespace-nowrap">
+                <div className="flex flex-col gap-1">
+                  <Skeleton className="h-4 w-20 rounded-md" />
+                  <Skeleton className="h-3 w-12 rounded-md" />
+                </div>
+              </td>
+              <td className="px-6 py-4 text-left">
+                <div className="flex flex-col gap-1.5">
+                  <Skeleton className="h-4 w-44 rounded-md" />
+                  <Skeleton className="h-3 w-28 rounded-md" />
+                </div>
+              </td>
+              <td className="px-6 py-4 text-left whitespace-nowrap">
+                <div className="flex flex-col gap-1.5">
+                  <Skeleton className="h-5 w-28 rounded-md" />
+                  <Skeleton className="h-3 w-20 rounded-md" />
+                </div>
+              </td>
+              <td className="px-6 py-4 text-left whitespace-nowrap">
+                <Skeleton className="h-6 w-28 rounded-md" />
+              </td>
+              <td className="px-6 py-4 text-left whitespace-nowrap">
+                <Skeleton className="h-5 w-16 rounded-md" />
+              </td>
+              <td className="px-6 py-4 text-center whitespace-nowrap min-w-[150px]">
+                <div className="flex items-center justify-center">
+                  <Skeleton className="h-5 w-24 rounded-md" />
+                </div>
+              </td>
+              <td className="px-6 py-4 text-center whitespace-nowrap min-w-[80px]">
+                <div className="flex items-center justify-center">
+                  <Skeleton className="h-7 w-7 rounded-lg" />
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      );
     }
 
     if (transactions.length === 0) {
       // Rich Empty State
       return (
-        <tr>
-          <td colSpan={7} className="px-6 py-16 text-center">
-            <div className="flex flex-col items-center justify-center gap-3 max-w-sm mx-auto">
-              <div className="w-12 h-12 rounded-2xl bg-surface-ground border border-border-subtle flex items-center justify-center text-slate-400">
-                <SearchX className="w-6 h-6" aria-hidden="true" />
+        <tbody className="divide-y divide-border-subtle bg-surface-card">
+          <tr>
+            <td colSpan={7} className="px-6 py-16 text-center">
+              <div className="flex flex-col items-center justify-center gap-3 max-w-sm mx-auto">
+                <div className="w-12 h-12 rounded-2xl bg-surface-ground border border-border-subtle flex items-center justify-center text-slate-400">
+                  <SearchX className="w-6 h-6" aria-hidden="true" />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-sm font-bold text-slate-700">
+                    Nenhuma transação encontrada
+                  </span>
+                  <p className="text-xs text-slate-400">
+                    Não encontramos lançamentos para os filtros ou busca informados. Tente ajustar os parâmetros.
+                  </p>
+                </div>
               </div>
-              <div className="flex flex-col gap-1">
-                <span className="text-sm font-bold text-slate-700">
-                  Nenhuma transação encontrada
-                </span>
-                <p className="text-xs text-slate-400">
-                  Não encontramos lançamentos para os filtros ou busca informados. Tente ajustar os parâmetros.
-                </p>
-              </div>
-            </div>
-          </td>
-        </tr>
+            </td>
+          </tr>
+        </tbody>
       );
     }
 
-    return transactions.map((t) => (
-      <tr
-        key={t.id}
-        className="hover:bg-brand-light/20 transition-colors duration-150 group"
-      >
-        {/* Data e Hora - Alinhadas à esquerda */}
-        <td className="px-6 py-4 text-left whitespace-nowrap">
-          <div className="flex flex-col">
-            <span className="text-slate-700 font-semibold tabular-nums">
-              {formatDateBR(t.transactionDateUtc)}
-            </span>
-            <span className="text-[10px] text-slate-400 font-mono tabular-nums">
-              {formatTimeBR(t.transactionDateUtc)}
-            </span>
-          </div>
-        </td>
+    return (
+      <tbody className="divide-y divide-border-subtle bg-surface-card">
+        {transactions.map((t) => (
+          <tr
+            key={t.id}
+            className="hover:bg-brand-light/35 transition-all duration-150 group"
+          >
+            {/* Data e Hora - Alinhadas à esquerda */}
+            <td className="px-6 py-4 text-left whitespace-nowrap">
+              <div className="flex flex-col">
+                <span className="text-slate-700 font-semibold tabular-nums">
+                  {formatDateBR(t.transactionDateUtc)}
+                </span>
+                <span className="text-[10px] text-slate-400 font-mono tabular-nums">
+                  {formatTimeBR(t.transactionDateUtc)}
+                </span>
+              </div>
+            </td>
 
-        {/* Descrição - Alinhada à esquerda */}
-        <td className="px-6 py-4 text-left">
-          <div className="flex flex-col">
-            <span className="font-bold text-slate-800 group-hover:text-secondary transition-colors">
-              {t.description}
-            </span>
-            {t.merchantName && (
-              <span className="text-[11px] text-slate-400 font-medium">
-                {t.merchantName}
+            {/* Descrição e Estabelecimento - Sanitizado no topo em negrito, nome bruto embaixo */}
+            <td className="px-6 py-4 text-left">
+              <div className="flex flex-col gap-0.5">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-bold text-slate-800 group-hover:text-secondary transition-colors text-xs">
+                    {t.description}
+                  </span>
+                  {t.nature === 'Transfer' && (
+                    <span
+                      title="Transferência interna pareada entre contas próprias ou repasse (não computada nos totais)"
+                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200"
+                    >
+                      <ArrowLeftRight className="w-2.5 h-2.5 text-slate-500" aria-hidden="true" />
+                      Transferência
+                    </span>
+                  )}
+                  {t.isBillPayment && (
+                    <span
+                      title="Pagamento de fatura de cartão de crédito"
+                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200"
+                    >
+                      <Receipt className="w-2.5 h-2.5 text-blue-600" aria-hidden="true" />
+                      Fatura
+                    </span>
+                  )}
+                  {t.isIgnoredInTotals && t.nature !== 'Transfer' && (
+                    <span
+                      title="Movimentação patrimonial / dinheiro de trânsito (não computada nos totais operacionais)"
+                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-500 border border-slate-200"
+                    >
+                      Neutro
+                    </span>
+                  )}
+                </div>
+                {t.merchantName &&
+                  t.merchantName.trim().toLowerCase() !== t.description.trim().toLowerCase() && (
+                    <span className="text-[11px] text-slate-400 font-mono font-medium truncate max-w-md">
+                      {t.merchantName}
+                    </span>
+                  )}
+              </div>
+            </td>
+
+            {/* Instituição e Conta - Alinhada à esquerda */}
+            <td className="px-6 py-4 text-left whitespace-nowrap">
+              <div className="flex flex-col items-start gap-1">
+                <BankLogoTag institutionId={t.institutionId} />
+                <span className="text-[10px] text-slate-400 font-mono whitespace-nowrap pl-0.5">
+                  Conta {maskSensitiveAccount(t.accountNumber)}
+                </span>
+              </div>
+            </td>
+
+            {/* Categoria - Alinhada à esquerda */}
+            <td className="px-6 py-4 text-left whitespace-nowrap">
+              <CategoryTagPopover
+                transactionId={t.id}
+                currentCategoryId={t.categoryId}
+              />
+            </td>
+
+            {/* Meio de Pagamento - Alinhado à esquerda */}
+            <td className="px-6 py-4 text-left whitespace-nowrap">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-surface-ground border border-border-subtle text-[11px] font-mono text-slate-600 whitespace-nowrap">
+                {formatPaymentMethod(t.channel)}
               </span>
-            )}
-          </div>
-        </td>
+            </td>
 
-        {/* Instituição e Conta - Alinhada à esquerda */}
-        <td className="px-6 py-4 text-left whitespace-nowrap">
-          <div className="flex flex-col items-start gap-1">
-            <BankLogoTag institutionId={t.institutionId} />
-            <span className="text-[10px] text-slate-400 font-mono whitespace-nowrap pl-0.5">
-              Conta {maskSensitiveAccount(t.accountNumber)}
-            </span>
-          </div>
-        </td>
+            {/* Valor - Centralizado na célula com largura protegida e sem quebra */}
+            <td className="px-6 py-4 text-center whitespace-nowrap min-w-[150px]">
+              <div className="flex items-center justify-center">
+                <span
+                  className={cn(
+                    'tabular-nums tracking-tight font-mono inline-flex items-center justify-center gap-1 font-bold text-sm whitespace-nowrap',
+                    t.type === 'Credit'
+                      ? 'text-status-success'
+                      : 'text-status-danger'
+                  )}
+                >
+                  {t.type === 'Credit' ? (
+                    <ArrowUpRight className="w-4 h-4 shrink-0" aria-hidden="true" />
+                  ) : (
+                    <ArrowDownRight className="w-4 h-4 shrink-0" aria-hidden="true" />
+                  )}
+                  <span className="whitespace-nowrap">
+                    {t.type === 'Credit' ? '+ ' : '- '}
+                    {formatCurrencyBRL(t.amount)}
+                  </span>
+                </span>
+              </div>
+            </td>
 
-        {/* Categoria - Alinhada à esquerda */}
-        <td className="px-6 py-4 text-left whitespace-nowrap">
-          <CategoryTagPopover
-            transactionId={t.id}
-            currentCategoryId={t.categoryId}
-          />
-        </td>
-
-        {/* Meio de Pagamento - Alinhado à esquerda */}
-        <td className="px-6 py-4 text-left whitespace-nowrap">
-          <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-surface-ground border border-border-subtle text-[11px] font-mono text-slate-600 whitespace-nowrap">
-            {formatPaymentMethod(t.channel)}
-          </span>
-        </td>
-
-        {/* Valor - Centralizado na célula com largura protegida e sem quebra */}
-        <td className="px-6 py-4 text-center whitespace-nowrap min-w-[150px]">
-          <div className="flex items-center justify-center">
-            <span
-              className={cn(
-                'tabular-nums tracking-tight font-mono inline-flex items-center justify-center gap-1 font-bold text-sm whitespace-nowrap',
-                t.type === 'Credit'
-                  ? 'text-status-success'
-                  : 'text-status-danger'
-              )}
-            >
-              {t.type === 'Credit' ? (
-                <ArrowUpRight className="w-4 h-4 shrink-0" aria-hidden="true" />
-              ) : (
-                <ArrowDownRight className="w-4 h-4 shrink-0" aria-hidden="true" />
-              )}
-              <span className="whitespace-nowrap">
-                {t.type === 'Credit' ? '+ ' : '- '}
-                {formatCurrencyBRL(t.amount)}
-              </span>
-            </span>
-          </div>
-        </td>
-
-        {/* Ações - Centralizado */}
-        <td className="px-6 py-4 text-center whitespace-nowrap min-w-[80px]">
-          <div className="flex items-center justify-center">
-            <button
-              type="button"
-              onClick={() => onSelectTransaction(t)}
-              aria-label={`Ver detalhes da transação ${t.description}`}
-              title="Ver Detalhes"
-              className="p-2 text-slate-400 hover:text-brand hover:bg-brand-light rounded-lg transition-all duration-200 cursor-pointer"
-            >
-              <Eye className="w-4 h-4" />
-            </button>
-          </div>
-        </td>
-      </tr>
-    ));
+            {/* Ações - Centralizado com DropdownMenu padronizado */}
+            <td className="px-6 py-4 text-center whitespace-nowrap min-w-[80px]">
+              <div className="flex items-center justify-center">
+                <TransactionActionDropdown
+                  transaction={t}
+                  onSelectTransaction={onSelectTransaction}
+                  onToggleNeutrality={onToggleNeutrality}
+                  onToggleBillPayment={onToggleBillPayment}
+                />
+              </div>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    );
   };
 
   return (
     <Card className="p-0 overflow-hidden bg-surface-card border border-border-subtle shadow-card" hoverable={false}>
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto overflow-y-hidden">
         <table className="w-full text-left text-xs">
           <thead>
             <tr className="bg-secondary text-white font-semibold uppercase tracking-wider text-[11px]">
               <th className="px-6 py-4 text-left whitespace-nowrap">Data</th>
-              <th className="px-6 py-4 text-left">Descrição e Estabelecimento</th>
+              <th className="px-6 py-4 text-left">Descrição / Estabelecimento</th>
               <th className="px-6 py-4 text-left whitespace-nowrap">Instituição e Conta</th>
               <th className="px-6 py-4 text-left whitespace-nowrap">Categoria</th>
               <th className="px-6 py-4 text-left whitespace-nowrap">Meio</th>
@@ -225,11 +266,10 @@ export const TransactionsTable: React.FC<TransactionsTableProps> = ({
               <th className="px-6 py-4 text-left whitespace-nowrap">Ações</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-border-subtle bg-surface-card">
-            {renderTableBody()}
-          </tbody>
+          {renderTableContent()}
         </table>
       </div>
     </Card>
   );
 };
+

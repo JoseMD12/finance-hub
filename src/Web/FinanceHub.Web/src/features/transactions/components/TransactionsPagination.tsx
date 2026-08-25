@@ -1,6 +1,7 @@
 import React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { CustomSelect } from '@/shared/components/Select/CustomSelect';
+import { cn } from '@/shared/utils/cn';
 
 export interface TransactionsPaginationProps {
   currentPage: number;
@@ -76,24 +77,29 @@ export const TransactionsPagination: React.FC<TransactionsPaginationProps> = ({
   if (totalItems === 0) return null;
 
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-surface-card rounded-2xl border border-border-subtle text-xs text-slate-600">
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-surface-card rounded-2xl border border-border-subtle shadow-card text-xs text-slate-600">
       {/* Contador de Itens */}
       <div className="flex items-center gap-2">
         <span>
-          Exibindo <strong className="text-secondary">{startItem}–{endItem}</strong> de{' '}
-          <strong className="text-secondary">{totalItems}</strong> transações
+          Exibindo <strong className="text-secondary tabular-nums font-bold">{startItem}–{endItem}</strong> de{' '}
+          <strong className="text-secondary tabular-nums font-bold">{totalItems}</strong> lançamentos
         </span>
       </div>
 
       {/* Navegação de Páginas e Seletor de PageSize */}
-      <div className="flex items-center gap-4">
-        <div className="w-32">
-          <CustomSelect
-            options={pageSizeOptions}
-            value={String(pageSize)}
-            onChange={(val) => onPageSizeChange(Number(val))}
-            label="Itens por página"
-          />
+      <div className="flex flex-wrap items-center gap-4">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-semibold text-slate-500 whitespace-nowrap">Exibir:</span>
+          <div className="w-28">
+            <CustomSelect
+              size="sm"
+              options={pageSizeOptions}
+              value={String(pageSize)}
+              onChange={(val) => onPageSizeChange(Number(val))}
+              clearable={false}
+              direction="up"
+            />
+          </div>
         </div>
 
         <div className="flex items-center gap-1">
@@ -103,7 +109,7 @@ export const TransactionsPagination: React.FC<TransactionsPaginationProps> = ({
             onClick={() => onPageChange(currentPage - 1)}
             disabled={currentPage <= 1}
             aria-label="Página anterior"
-            className="p-1.5 rounded-lg border border-border-subtle bg-surface-ground text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:pointer-events-none transition-colors cursor-pointer"
+            className="w-8 h-8 flex items-center justify-center rounded-xl border border-border-subtle bg-surface-ground text-slate-600 hover:bg-slate-100 hover:text-slate-900 disabled:opacity-30 disabled:pointer-events-none transition-all cursor-pointer"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
@@ -117,16 +123,17 @@ export const TransactionsPagination: React.FC<TransactionsPaginationProps> = ({
                 onClick={() => onPageChange(item.pageNumber!)}
                 aria-label={`Página ${item.label}`}
                 aria-current={item.pageNumber === currentPage ? 'page' : undefined}
-                className={`min-w-8 h-8 px-2 rounded-lg font-bold transition-colors cursor-pointer ${
+                className={cn(
+                  'min-w-8 h-8 px-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer',
                   item.pageNumber === currentPage
-                    ? 'bg-brand text-white shadow-sm'
-                    : 'bg-surface-ground text-slate-600 hover:bg-slate-100 border border-border-subtle'
-                }`}
+                    ? 'bg-brand text-white shadow-2xs'
+                    : 'bg-surface-ground text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-border-subtle'
+                )}
               >
                 {item.label}
               </button>
             ) : (
-              <span key={item.id} className="px-1 text-slate-400">
+              <span key={item.id} className="px-1.5 text-slate-400 font-mono">
                 {item.label}
               </span>
             )
@@ -138,7 +145,7 @@ export const TransactionsPagination: React.FC<TransactionsPaginationProps> = ({
             onClick={() => onPageChange(currentPage + 1)}
             disabled={currentPage >= totalPages}
             aria-label="Próxima página"
-            className="p-1.5 rounded-lg border border-border-subtle bg-surface-ground text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:pointer-events-none transition-colors cursor-pointer"
+            className="w-8 h-8 flex items-center justify-center rounded-xl border border-border-subtle bg-surface-ground text-slate-600 hover:bg-slate-100 hover:text-slate-900 disabled:opacity-30 disabled:pointer-events-none transition-all cursor-pointer"
           >
             <ChevronRight className="w-4 h-4" />
           </button>

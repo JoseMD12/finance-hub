@@ -68,8 +68,30 @@ namespace FinanceHub.TransactionAggregator.Infrastructure.Migrations
                         .HasColumnType("character varying(64)")
                         .HasColumnName("transaction_hash");
 
+                    b.Property<bool>("IsBillPayment")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_bill_payment");
+
+                    b.Property<bool>("IsIgnoredInTotals")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_ignored_in_totals");
+
                     b.Property<bool>("IsManuallyCategorized")
                         .HasColumnType("boolean");
+
+                    b.Property<int>("Nature")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("nature");
+
+                    b.Property<Guid?>("PairedTransactionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("paired_transaction_id");
 
                     b.Property<DateTime>("TransactionDateUtc")
                         .HasColumnType("timestamp with time zone");
@@ -93,6 +115,10 @@ namespace FinanceHub.TransactionAggregator.Infrastructure.Migrations
                     b.HasIndex("Hash")
                         .IsUnique()
                         .HasDatabaseName("idx_canonical_transactions_hash");
+
+                    b.HasIndex("UserId", "TransactionDateUtc", "Type")
+                        .HasDatabaseName("idx_canonical_transactions_operating_totals")
+                        .HasFilter("\"is_ignored_in_totals\" = false");
 
                     b.ToTable("canonical_transactions", (string)null);
                 });

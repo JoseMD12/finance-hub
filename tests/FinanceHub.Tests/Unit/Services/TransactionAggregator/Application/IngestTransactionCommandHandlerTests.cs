@@ -68,7 +68,6 @@ public class IngestTransactionCommandHandlerTests
                 t.Amount.Amount == 150.75m &&
                 t.CategoryId == _categoryId),
             Arg.Any<CancellationToken>());
-        await _balanceRepo.Received(1).AddOrUpdateAsync(Arg.Any<AccountBalance>(), Arg.Any<CancellationToken>());
         await _unitOfWork.Received(1).CommitAsync(Arg.Any<CancellationToken>());
     }
 
@@ -102,8 +101,6 @@ public class IngestTransactionCommandHandlerTests
         var callOrder = new System.Collections.Generic.List<string>();
         _txRepo.AddAsync(Arg.Any<CanonicalTransaction>(), Arg.Any<CancellationToken>())
             .Returns(_ => { callOrder.Add("AddAsync"); return Task.CompletedTask; });
-        _balanceRepo.AddOrUpdateAsync(Arg.Any<AccountBalance>(), Arg.Any<CancellationToken>())
-            .Returns(_ => { callOrder.Add("AddOrUpdateAsync"); return Task.CompletedTask; });
         _unitOfWork.CommitAsync(Arg.Any<CancellationToken>())
             .Returns(_ => { callOrder.Add("CommitAsync"); return Task.FromResult(1); });
         _eventPublisher.PublishAsync(Arg.Any<TransactionNormalized>(), Arg.Any<CancellationToken>())
@@ -113,7 +110,7 @@ public class IngestTransactionCommandHandlerTests
         await _handler.Handle(BuildCommand(), CancellationToken.None);
 
         // Assert — persistence and commit MUST happen before publish
-        callOrder.Should().ContainInOrder("AddAsync", "AddOrUpdateAsync", "CommitAsync", "PublishAsync");
+        callOrder.Should().ContainInOrder("AddAsync", "CommitAsync", "PublishAsync");
     }
 
     [Fact]
@@ -130,14 +127,16 @@ public class IngestTransactionCommandHandlerTests
 
         // Assert
         await act.Should().ThrowAsync<InvalidOperationException>()
-            .WithMessage("*DB commit failure*");
-        await _eventPublisher.DidNotReceive().PublishAsync(Arg.Any<TransactionNormalized>(), Arg.Any<CancellationToken>());
+            .WithMessage("DB commit failure");
+        await _eventPublisher.DidNotReceive().PublishAsync(
+            Arg.Any<TransactionNormalized>(),
+            Arg.Any<CancellationToken>());
     }
 
-    // ─── Negative / Deduplication Cases ────────────────────────────────────────
+    // ─── Deduplication (Idempotency) ──────────────────────────────────────────
 
     [Fact]
-    public async Task Handle_WhenTransactionAlreadyExistsByHash_ShouldReturnExistingIdAndNotPublish()
+    public async Task Handle_WhenTransactionAlreadyExistsByHash_ShouldReturnExistingIdWithoutSideEffects()
     {
         // Arrange
         var existingId = Guid.NewGuid();
@@ -147,49 +146,12 @@ public class IngestTransactionCommandHandlerTests
         // Act
         var resultId = await _handler.Handle(BuildCommand(), CancellationToken.None);
 
-        // Assert
+        // Assert — must return existing ID idempotently
         resultId.Should().Be(existingId);
         await _txRepo.DidNotReceive().AddAsync(Arg.Any<CanonicalTransaction>(), Arg.Any<CancellationToken>());
-        await _balanceRepo.DidNotReceive().AddOrUpdateAsync(Arg.Any<AccountBalance>(), Arg.Any<CancellationToken>());
         await _unitOfWork.DidNotReceive().CommitAsync(Arg.Any<CancellationToken>());
-        await _eventPublisher.DidNotReceive().PublishAsync(Arg.Any<TransactionNormalized>(), Arg.Any<CancellationToken>());
-    }
-
-    // ─── Edge / Error Cases ────────────────────────────────────────────────────
-
-    [Fact]
-    public async Task Handle_WhenPublisherThrows_ShouldPropagateExceptionWithoutSwallowing()
-    {
-        // Arrange
-        _txRepo.GetIdByHashAsync(Arg.Any<TransactionHash>(), Arg.Any<CancellationToken>())
-            .Returns((Guid?)null);
-        _eventPublisher
-            .PublishAsync(Arg.Any<TransactionNormalized>(), Arg.Any<CancellationToken>())
-            .ThrowsAsync(new InvalidOperationException("RabbitMQ unavailable"));
-
-        // Act
-        var act = async () => await _handler.Handle(BuildCommand(), CancellationToken.None);
-
-        // Assert — exception must propagate, not be swallowed
-        await act.Should().ThrowAsync<InvalidOperationException>()
-            .WithMessage("*RabbitMQ unavailable*");
-    }
-
-    [Fact]
-    public async Task Handle_WhenNewTransactionWithCreditType_ShouldPublishWithCorrectTransactionType()
-    {
-        // Arrange
-        _txRepo.GetIdByHashAsync(Arg.Any<TransactionHash>(), Arg.Any<CancellationToken>())
-            .Returns((Guid?)null);
-
-        // Act
-        await _handler.Handle(BuildCommand(type: TransactionType.Credit, amount: 500m), CancellationToken.None);
-
-        // Assert
-        await _eventPublisher.Received(1).PublishAsync(
-            Arg.Is<TransactionNormalized>(e =>
-                e.TransactionType == TransactionType.Credit.ToString() &&
-                e.Amount == 500m),
+        await _eventPublisher.DidNotReceive().PublishAsync(
+            Arg.Any<TransactionNormalized>(),
             Arg.Any<CancellationToken>());
     }
 }

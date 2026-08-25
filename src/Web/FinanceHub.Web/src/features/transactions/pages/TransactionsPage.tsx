@@ -4,23 +4,35 @@ import { formatCurrencyBRL, formatDateBR, formatTimeBR, formatPaymentMethod, mas
 import { useTransactionsQuery } from '../hooks/useTransactionsQuery';
 import { TransactionsSummaryCards } from '../components/TransactionsSummaryCards';
 import { TransactionsFilterBar } from '../components/TransactionsFilterBar';
+import { getPresetDateRange } from '../utils/datePresets';
 import { TransactionsTable } from '../components/TransactionsTable';
 import { TransactionsPagination } from '../components/TransactionsPagination';
 import { PageContainer } from '@/shared/components/PageContainer/PageContainer';
+import { useToggleNeutralityMutation } from '../hooks/useToggleNeutralityMutation';
+import { useToggleBillPaymentMutation } from '../hooks/useToggleBillPaymentMutation';
+import { ArrowLeftRight } from 'lucide-react';
 import type { TransactionDto, TransactionFilterParams } from '../types/transactions.types';
 
 export const TransactionsPage: React.FC = () => {
+  const initialRange = getPresetDateRange('current-month');
+
   const [filters, setFilters] = useState<TransactionFilterParams>({
     page: 1,
     pageSize: 20,
+    startDate: initialRange.startDate,
+    endDate: initialRange.endDate,
+    datePreset: 'current-month',
   });
 
   const [selectedTransaction, setSelectedTransaction] = useState<TransactionDto | null>(null);
 
   const { data, isLoading } = useTransactionsQuery(filters);
+  const toggleNeutralityMutation = useToggleNeutralityMutation();
+  const toggleBillPaymentMutation = useToggleBillPaymentMutation();
 
   const transactions = data?.items ?? [];
   const summary = data?.summary;
+
   const totalPages = data?.totalPages ?? 1;
   const totalItems = data?.totalItems ?? 0;
   const currentPage = filters.page ?? 1;
@@ -31,20 +43,42 @@ export const TransactionsPage: React.FC = () => {
   };
 
   const handleResetFilters = () => {
-    setFilters({ page: 1, pageSize: 20 });
+    const range = getPresetDateRange('current-month');
+    setFilters({
+      page: 1,
+      pageSize: 20,
+      startDate: range.startDate,
+      endDate: range.endDate,
+      datePreset: 'current-month',
+      includeIgnoredInTotals: false,
+    });
+  };
+
+  const handleToggleNeutrality = async (transaction: TransactionDto) => {
+    const nextIgnored = !transaction.isIgnoredInTotals;
+    await toggleNeutralityMutation.mutateAsync({
+      transactionId: transaction.id,
+      isIgnoredInTotals: nextIgnored,
+      reason: nextIgnored ? 'Marcado manualmente como neutro/trânsito' : 'Reativado manualmente',
+    });
+    setSelectedTransaction((prev) => prev ? { ...prev, isIgnoredInTotals: nextIgnored } : null);
+  };
+
+  const handleToggleBillPayment = async (transaction: TransactionDto) => {
+    const nextIsBillPayment = !transaction.isBillPayment;
+    await toggleBillPaymentMutation.mutateAsync({
+      transactionId: transaction.id,
+      isBillPayment: nextIsBillPayment,
+    });
+    setSelectedTransaction((prev) =>
+      prev ? { ...prev, isBillPayment: nextIsBillPayment, isIgnoredInTotals: nextIsBillPayment } : null
+    );
   };
 
   return (
     <PageContainer
       title="Extrato de Transações"
       description="Controle de fluxo de caixa e categorização inteligente"
-      actions={
-        !isLoading && totalItems > 0 ? (
-          <span className="px-3 py-1.5 rounded-xl bg-surface-card border border-border-subtle text-xs font-semibold text-slate-600 shadow-sm select-none">
-            <strong className="text-secondary tabular-nums">{totalItems}</strong> lançamentos registrados
-          </span>
-        ) : undefined
-      }
     >
       {/* Resumo do Período */}
       <TransactionsSummaryCards summary={summary} isLoading={isLoading} />
@@ -54,6 +88,8 @@ export const TransactionsPage: React.FC = () => {
         filters={filters}
         onFilterChange={handleFilterChange}
         onResetFilters={handleResetFilters}
+        includeIgnoredInTotals={Boolean(filters.includeIgnoredInTotals)}
+        onIncludeIgnoredChange={(include) => handleFilterChange({ includeIgnoredInTotals: include })}
       />
 
       {/* Tabela de Transações */}
@@ -61,6 +97,8 @@ export const TransactionsPage: React.FC = () => {
         transactions={transactions}
         isLoading={isLoading}
         onSelectTransaction={setSelectedTransaction}
+        onToggleNeutrality={handleToggleNeutrality}
+        onToggleBillPayment={handleToggleBillPayment}
       />
 
       {/* Paginação Clássica */}
@@ -105,56 +143,72 @@ export const TransactionsPage: React.FC = () => {
               </div>
 
               {selectedTransaction.merchantName && (
-                <div className="text-[11px] text-slate-500 font-medium">
-                  Estabelecimento: <strong className="text-slate-700">{selectedTransaction.merchantName}</strong>
+                <div className="flex items-center gap-2 pt-2 border-t border-border-subtle text-slate-500 font-medium">
+                  <span className="text-[11px] text-slate-400">Estabelecimento:</span>
+                  <span>{selectedTransaction.merchantName}</span>
                 </div>
               )}
             </div>
 
-            {/* Grid de Metadados */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="p-3 rounded-xl bg-surface-ground border border-border-subtle flex flex-col gap-1">
-                <span className="text-slate-400 font-semibold">Data e Hora</span>
-                <div className="flex flex-col">
-                  <span className="text-sm font-bold text-slate-800 tabular-nums">
-                    {formatDateBR(selectedTransaction.transactionDateUtc)}
-                  </span>
-                  <span className="text-xs font-semibold text-slate-400 font-mono tabular-nums">
-                    {formatTimeBR(selectedTransaction.transactionDateUtc)}
-                  </span>
+            {/* Controle de Neutralidade / Dinheiro de Trânsito */}
+            <div className="p-4 rounded-2xl bg-surface-card border border-border-subtle flex items-center justify-between gap-3">
+              <div className="flex flex-col gap-0.5">
+                <div className="flex items-center gap-1.5 font-bold text-slate-800">
+                  <ArrowLeftRight className="w-4 h-4 text-brand" />
+                  <span>Dinheiro de Trânsito / Lançamento Neutro</span>
                 </div>
+                <p className="text-[11px] text-slate-500">
+                  Quando ativo, este lançamento é expurgado dos somatórios de receitas e despesas operacionais.
+                </p>
               </div>
 
+              <button
+                type="button"
+                onClick={() => handleToggleNeutrality(selectedTransaction)}
+                disabled={toggleNeutralityMutation.isPending}
+                aria-pressed={Boolean(selectedTransaction.isIgnoredInTotals)}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 ${
+                  selectedTransaction.isIgnoredInTotals ? 'bg-brand' : 'bg-slate-300'
+                }`}
+              >
+                <span className="sr-only">Alternar neutralidade nos totais</span>
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
+                    selectedTransaction.isIgnoredInTotals ? 'translate-x-5' : 'translate-x-0'
+                  }`}
+                />
+              </button>
+            </div>
+
+            {/* Grid de Metadados Bancários */}
+            <div className="grid grid-cols-2 gap-3">
               <div className="p-3 rounded-xl bg-surface-ground border border-border-subtle flex flex-col gap-1">
-                <span className="text-slate-400 font-semibold">Instituição e Conta</span>
-                <span className="text-sm font-bold text-slate-800">
-                  {selectedTransaction.institutionId.toUpperCase()} • Conta {maskSensitiveAccount(selectedTransaction.accountNumber)}
+                <span className="text-[10px] font-semibold text-slate-400 uppercase">Data e Hora</span>
+                <span className="font-mono font-medium text-slate-700">
+                  {formatDateBR(selectedTransaction.transactionDateUtc)} às {formatTimeBR(selectedTransaction.transactionDateUtc)}
                 </span>
               </div>
 
               <div className="p-3 rounded-xl bg-surface-ground border border-border-subtle flex flex-col gap-1">
-                <span className="text-slate-400 font-semibold">Meio de Pagamento</span>
-                <span className="text-sm font-bold text-slate-800 font-mono">
+                <span className="text-[10px] font-semibold text-slate-400 uppercase">Meio de Pagamento</span>
+                <span className="font-mono font-medium text-slate-700">
                   {formatPaymentMethod(selectedTransaction.channel)}
                 </span>
               </div>
 
               <div className="p-3 rounded-xl bg-surface-ground border border-border-subtle flex flex-col gap-1">
-                <span className="text-slate-400 font-semibold">Origem da Categorização</span>
-                <span className="text-sm font-bold text-slate-800">
-                  {selectedTransaction.isManuallyCategorized
-                    ? 'Categorizado Manualmente'
-                    : selectedTransaction.categorizationSource || 'Regra Automática'}
+                <span className="text-[10px] font-semibold text-slate-400 uppercase">Conta Vinculada</span>
+                <span className="font-mono font-medium text-slate-700">
+                  {maskSensitiveAccount(selectedTransaction.accountNumber)}
                 </span>
               </div>
-            </div>
 
-            {/* ID Canônico do Ledger */}
-            <div className="p-3 rounded-xl bg-surface-ground border border-border-subtle flex flex-col gap-1">
-              <span className="text-slate-400 font-semibold">ID Canônico no Ledger</span>
-              <span className="text-[11px] font-mono text-slate-600 break-all select-all">
-                {selectedTransaction.id}
-              </span>
+              <div className="p-3 rounded-xl bg-surface-ground border border-border-subtle flex flex-col gap-1">
+                <span className="text-[10px] font-semibold text-slate-400 uppercase">Origem da Categoria</span>
+                <span className="font-mono font-medium text-slate-700">
+                  {selectedTransaction.categorizationSource} {selectedTransaction.isManuallyCategorized ? '(Manual)' : '(Auto)'}
+                </span>
+              </div>
             </div>
           </div>
         )}

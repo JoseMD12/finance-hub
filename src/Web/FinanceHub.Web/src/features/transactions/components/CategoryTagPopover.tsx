@@ -1,8 +1,11 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Search, Check, Tag, Loader2, ChevronRight, ChevronDown } from 'lucide-react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import ReactDOM from 'react-dom';
+import { Search, Tag, Loader2 } from 'lucide-react';
 import { CategoryTag } from './CategoryTag';
+import { CategoryCatalogList } from './CategoryCatalogList';
 import { useCategoriesQuery } from '../hooks/useCategoriesQuery';
 import { useCategorizeTransactionMutation } from '../hooks/useCategorizeTransactionMutation';
+import { Checkbox } from '@/shared/components/Checkbox/Checkbox';
 import type { CategoryDto } from '../types/transactions.types';
 
 export interface CategoryTagPopoverProps {
@@ -19,29 +22,70 @@ export const CategoryTagPopover: React.FC<CategoryTagPopoverProps> = ({
   const [createCustomRule, setCreateCustomRule] = useState(false);
   const [applyToPastTransactions, setApplyToPastTransactions] = useState(false);
   const [expandedParentIds, setExpandedParentIds] = useState<Set<string>>(new Set());
-  const popoverRef = useRef<HTMLDivElement>(null);
+  const [position, setPosition] = useState<{ top: number; left: number } | null>(null);
+
+  const popoverTriggerRef = useRef<HTMLDivElement>(null);
+  const dropdownContentRef = useRef<HTMLDialogElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const { data: categories = [], isLoading } = useCategoriesQuery();
   const categorizeMutation = useCategorizeTransactionMutation();
 
-  // Fechar ao clicar fora
+  // Calcular posição flutuante precisa para o portal
+  const updatePosition = useCallback(() => {
+    if (!popoverTriggerRef.current) return;
+    const rect = popoverTriggerRef.current.getBoundingClientRect();
+    const dropdownHeight = 360;
+    const dropdownWidth = 288; // w-72 (18rem = 288px)
+
+    let top = rect.bottom + 6;
+    // Se estourar a parte inferior da janela, abre para cima
+    if (top + dropdownHeight > window.innerHeight && rect.top > dropdownHeight) {
+      top = Math.max(10, rect.top - dropdownHeight - 6);
+    }
+
+    let left = rect.left;
+    // Se estourar a borda direita da janela, ajusta para a esquerda
+    if (left + dropdownWidth > window.innerWidth - 16) {
+      left = Math.max(16, window.innerWidth - dropdownWidth - 16);
+    }
+
+    setPosition({ top, left });
+  }, []);
+
+  // Fechar ao clicar fora (verificando tanto o gatilho quanto o conteúdo do portal)
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (popoverRef.current && !popoverRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      const clickedTrigger = popoverTriggerRef.current?.contains(target);
+      const clickedDropdown = dropdownContentRef.current?.contains(target);
+
+      if (!clickedTrigger && !clickedDropdown) {
         setIsOpen(false);
       }
     };
 
     if (isOpen) {
+      updatePosition();
       document.addEventListener('mousedown', handleClickOutside);
+      window.addEventListener('scroll', updatePosition, true);
+      window.addEventListener('resize', updatePosition);
+
+      // Foco automático no input de busca ao abrir
+      setTimeout(() => {
+        searchInputRef.current?.focus();
+      }, 50);
     }
+
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('scroll', updatePosition, true);
+      window.removeEventListener('resize', updatePosition);
     };
-  }, [isOpen]);
+  }, [isOpen, updatePosition]);
 
   // Aplanar categorias e subcategorias para pesquisa rápida
-  const allFlattenedCategories: CategoryDto[] = React.useMemo(() => {
+  const allFlattenedCategories: CategoryDto[] = useMemo(() => {
     const list: CategoryDto[] = [];
     categories.forEach((cat) => {
       list.push(cat);
@@ -96,7 +140,7 @@ export const CategoryTagPopover: React.FC<CategoryTagPopoverProps> = ({
   );
 
   return (
-    <div className="relative inline-block" ref={popoverRef}>
+    <div className="relative inline-block" ref={popoverTriggerRef}>
       <CategoryTag
         name={currentCategory?.name || 'Não categorizado'}
         iconKey={currentCategory?.iconKey || 'tag'}
@@ -105,168 +149,75 @@ export const CategoryTagPopover: React.FC<CategoryTagPopoverProps> = ({
         interactive={true}
       />
 
-      {isOpen && (
-        <div
-          aria-label="Alterar categoria da transação"
-          className="absolute left-0 top-full mt-2 z-50 w-72 p-3.5 bg-surface-card rounded-2xl shadow-elevated border border-border-subtle flex flex-col gap-3 animate-in fade-in zoom-in-95 duration-150"
-        >
-          <div className="flex items-center justify-between border-b border-border-subtle pb-2.5">
-            <span className="text-xs font-bold text-secondary flex items-center gap-1.5">
-              <Tag className="w-3.5 h-3.5 text-brand" />
-              Alterar Categoria
-            </span>
-            {categorizeMutation.isPending && (
-              <Loader2 className="w-3.5 h-3.5 text-brand animate-spin" />
-            )}
-          </div>
+      {isOpen &&
+        position &&
+        ReactDOM.createPortal(
+          <dialog
+            open
+            ref={dropdownContentRef}
+            aria-label="Alterar categoria da transação"
+            style={{
+              position: 'fixed',
+              top: `${position.top}px`,
+              left: `${position.left}px`,
+            }}
+            className="z-[9999] w-72 p-3.5 bg-surface-card rounded-2xl shadow-elevated border border-border-subtle flex flex-col gap-3 animate-in fade-in zoom-in-95 duration-150 m-0"
+          >
+            <div className="flex items-center justify-between border-b border-border-subtle pb-2.5">
+              <span className="text-xs font-bold text-secondary flex items-center gap-1.5">
+                <Tag className="w-3.5 h-3.5 text-brand" />
+                Alterar Categoria
+              </span>
+              {categorizeMutation.isPending && (
+                <Loader2 className="w-3.5 h-3.5 text-brand animate-spin" />
+              )}
+            </div>
 
-          {/* Busca de categorias */}
-          <div className="relative">
-            <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-            <input
-              type="text"
-              placeholder="Buscar categoria ou subcategoria..."
-              value={searchTerm}
-              aria-label="Filtrar categorias"
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-border-subtle bg-surface-ground text-slate-800 focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 transition-all"
-            />
-          </div>
-
-          {/* Lista de categorias (Hierárquica quando sem busca, plana na busca) */}
-          <div className="max-h-56 overflow-y-auto flex flex-col gap-1 pr-1">
-            {isLoading && (
-              <div className="py-6 text-center text-xs text-slate-400">Carregando catálogo...</div>
-            )}
-
-            {!isLoading && isSearching && filteredSearchCategories.length === 0 && (
-              <div className="py-6 text-center text-xs text-slate-400">Nenhuma categoria encontrada</div>
-            )}
-
-            {/* Modo de Busca: exibe lista filtrada direta */}
-            {!isLoading &&
-              isSearching &&
-              filteredSearchCategories.map((category) => {
-                const isSelected = category.id === currentCategoryId;
-                const isSub = !!category.parentCategoryId;
-
-                return (
-                  <button
-                    key={category.id}
-                    type="button"
-                    onClick={() => handleSelectCategory(category.id)}
-                    className={`flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-medium text-left transition-all cursor-pointer ${
-                      isSelected
-                        ? 'bg-brand-light text-brand-dark font-bold shadow-xs'
-                        : 'hover:bg-slate-100/80 text-slate-700 hover:text-slate-900'
-                    } ${isSub ? 'pl-5 text-slate-600' : ''}`}
-                  >
-                    <span className="truncate flex items-center gap-1.5">
-                      {isSub && <span className="text-slate-300 select-none">└</span>}
-                      {category.name}
-                    </span>
-                    {isSelected && <Check className="w-3.5 h-3.5 text-brand shrink-0" />}
-                  </button>
-                );
-              })}
-
-            {/* Modo Padrão: Apenas categorias principais com expansão sob demanda */}
-            {!isLoading &&
-              !isSearching &&
-              categories.map((parent) => {
-                const hasSub = !!(parent.subcategories && parent.subcategories.length > 0);
-                const isExpanded = expandedParentIds.has(parent.id);
-                const isParentSelected = parent.id === currentCategoryId;
-
-                return (
-                  <div key={parent.id} className="flex flex-col gap-0.5">
-                    {/* Item Principal */}
-                    <div className="flex items-center justify-between rounded-lg">
-                      <button
-                        type="button"
-                        onClick={() => handleSelectCategory(parent.id)}
-                        className={`flex-1 flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-medium text-left transition-all cursor-pointer ${
-                          isParentSelected
-                            ? 'bg-brand-light text-brand-dark font-bold shadow-xs'
-                            : 'hover:bg-slate-100/80 text-slate-700 hover:text-slate-900'
-                        }`}
-                      >
-                        <span className="truncate font-semibold">{parent.name}</span>
-                        {isParentSelected && <Check className="w-3.5 h-3.5 text-brand shrink-0" />}
-                      </button>
-
-                      {hasSub && (
-                        <button
-                          type="button"
-                          onClick={(e) => toggleExpand(parent.id, e)}
-                          aria-label={isExpanded ? `Recolher subcategorias de ${parent.name}` : `Expandir subcategorias de ${parent.name}`}
-                          title={isExpanded ? 'Recolher subcategorias' : 'Ver subcategorias'}
-                          className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-brand hover:bg-brand-light active:scale-95 transition-all cursor-pointer shrink-0 ml-1"
-                        >
-                          {isExpanded ? (
-                            <ChevronDown className="w-4 h-4" />
-                          ) : (
-                            <ChevronRight className="w-4 h-4" />
-                          )}
-                        </button>
-                      )}
-                    </div>
-
-                    {/* Subcategorias expandidas */}
-                    {hasSub && isExpanded && (
-                      <div className="flex flex-col gap-0.5 pl-3 border-l-2 border-slate-200 ml-3.5 my-0.5 animate-in fade-in slide-in-from-top-1 duration-150">
-                        {parent.subcategories!.map((sub) => {
-                          const isSubSelected = sub.id === currentCategoryId;
-                          return (
-                            <button
-                              key={sub.id}
-                              type="button"
-                              onClick={() => handleSelectCategory(sub.id)}
-                              className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium text-left transition-all cursor-pointer ${
-                                isSubSelected
-                                  ? 'bg-brand-light text-brand-dark font-bold'
-                                  : 'hover:bg-slate-100/80 text-slate-600 hover:text-slate-900'
-                              }`}
-                            >
-                              <span className="truncate flex items-center gap-1">
-                                <span className="text-slate-300 select-none">└</span>
-                                {sub.name}
-                              </span>
-                              {isSubSelected && <Check className="w-3.5 h-3.5 text-brand shrink-0" />}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-          </div>
-
-          {/* Opções de Automação de Categoria */}
-          <div className="pt-2 border-t border-border-subtle flex flex-col gap-1.5">
-            <label className="flex items-center gap-2 text-[11px] text-slate-600 hover:text-slate-800 cursor-pointer select-none">
+            {/* Busca de categorias */}
+            <div className="relative">
+              <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               <input
-                type="checkbox"
+                ref={searchInputRef}
+                type="text"
+                placeholder="Buscar categoria ou subcategoria..."
+                value={searchTerm}
+                aria-label="Filtrar categorias"
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-border-subtle bg-surface-ground text-slate-800 focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 transition-all"
+              />
+            </div>
+
+            {/* Lista de categorias Reutilizável */}
+            <div className="max-h-56 overflow-y-auto flex flex-col gap-1 pr-1">
+              <CategoryCatalogList
+                isLoading={isLoading}
+                isSearching={isSearching}
+                categories={categories}
+                filteredSearchCategories={filteredSearchCategories}
+                selectedCategoryId={currentCategoryId}
+                expandedParentIds={expandedParentIds}
+                onSelectCategory={(id) => handleSelectCategory(id)}
+                onToggleExpand={toggleExpand}
+              />
+            </div>
+
+            {/* Opções de Automação de Categoria */}
+            <div className="pt-2.5 border-t border-border-subtle flex flex-col gap-2">
+              <Checkbox
                 checked={createCustomRule}
-                onChange={(e) => setCreateCustomRule(e.target.checked)}
-                className="rounded border-slate-300 text-brand focus:ring-brand cursor-pointer"
+                onChange={setCreateCustomRule}
+                label={<span className="text-[11px] font-medium text-slate-600">Criar regra para transações futuras similares</span>}
               />
-              <span>Criar regra para transações futuras similares</span>
-            </label>
 
-            <label className="flex items-center gap-2 text-[11px] text-slate-600 hover:text-slate-800 cursor-pointer select-none">
-              <input
-                type="checkbox"
+              <Checkbox
                 checked={applyToPastTransactions}
-                onChange={(e) => setApplyToPastTransactions(e.target.checked)}
-                className="rounded border-slate-300 text-brand focus:ring-brand cursor-pointer"
+                onChange={setApplyToPastTransactions}
+                label={<span className="text-[11px] font-medium text-slate-600">Aplicar alteração em lançamentos passados similares</span>}
               />
-              <span>Aplicar alteração em lançamentos passados similares</span>
-            </label>
-          </div>
-        </div>
-      )}
+            </div>
+          </dialog>,
+          document.body
+        )}
     </div>
   );
 };

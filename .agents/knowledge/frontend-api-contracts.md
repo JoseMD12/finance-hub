@@ -39,50 +39,75 @@ export interface DashboardResponseDto {
 
 ---
 
-## 💳 2. Endpoint de Transações (`GET /api/v1/transactions`)
+## 💳 2. Endpoints de Transações (`/api/v1/gateway/transactions`)
 
-### Query Parameters
+### Query Parameters (`TransactionFilterParams`)
 ```typescript
-export interface TransactionFiltersDto {
-  readonly month?: number; // 1-12
-  readonly year?: number; // Ex: 2025
-  readonly bank?: string; // 'itau' | 'mercadopago' | 'inter'
-  readonly category?: string;
-  readonly type?: 'CREDIT' | 'DEBIT' | 'PIX';
+export interface TransactionFilterParams {
   readonly page?: number;
   readonly pageSize?: number;
+  readonly startDate?: string; // ISO 8601
+  readonly endDate?: string; // ISO 8601
+  readonly datePreset?: string; // 'current-month' | 'previous-month' | 'last-30' | 'current-year' | 'all-time'
+  readonly institutionId?: string; // 'itau' | 'inter' | 'mercadopago'
+  readonly categoryId?: string;
+  readonly type?: string; // 'Debit' | 'Credit'
   readonly search?: string;
+  readonly includeIgnoredInTotals?: boolean; // Padrão: false (Filtra neutros, faturas e transferências da listagem e dos totais)
 }
 ```
 
-### Resposta TypeScript
+### Resposta de Listagem (`PaginatedTransactionsDto`)
 ```typescript
 export interface TransactionDto {
   readonly id: string;
-  readonly bankId: string;
-  readonly bankName: string;
+  readonly userId: string;
+  readonly institutionId: string;
+  readonly accountNumber: string;
   readonly amount: number;
   readonly currency: string;
-  readonly transactionType: 'INCOME' | 'EXPENSE';
-  readonly paymentMethod: 'PIX' | 'DEBIT' | 'CREDIT_SINGLE' | 'CREDIT_INSTALLMENT';
-  readonly installmentInfo?: {
-    readonly current: number;
-    readonly total: number;
-  }; // Ex: "2/5"
+  readonly type: 'Credit' | 'Debit';
   readonly description: string;
-  readonly category: string;
-  readonly transactionDate: string; // ISO 8601
-  readonly status: 'CONFIRMED' | 'PENDING';
+  readonly categoryId: string;
+  readonly categorizationSource: string;
+  readonly isManuallyCategorized: boolean;
+  readonly transactionDateUtc: string;
+  readonly channel: string;
+  readonly merchantName: string;
+  readonly nature?: 'Operating' | 'Transfer' | 'BillPayment';
+  readonly isBillPayment?: boolean;
+  readonly isIgnoredInTotals?: boolean;
+  readonly pairedTransactionId?: string | null;
+}
+
+export interface TransactionSummaryDto {
+  readonly totalIncome: number;
+  readonly totalExpense: number;
+  readonly netBalance: number;
+  readonly totalCount: number;
+  readonly realConsolidatedBalanceBrl?: number;
+  readonly totalOpenCreditCardsBrl?: number;
+  readonly projectedAvailableBalanceBrl?: number;
+  readonly lastSyncAtUtc?: string | null;
 }
 
 export interface PaginatedTransactionsDto {
-  readonly items: readonly TransactionDto[];
-  readonly totalCount: number;
+  readonly items: TransactionDto[];
+  readonly summary: TransactionSummaryDto;
   readonly page: number;
   readonly pageSize: number;
+  readonly totalItems: number;
   readonly totalPages: number;
 }
 ```
+
+### Endpoints de Alteração Parcial (PATCH)
+- **Categorização**: `PATCH /api/v1/gateway/transactions/{id}/category`
+  - Payload: `{ categoryId: string, createCustomRule: boolean, applyToPastTransactions?: boolean }`
+- **Alternar Neutralidade / Trânsito**: `PATCH /api/v1/gateway/transactions/{id}/neutrality`
+  - Payload: `{ isIgnoredInTotals: boolean, reason?: string }`
+- **Alternar Pagamento de Fatura**: `PATCH /api/v1/gateway/transactions/{id}/bill-payment`
+  - Payload: `{ isBillPayment: boolean }`
 
 ---
 

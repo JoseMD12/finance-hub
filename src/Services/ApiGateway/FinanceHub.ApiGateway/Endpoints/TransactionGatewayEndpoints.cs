@@ -39,7 +39,8 @@ public static class TransactionGatewayEndpoints
                 query.InstitutionId,
                 query.CategoryId,
                 query.Type,
-                query.Search);
+                query.Search,
+                query.IncludeIgnoredInTotals ?? false);
 
             var result = await transactionClient.GetTransactionsAsync(filter, ct);
             return Results.Ok(result);
@@ -56,8 +57,8 @@ public static class TransactionGatewayEndpoints
             return Results.Ok(categories);
         })
         .WithName("GetGatewayCategories")
-        .Produces<IEnumerable<GatewayCategoryDto>>(StatusCodes.Status200OK)
-        .ProducesProblem(StatusCodes.Status401Unauthorized);
+        .AllowAnonymous()
+        .Produces<IEnumerable<GatewayCategoryDto>>(StatusCodes.Status200OK);
 
         group.MapPatch("/{id:guid}/category", async (
             Guid id,
@@ -82,8 +83,56 @@ public static class TransactionGatewayEndpoints
         .ProducesProblem(StatusCodes.Status401Unauthorized)
         .ProducesProblem(StatusCodes.Status404NotFound);
 
+        group.MapPatch("/{id:guid}/neutrality", async (
+            Guid id,
+            ToggleNeutralityRequest request,
+            ClaimsPrincipal user,
+            ITransactionAggregatorServiceClient transactionClient,
+            CancellationToken ct) =>
+        {
+            var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                      ?? user.FindFirst("sub")?.Value;
+
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                return Results.Unauthorized();
+            }
+
+            await transactionClient.ToggleTransactionNeutralityAsync(id, userId, request.IsIgnoredInTotals, request.Reason, ct);
+            return Results.NoContent();
+        })
+        .WithName("ToggleGatewayTransactionNeutrality")
+        .Produces(StatusCodes.Status204NoContent)
+        .ProducesProblem(StatusCodes.Status401Unauthorized)
+        .ProducesProblem(StatusCodes.Status404NotFound);
+
+        group.MapPatch("/{id:guid}/bill-payment", async (
+            Guid id,
+            ToggleBillPaymentRequest request,
+            ClaimsPrincipal user,
+            ITransactionAggregatorServiceClient transactionClient,
+            CancellationToken ct) =>
+        {
+            var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                      ?? user.FindFirst("sub")?.Value;
+
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                return Results.Unauthorized();
+            }
+
+            await transactionClient.ToggleBillPaymentAsync(id, userId, request.IsBillPayment, ct);
+            return Results.NoContent();
+        })
+        .WithName("ToggleGatewayTransactionBillPayment")
+        .Produces(StatusCodes.Status204NoContent)
+        .ProducesProblem(StatusCodes.Status401Unauthorized)
+        .ProducesProblem(StatusCodes.Status404NotFound);
+
         return endpoints;
     }
 
     public record CategorizeRequest(Guid CategoryId, bool CreateCustomRule, bool ApplyToPastTransactions = false);
+    public record ToggleNeutralityRequest(bool IsIgnoredInTotals, string? Reason = null);
+    public record ToggleBillPaymentRequest(bool IsBillPayment);
 }

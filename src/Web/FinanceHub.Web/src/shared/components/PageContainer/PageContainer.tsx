@@ -17,7 +17,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   return (
     <header className={cn('flex flex-col md:flex-row md:items-center justify-between gap-4', className)}>
       <div className="flex flex-col gap-1">
-        <h1 className="text-xl font-extrabold text-secondary tracking-tight">
+        <h1 className="text-xl font-extrabold font-display text-secondary tracking-tight">
           {title}
         </h1>
         {description && (

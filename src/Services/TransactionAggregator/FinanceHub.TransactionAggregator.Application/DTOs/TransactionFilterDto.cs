@@ -11,4 +11,5 @@ public record TransactionFilterDto(
     string? InstitutionId = null,
     Guid? CategoryId = null,
     string? Type = null,
-    string? Search = null);
+    string? Search = null,
+    bool IncludeIgnoredInTotals = false);

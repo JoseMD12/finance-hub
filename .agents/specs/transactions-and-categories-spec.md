@@ -134,3 +134,25 @@ O **FinanceHub** é a autoridade única e soberana sobre as categorias. Categori
 - **Fase 4 (Frontend - UI Components & Popover)**: Implementar `CategoryTag`, `CategoryTagPopover`, `TransactionsFilterBar`, `TransactionsSummaryCards` e `TransactionsPagination`.
 - **Fase 5 (Frontend - Integration & Page Assembly)**: Montar a `TransactionsPage`, integrar rotas e realizar testes E2E/Vitest.
 
+---
+
+## 9. Detecção Inteligente de Dinheiro de Trânsito, Repasses com Terceiros e Neutralidade Contábil
+
+### 9.1 Motivação & Desafio Contábil
+Nem todas as movimentações bancárias representam receitas operacionais (salário/renda) ou despesas de consumo. Fluxos como:
+1. **Pontes e Repasses com Terceiros** (ex: José envia Pix para Patrick e Patrick devolve no mesmo período);
+2. **Dinheiro Transitório / Pagamento por Terceiros** (ex: Pix recebido de familiar seguido de pagamento de boleto de aluguel no mesmo valor);
+3. **Divisão de Despesas / Rachas de Conta** (ex: Pix recebido de amigos para abater uma conta dividida);
+inflam artificialmente as entradas e saídas se forem computados no fluxo de caixa operacional.
+
+### 9.2 Solução Arquitetural
+- **TransferPairMatchingEngine Expandido**:
+  - Detecção automática de pontes com terceiros (Pix enviado $\leftrightarrow$ Pix recebido com mesma contraparte e valor idêntico em janela de até 3 dias).
+  - Detecção de dinheiro em trânsito com boleto espelho ($\Delta \le \text{R\$ } 2,00$ em $\le 24\text{h}$).
+  - Marcação de ambas as pontas como `is_ignored_in_totals = true`.
+- **Controle Interativo na Interface (Frontend)**:
+  - Toggle manual de neutralidade no detalhe da transação (`TransactionDetailsDrawer`).
+  - Badge visual de *Neutro / Trânsito* na tabela de transações.
+  - Endpoint `PATCH /api/v1/gateway/transactions/{id}/neutrality` para controle sob demanda.
+
+

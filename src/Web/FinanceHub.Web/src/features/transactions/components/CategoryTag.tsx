@@ -1,31 +1,6 @@
 import React from 'react';
 import { cn } from '@/shared/utils/cn';
-import {
-  Utensils,
-  Car,
-  Home,
-  HeartPulse,
-  Tv,
-  ShoppingBag,
-  GraduationCap,
-  Landmark,
-  TrendingUp,
-  Tag,
-  type LucideIcon,
-} from 'lucide-react';
-
-const iconMap: Record<string, LucideIcon> = {
-  utensils: Utensils,
-  car: Car,
-  home: Home,
-  'heart-pulse': HeartPulse,
-  tv: Tv,
-  'shopping-bag': ShoppingBag,
-  'graduation-cap': GraduationCap,
-  landmark: Landmark,
-  'trending-up': TrendingUp,
-  tag: Tag,
-};
+import { getCategoryIcon } from '../utils/categoryIcons';
 
 const colorStyleMap: Record<string, { bg: string; text: string; border: string }> = {
   emerald: { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200' },
@@ -55,7 +30,7 @@ export const CategoryTag: React.FC<CategoryTagProps> = ({
   onClick,
   interactive = false,
 }) => {
-  const Icon = iconMap[iconKey] || Tag;
+  const icon = getCategoryIcon(iconKey);
   const style = colorStyleMap[colorToken] || colorStyleMap.gray;
 
   return (
@@ -72,7 +47,7 @@ export const CategoryTag: React.FC<CategoryTagProps> = ({
         interactive && 'cursor-pointer hover:shadow-sm hover:brightness-95 active:scale-95'
       )}
     >
-      <Icon className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+      {React.createElement(icon, { className: 'w-3.5 h-3.5 shrink-0', 'aria-hidden': true })}
       <span className="whitespace-nowrap">{name}</span>
     </button>
   );

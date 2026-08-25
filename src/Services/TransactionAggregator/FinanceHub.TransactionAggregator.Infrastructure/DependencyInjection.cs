@@ -44,6 +44,7 @@ public static class DependencyInjection
             busConfig.AddConsumer<Messaging.Consumers.TransactionIngestedConsumer>();
             busConfig.AddConsumer<Messaging.Consumers.InvoiceItemIngestedConsumer>();
             busConfig.AddConsumer<Messaging.Consumers.TransactionsBatchIngestedConsumer>();
+            busConfig.AddConsumer<Messaging.Consumers.AccountBalanceSnapshotSynchronizedConsumer>();
 
             busConfig.AddEntityFrameworkOutbox<TransactionAggregatorDbContext>(outbox =>
             {

@@ -55,19 +55,27 @@ public class MerchantDatasetProvider : IMerchantDatasetProvider
 
         var normalizedInput = cleanText.ToUpperInvariant().Trim();
 
+        MerchantDefinition? bestMatch = null;
+        var bestPriority = -1;
+        var bestPatternLength = -1;
+
         foreach (var merchant in _merchants)
         {
             foreach (var pattern in merchant.Patterns)
             {
                 var normalizedPattern = pattern.ToUpperInvariant().Trim();
-                if (normalizedInput.Contains(normalizedPattern))
+                if (normalizedInput.Contains(normalizedPattern) &&
+                    (merchant.Priority > bestPriority ||
+                     (merchant.Priority == bestPriority && normalizedPattern.Length > bestPatternLength)))
                 {
-                    return merchant;
+                    bestMatch = merchant;
+                    bestPriority = merchant.Priority;
+                    bestPatternLength = normalizedPattern.Length;
                 }
             }
         }
 
-        return null;
+        return bestMatch;
     }
 
     public IReadOnlyList<MerchantDefinition> GetAllMerchants()

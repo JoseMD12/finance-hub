@@ -14,7 +14,11 @@ public record GatewayTransactionDto(
     bool IsManuallyCategorized,
     DateTime TransactionDateUtc,
     string Channel,
-    string MerchantName);
+    string MerchantName,
+    string Nature = "Operating",
+    bool IsBillPayment = false,
+    bool IsIgnoredInTotals = false,
+    Guid? PairedTransactionId = null);
 
 public record GatewayConsolidatedBalanceDto(
     string UserId,
@@ -32,7 +36,11 @@ public record GatewayTransactionSummaryDto(
     decimal TotalIncome,
     decimal TotalExpense,
     decimal NetBalance,
-    int TotalCount);
+    int TotalCount,
+    decimal RealConsolidatedBalanceBrl = 0m,
+    decimal TotalOpenCreditCardsBrl = 0m,
+    decimal ProjectedAvailableBalanceBrl = 0m,
+    DateTime? LastSyncAtUtc = null);
 
 public record PagedGatewayTransactionsDto(
     IEnumerable<GatewayTransactionDto> Items,
@@ -51,4 +59,5 @@ public record GatewayTransactionFilterDto(
     string? InstitutionId = null,
     Guid? CategoryId = null,
     string? Type = null,
-    string? Search = null);
+    string? Search = null,
+    bool IncludeIgnoredInTotals = false);

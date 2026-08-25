@@ -10,4 +10,5 @@ public sealed record TransactionGatewayQueryParameters(
     string? InstitutionId,
     Guid? CategoryId,
     string? Type,
-    string? Search);
+    string? Search,
+    bool? IncludeIgnoredInTotals);

@@ -24,6 +24,14 @@ public class UserCategoryRuleRepository : IUserCategoryRuleRepository
             .FirstOrDefaultAsync(r => r.UserId == userId && r.Pattern == upperPattern, cancellationToken);
     }
 
+    public async Task<IEnumerable<UserCategoryRule>> GetByUserIdAsync(string userId, CancellationToken cancellationToken)
+    {
+        return await _context.UserCategoryRules
+            .AsNoTracking()
+            .Where(r => r.UserId == userId)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task AddOrUpdateAsync(UserCategoryRule rule, CancellationToken cancellationToken)
     {
         var existing = await _context.UserCategoryRules

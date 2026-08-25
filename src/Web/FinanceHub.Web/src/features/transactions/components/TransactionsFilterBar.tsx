@@ -1,91 +1,121 @@
 import React from 'react';
-import { Search, RotateCcw, X, SlidersHorizontal, Calendar } from 'lucide-react';
+import { Search, RotateCcw, X, SlidersHorizontal, Calendar, Landmark, ArrowUpRight, ArrowDownRight, ArrowLeftRight } from 'lucide-react';
 import { CustomSelect } from '@/shared/components/Select/CustomSelect';
+import { CategoryFilterSelect } from './CategoryFilterSelect';
 import { cn } from '@/shared/utils/cn';
 import { useCategoriesQuery } from '../hooks/useCategoriesQuery';
-import type { TransactionFilterParams } from '../types/transactions.types';
+import { getInstitutionLogoUrl } from '@/shared/constants/institutions';
+import { Switch } from '@/shared/components/Switch/Switch';
+import type { TransactionFilterParams, DatePresetKey } from '../types/transactions.types';
+import { getPresetDateRange } from '../utils/datePresets';
 
 export interface TransactionsFilterBarProps {
   filters: TransactionFilterParams;
   onFilterChange: (newFilters: Partial<TransactionFilterParams>) => void;
   onResetFilters: () => void;
+  includeIgnoredInTotals?: boolean;
+  onIncludeIgnoredChange?: (include: boolean) => void;
 }
 
-const DATE_PRESET_OPTIONS = [
-  { days: 15, label: '15 dias' },
-  { days: 30, label: '30 dias' },
-  { days: 60, label: '60 dias' },
-  { days: 90, label: '90 dias' },
-] as const;
+interface DatePresetOption {
+  key: DatePresetKey;
+  label: string;
+}
+
+const DATE_PRESET_OPTIONS: DatePresetOption[] = [
+  { key: 'current-month', label: 'Mês Atual' },
+  { key: 'previous-month', label: 'Mês Anterior' },
+  { key: 'last-30', label: 'Últimos 30 Dias' },
+  { key: 'current-year', label: 'Ano Atual' },
+  { key: 'all-time', label: 'Todo o Histórico' },
+];
 
 export const TransactionsFilterBar: React.FC<TransactionsFilterBarProps> = ({
   filters,
   onFilterChange,
   onResetFilters,
+  includeIgnoredInTotals,
+  onIncludeIgnoredChange,
 }) => {
   const { data: categories = [] } = useCategoriesQuery();
 
   const institutionOptions = [
-    { value: '', label: 'Todas as Instituições' },
-    { value: 'itau', label: 'Itaú Unibanco' },
-    { value: 'inter', label: 'Banco Inter' },
-    { value: 'mercadopago', label: 'Mercado Pago' },
-    { value: 'nubank', label: 'Nubank' },
+    {
+      value: '',
+      label: 'Todas as Instituições',
+      icon: <Landmark className="w-3.5 h-3.5 text-brand shrink-0" />,
+    },
+    {
+      value: 'itau',
+      label: 'Itaú Unibanco',
+      icon: <img src={getInstitutionLogoUrl('itau') || ''} alt="" className="w-3.5 h-3.5 object-contain rounded-xs" />,
+    },
+    {
+      value: 'inter',
+      label: 'Banco Inter',
+      icon: <img src={getInstitutionLogoUrl('inter') || ''} alt="" className="w-3.5 h-3.5 object-contain rounded-xs" />,
+    },
+    {
+      value: 'mercadopago',
+      label: 'Mercado Pago',
+      icon: <img src={getInstitutionLogoUrl('mercadopago') || ''} alt="" className="w-3.5 h-3.5 object-contain rounded-xs" />,
+    },
   ];
 
   const typeOptions = [
-    { value: '', label: 'Todos os Tipos' },
-    { value: 'Debit', label: 'Saídas / Despesas' },
-    { value: 'Credit', label: 'Entradas / Receitas' },
+    {
+      value: '',
+      label: 'Todos os Tipos',
+      icon: <ArrowLeftRight className="w-3.5 h-3.5 text-brand shrink-0" />,
+    },
+    {
+      value: 'Debit',
+      label: 'Saídas / Despesas',
+      icon: <ArrowDownRight className="w-3.5 h-3.5 text-status-danger shrink-0" />,
+    },
+    {
+      value: 'Credit',
+      label: 'Entradas / Receitas',
+      icon: <ArrowUpRight className="w-3.5 h-3.5 text-status-success shrink-0" />,
+    },
   ];
 
-  const categoryOptions = React.useMemo(() => {
-    const opts = [{ value: '', label: 'Todas as Categorias' }];
+  const allCategories = React.useMemo(() => {
+    const list: { id: string; name: string }[] = [];
     categories.forEach((cat) => {
-      opts.push({ value: cat.id, label: cat.name });
+      list.push({ id: cat.id, name: cat.name });
       if (cat.subcategories) {
-        cat.subcategories.forEach((sub) => {
-          opts.push({ value: sub.id, label: `  • ${sub.name}` });
-        });
+        cat.subcategories.forEach((sub) => list.push({ id: sub.id, name: sub.name }));
       }
     });
-    return opts;
+    return list;
   }, [categories]);
+
+  const activePreset = (filters.datePreset as DatePresetKey) || 'current-month';
 
   const activeFiltersCount =
     (filters.search ? 1 : 0) +
     (filters.institutionId ? 1 : 0) +
     (filters.categoryId ? 1 : 0) +
     (filters.type ? 1 : 0) +
-    (filters.datePreset ? 1 : 0);
+    (activePreset !== 'current-month' ? 1 : 0);
 
   const selectedInstitutionLabel = institutionOptions.find(
     (o) => o.value === filters.institutionId
   )?.label;
   const selectedTypeLabel = typeOptions.find((o) => o.value === filters.type)?.label;
-  const selectedCategoryLabel = categoryOptions.find(
-    (o) => o.value === filters.categoryId
-  )?.label?.trim();
+  const selectedCategoryLabel = allCategories.find(
+    (o) => o.id === filters.categoryId
+  )?.name;
 
-  const handleToggleDatePreset = (days: number) => {
-    if (filters.datePreset === days) {
-      onFilterChange({
-        startDate: undefined,
-        endDate: undefined,
-        datePreset: undefined,
-        page: 1,
-      });
-    } else {
-      const end = new Date();
-      const start = new Date();
-      start.setDate(end.getDate() - days);
-      onFilterChange({
-        startDate: start.toISOString().split('T')[0],
-        endDate: end.toISOString().split('T')[0],
-        datePreset: days,
-        page: 1,
-      });
-    }
+  const handleSelectDatePreset = (preset: DatePresetKey) => {
+    const range = getPresetDateRange(preset);
+    onFilterChange({
+      startDate: range.startDate,
+      endDate: range.endDate,
+      datePreset: preset,
+      page: 1,
+    });
   };
 
   return (
@@ -132,10 +162,9 @@ export const TransactionsFilterBar: React.FC<TransactionsFilterBarProps> = ({
 
         {/* Filtro Categoria */}
         <div>
-          <CustomSelect
-            options={categoryOptions}
+          <CategoryFilterSelect
             value={filters.categoryId ?? ''}
-            onChange={(val) => onFilterChange({ categoryId: val || undefined, page: 1 })}
+            onChange={(val) => onFilterChange({ categoryId: val, page: 1 })}
             label="Categoria"
           />
         </div>
@@ -151,33 +180,44 @@ export const TransactionsFilterBar: React.FC<TransactionsFilterBarProps> = ({
         </div>
       </div>
 
-      {/* Filtros Rápidos de Período (Apenas 1 ativo por vez) */}
-      <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-border-subtle/60">
-        <span className="text-xs font-semibold text-slate-500 inline-flex items-center gap-1.5 mr-1 pl-1">
-          <Calendar className="w-3.5 h-3.5 text-brand" />
-          Período rápido:
-        </span>
-        <div className="flex flex-wrap items-center gap-1.5">
-          {DATE_PRESET_OPTIONS.map(({ days, label }) => {
-            const isSelected = filters.datePreset === days;
+      {/* Barra de Presets Rápidos de Período e Switch de Totais Neutros */}
+      <div className="flex flex-wrap items-center justify-between gap-3 pt-3 pb-0.5 border-t border-border-subtle/60">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs font-semibold text-slate-500 inline-flex items-center gap-1.5 mr-1 pl-1">
+            <Calendar className="w-3.5 h-3.5 text-brand" />
+            Período:
+          </span>
+          <div className="flex flex-wrap items-center gap-1.5">
+            {DATE_PRESET_OPTIONS.map(({ key, label }) => {
+              const isSelected = activePreset === key;
 
-            return (
-              <button
-                key={days}
-                type="button"
-                onClick={() => handleToggleDatePreset(days)}
-                aria-pressed={isSelected}
-                className={cn(
-                  'px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150 cursor-pointer select-none',
-                  isSelected
-                    ? 'bg-brand-light text-brand-dark border-brand font-bold shadow-2xs ring-1 ring-brand/20'
-                    : 'bg-surface-ground text-slate-600 border-border-subtle hover:bg-slate-200/60 hover:text-slate-800'
-                )}
-              >
-                {label}
-              </button>
-            );
-          })}
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => handleSelectDatePreset(key)}
+                  aria-pressed={isSelected}
+                  className={cn(
+                    'px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150 cursor-pointer select-none',
+                    isSelected
+                      ? 'bg-brand-light text-brand-dark border-brand font-bold shadow-2xs ring-1 ring-brand/20'
+                      : 'bg-surface-ground text-slate-600 border-border-subtle hover:bg-slate-200/60 hover:text-slate-800'
+                  )}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Novo Switch para controle de cálculo de Neutros / Transferências */}
+        <div className="p-2 rounded-xl bg-surface-ground border border-border-subtle flex items-center gap-2">
+          <Switch
+            checked={Boolean(includeIgnoredInTotals)}
+            onChange={(val) => onIncludeIgnoredChange?.(val)}
+            label="Incluir Transferências / Neutros nos Totais"
+          />
         </div>
       </div>
 
@@ -190,27 +230,12 @@ export const TransactionsFilterBar: React.FC<TransactionsFilterBarProps> = ({
           </span>
 
           {activeFiltersCount === 0 ? (
-            <span className="text-slate-400 italic">Nenhum filtro aplicado</span>
+            <span className="text-slate-400 italic">Mês Atual (Padrão)</span>
           ) : (
             <>
-              {filters.datePreset && (
+              {activePreset && (
                 <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-surface-ground border border-border-subtle text-slate-700 font-medium">
-                  Últimos {filters.datePreset} dias
-                  <button
-                    type="button"
-                    onClick={() =>
-                      onFilterChange({
-                        startDate: undefined,
-                        endDate: undefined,
-                        datePreset: undefined,
-                        page: 1,
-                      })
-                    }
-                    className="hover:text-brand transition-colors cursor-pointer"
-                    aria-label="Remover filtro de período rápido"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
+                  {DATE_PRESET_OPTIONS.find(p => p.key === activePreset)?.label ?? activePreset}
                 </span>
               )}
 
@@ -223,7 +248,7 @@ export const TransactionsFilterBar: React.FC<TransactionsFilterBarProps> = ({
                     className="hover:text-brand transition-colors cursor-pointer"
                     aria-label="Remover filtro de busca"
                   >
-                    <X className="w-3 h-3" />
+                    <X className="w-3.5 h-3.5" />
                   </button>
                 </span>
               )}
@@ -237,7 +262,7 @@ export const TransactionsFilterBar: React.FC<TransactionsFilterBarProps> = ({
                     className="hover:text-brand transition-colors cursor-pointer"
                     aria-label="Remover filtro de instituição"
                   >
-                    <X className="w-3 h-3" />
+                    <X className="w-3.5 h-3.5" />
                   </button>
                 </span>
               )}
@@ -251,7 +276,7 @@ export const TransactionsFilterBar: React.FC<TransactionsFilterBarProps> = ({
                     className="hover:text-brand transition-colors cursor-pointer"
                     aria-label="Remover filtro de categoria"
                   >
-                    <X className="w-3 h-3" />
+                    <X className="w-3.5 h-3.5" />
                   </button>
                 </span>
               )}
@@ -265,7 +290,7 @@ export const TransactionsFilterBar: React.FC<TransactionsFilterBarProps> = ({
                     className="hover:text-brand transition-colors cursor-pointer"
                     aria-label="Remover filtro de tipo"
                   >
-                    <X className="w-3 h-3" />
+                    <X className="w-3.5 h-3.5" />
                   </button>
                 </span>
               )}
@@ -280,7 +305,7 @@ export const TransactionsFilterBar: React.FC<TransactionsFilterBarProps> = ({
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-slate-600 hover:text-brand hover:bg-brand-light transition-colors font-semibold cursor-pointer"
           >
             <RotateCcw className="w-3.5 h-3.5" />
-            Limpar Filtros
+            Restaurar Padrão
           </button>
         )}
       </div>

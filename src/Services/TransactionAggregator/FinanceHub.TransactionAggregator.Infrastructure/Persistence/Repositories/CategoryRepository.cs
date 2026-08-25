@@ -20,6 +20,13 @@ public class CategoryRepository : ICategoryRepository
 
     public async Task<IEnumerable<Category>> GetAllActiveAsync(CancellationToken cancellationToken)
     {
+        var hasCategories = await _dbContext.Categories.AnyAsync(cancellationToken);
+        if (!hasCategories)
+        {
+            await _dbContext.Categories.AddRangeAsync(CategorySeedData.GetDefaultCategories(), cancellationToken);
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
+
         return await _dbContext.Categories
             .AsNoTracking()
             .Where(c => c.IsActive)

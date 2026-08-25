@@ -108,6 +108,30 @@ public class CanonicalTransactionConfiguration : IEntityTypeConfiguration<Canoni
                 .IsRequired();
         });
 
+        builder.Property(x => x.Nature)
+            .HasColumnName("nature")
+            .HasConversion<int>()
+            .IsRequired()
+            .HasDefaultValue(TransactionNature.Operating);
+
+        builder.Property(x => x.IsBillPayment)
+            .HasColumnName("is_bill_payment")
+            .IsRequired()
+            .HasDefaultValue(false);
+
+        builder.Property(x => x.IsIgnoredInTotals)
+            .HasColumnName("is_ignored_in_totals")
+            .IsRequired()
+            .HasDefaultValue(false);
+
+        builder.Property(x => x.PairedTransactionId)
+            .HasColumnName("paired_transaction_id")
+            .IsRequired(false);
+
+        builder.HasIndex(x => new { x.UserId, x.TransactionDateUtc, x.Type })
+            .HasFilter("\"is_ignored_in_totals\" = false")
+            .HasDatabaseName("idx_canonical_transactions_operating_totals");
+
         // Optimistic Concurrency Token via xmin system column in PostgreSQL
         builder.Property<uint>("xmin")
             .HasColumnName("xmin")

@@ -11,6 +11,7 @@ export interface CategoryDto {
 }
 
 export type TransactionType = 'Credit' | 'Debit';
+export type DatePresetKey = 'current-month' | 'previous-month' | 'last-30' | 'current-year' | 'all-time';
 
 export interface TransactionDto {
   readonly id: string;
@@ -27,6 +28,10 @@ export interface TransactionDto {
   readonly transactionDateUtc: string;
   readonly channel: string;
   readonly merchantName: string;
+  readonly nature?: string;
+  readonly isBillPayment?: boolean;
+  readonly isIgnoredInTotals?: boolean;
+  readonly pairedTransactionId?: string | null;
 }
 
 export interface TransactionSummaryDto {
@@ -34,6 +39,10 @@ export interface TransactionSummaryDto {
   readonly totalExpense: number;
   readonly netBalance: number;
   readonly totalCount: number;
+  readonly realConsolidatedBalanceBrl?: number;
+  readonly totalOpenCreditCardsBrl?: number;
+  readonly projectedAvailableBalanceBrl?: number;
+  readonly lastSyncAtUtc?: string | null;
 }
 
 export interface PaginatedTransactionsDto {
@@ -50,11 +59,12 @@ export interface TransactionFilterParams {
   readonly pageSize?: number;
   readonly startDate?: string;
   readonly endDate?: string;
-  readonly datePreset?: number;
+  readonly datePreset?: string;
   readonly institutionId?: string;
   readonly categoryId?: string;
   readonly type?: string;
   readonly search?: string;
+  readonly includeIgnoredInTotals?: boolean;
 }
 
 export interface CategorizeTransactionPayload {
@@ -62,4 +72,15 @@ export interface CategorizeTransactionPayload {
   readonly categoryId: string;
   readonly createCustomRule: boolean;
   readonly applyToPastTransactions?: boolean;
+}
+
+export interface ToggleNeutralityPayload {
+  readonly transactionId: string;
+  readonly isIgnoredInTotals: boolean;
+  readonly reason?: string;
+}
+
+export interface ToggleBillPaymentPayload {
+  readonly transactionId: string;
+  readonly isBillPayment: boolean;
 }
