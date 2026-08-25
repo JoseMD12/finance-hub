@@ -4,15 +4,16 @@ import { Skeleton } from '@/shared/components/Skeleton/Skeleton';
 import { formatCurrencyBRL, formatDateBR, formatTimeBR, formatPaymentMethod, maskSensitiveAccount } from '@/shared/utils/formatters';
 import { getInstitutionInfo } from '@/shared/constants/institutions';
 import { cn } from '@/shared/utils/cn';
-import { Landmark, ArrowUpRight, ArrowDownRight, ArrowLeftRight, Receipt, SearchX, MessageSquare } from 'lucide-react';
+import { Landmark, ArrowUpRight, ArrowDownRight, ArrowLeftRight, Receipt, SearchX } from 'lucide-react';
 import { CategoryTagPopover } from './CategoryTagPopover';
 import { TransactionActionDropdown } from './TransactionActionDropdown';
+import { TransactionNotePopover } from './TransactionNotePopover';
 import type { TransactionDto } from '../types/transactions.types';
 
 export interface TransactionsTableProps {
   transactions: TransactionDto[];
   isLoading: boolean;
-  onSelectTransaction: (transaction: TransactionDto) => void;
+  onSelectTransaction?: (transaction: TransactionDto) => void;
   onToggleNeutrality: (transaction: TransactionDto) => void;
   onToggleBillPayment: (transaction: TransactionDto) => void;
 }
@@ -47,7 +48,6 @@ const BankLogoTag: React.FC<{ institutionId: string }> = ({ institutionId }) => 
 export const TransactionsTable: React.FC<TransactionsTableProps> = ({
   transactions,
   isLoading,
-  onSelectTransaction,
   onToggleNeutrality,
   onToggleBillPayment,
 }) => {
@@ -175,15 +175,6 @@ export const TransactionsTable: React.FC<TransactionsTableProps> = ({
                       Neutro
                     </span>
                   )}
-                  {t.notes && (
-                    <span
-                      title={`Observação: ${t.notes}`}
-                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-purple-50 text-purple-700 border border-purple-200"
-                    >
-                      <MessageSquare className="w-2.5 h-2.5 text-purple-600" aria-hidden="true" />
-                      Nota
-                    </span>
-                  )}
                 </div>
                 {t.merchantName &&
                   t.merchantName.trim().toLowerCase() !== t.description.trim().toLowerCase() && (
@@ -212,11 +203,13 @@ export const TransactionsTable: React.FC<TransactionsTableProps> = ({
               />
             </td>
 
-            {/* Meio de Pagamento - Alinhado à esquerda */}
-            <td className="px-6 py-4 text-left whitespace-nowrap">
-              <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-surface-ground border border-border-subtle text-[11px] font-mono text-slate-600 whitespace-nowrap">
-                {formatPaymentMethod(t.channel)}
-              </span>
+            {/* Meio de Pagamento - Centralizado na célula */}
+            <td className="px-6 py-4 text-center whitespace-nowrap">
+              <div className="flex items-center justify-center">
+                <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-surface-ground border border-border-subtle text-[11px] font-mono text-slate-600 whitespace-nowrap">
+                  {formatPaymentMethod(t.channel)}
+                </span>
+              </div>
             </td>
 
             {/* Valor - Centralizado na célula com largura protegida e sem quebra */}
@@ -243,12 +236,16 @@ export const TransactionsTable: React.FC<TransactionsTableProps> = ({
               </div>
             </td>
 
-            {/* Ações - Centralizado com DropdownMenu padronizado */}
-            <td className="px-6 py-4 text-center whitespace-nowrap min-w-[80px]">
-              <div className="flex items-center justify-center">
+            {/* Ações - Centralizado com Popover de Nota (primeiro) e DropdownMenu (segundo) */}
+            <td className="px-6 py-4 text-center whitespace-nowrap min-w-[100px]">
+              <div className="flex items-center justify-center gap-1">
+                <TransactionNotePopover
+                  transactionId={t.id}
+                  currentNotes={t.notes}
+                  description={t.description}
+                />
                 <TransactionActionDropdown
                   transaction={t}
-                  onSelectTransaction={onSelectTransaction}
                   onToggleNeutrality={onToggleNeutrality}
                   onToggleBillPayment={onToggleBillPayment}
                 />
@@ -270,9 +267,9 @@ export const TransactionsTable: React.FC<TransactionsTableProps> = ({
               <th className="px-6 py-4 text-left">Descrição / Estabelecimento</th>
               <th className="px-6 py-4 text-left whitespace-nowrap">Instituição e Conta</th>
               <th className="px-6 py-4 text-left whitespace-nowrap">Categoria</th>
-              <th className="px-6 py-4 text-left whitespace-nowrap">Meio</th>
-              <th className="px-6 py-4 text-left whitespace-nowrap">Valor</th>
-              <th className="px-6 py-4 text-left whitespace-nowrap">Ações</th>
+              <th className="px-6 py-4 text-center whitespace-nowrap">Meio</th>
+              <th className="px-6 py-4 text-center whitespace-nowrap">Valor</th>
+              <th className="px-6 py-4 text-center whitespace-nowrap">Ações</th>
             </tr>
           </thead>
           {renderTableContent()}

@@ -5,7 +5,6 @@ import { TransactionsFilterBar } from '../components/TransactionsFilterBar';
 import { getPresetDateRange } from '../utils/datePresets';
 import { TransactionsTable } from '../components/TransactionsTable';
 import { TransactionsPagination } from '../components/TransactionsPagination';
-import { TransactionDetailsDrawer } from '../components/TransactionDetailsDrawer';
 import { PageContainer } from '@/shared/components/PageContainer/PageContainer';
 import { useToggleNeutralityMutation } from '../hooks/useToggleNeutralityMutation';
 import { useToggleBillPaymentMutation } from '../hooks/useToggleBillPaymentMutation';
@@ -21,8 +20,6 @@ export const TransactionsPage: React.FC = () => {
     endDate: initialRange.endDate,
     datePreset: 'current-month',
   });
-
-  const [selectedTransaction, setSelectedTransaction] = useState<TransactionDto | null>(null);
 
   const { data, isLoading } = useTransactionsQuery(filters);
   const toggleNeutralityMutation = useToggleNeutralityMutation();
@@ -59,7 +56,6 @@ export const TransactionsPage: React.FC = () => {
       isIgnoredInTotals: nextIgnored,
       reason: nextIgnored ? 'Marcado manualmente como neutro/trânsito' : 'Reativado manualmente',
     });
-    setSelectedTransaction((prev) => prev ? { ...prev, isIgnoredInTotals: nextIgnored } : null);
   };
 
   const handleToggleBillPayment = async (transaction: TransactionDto) => {
@@ -68,9 +64,6 @@ export const TransactionsPage: React.FC = () => {
       transactionId: transaction.id,
       isBillPayment: nextIsBillPayment,
     });
-    setSelectedTransaction((prev) =>
-      prev ? { ...prev, isBillPayment: nextIsBillPayment, isIgnoredInTotals: nextIsBillPayment } : null
-    );
   };
 
   return (
@@ -94,7 +87,6 @@ export const TransactionsPage: React.FC = () => {
       <TransactionsTable
         transactions={transactions}
         isLoading={isLoading}
-        onSelectTransaction={setSelectedTransaction}
         onToggleNeutrality={handleToggleNeutrality}
         onToggleBillPayment={handleToggleBillPayment}
       />
@@ -107,19 +99,6 @@ export const TransactionsPage: React.FC = () => {
         totalItems={totalItems}
         onPageChange={(page) => handleFilterChange({ page })}
         onPageSizeChange={(newPageSize) => handleFilterChange({ pageSize: newPageSize, page: 1 })}
-      />
-
-      {/* Transaction Details Drawer */}
-      <TransactionDetailsDrawer
-        transaction={selectedTransaction}
-        isOpen={selectedTransaction !== null}
-        onClose={() => setSelectedTransaction(null)}
-        onSelectPairedTransaction={(pairedId) => {
-          const found = transactions.find((t) => t.id === pairedId);
-          if (found) {
-            setSelectedTransaction(found);
-          }
-        }}
       />
     </PageContainer>
   );
