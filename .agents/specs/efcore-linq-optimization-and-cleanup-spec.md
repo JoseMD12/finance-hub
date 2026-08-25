@@ -1,7 +1,7 @@
 # 📐 Technical Specification: EF Core Query Optimizations, Cleanup & CI/CD Modernization
 
 > **Document:** `.agents/specs/efcore-linq-optimization-and-cleanup-spec.md`  
-> **Status:** 🟢 `Approved & In Execution`  
+> **Status:** 🟢 `Concluída & Implementada`  
 > **Date:** 2026-08-19  
 
 ---

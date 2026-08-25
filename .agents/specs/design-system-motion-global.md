@@ -1,6 +1,6 @@
 # FinanceHub — Spec: Design System Visual e Motion Global
 
-> **Status**: Aprovada para Implementação  
+> **Status**: `Concluída & Implementada`  
 > **Scope**: `src/Web/FinanceHub.Web` — aplicação completa  
 > **Objetivo**: Elevar a identidade visual e adicionar motion com sistema global e consistente, cobrindo todas as telas presentes e futuras sem animações isoladas ou duplicadas.
 
