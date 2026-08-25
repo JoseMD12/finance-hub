@@ -6,7 +6,8 @@ import { cn } from '@/shared/utils/cn';
 import { useCategoriesQuery } from '../hooks/useCategoriesQuery';
 import { getInstitutionLogoUrl } from '@/shared/constants/institutions';
 import { Switch } from '@/shared/components/Switch/Switch';
-import type { TransactionFilterParams } from '../types/transactions.types';
+import type { TransactionFilterParams, DatePresetKey } from '../types/transactions.types';
+import { getPresetDateRange } from '../utils/datePresets';
 
 export interface TransactionsFilterBarProps {
   filters: TransactionFilterParams;
@@ -15,8 +16,6 @@ export interface TransactionsFilterBarProps {
   includeIgnoredInTotals?: boolean;
   onIncludeIgnoredChange?: (include: boolean) => void;
 }
-
-export type DatePresetKey = 'current-month' | 'previous-month' | 'last-30' | 'current-year' | 'all-time';
 
 interface DatePresetOption {
   key: DatePresetKey;

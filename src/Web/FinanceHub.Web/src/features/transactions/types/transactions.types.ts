@@ -11,6 +11,7 @@ export interface CategoryDto {
 }
 
 export type TransactionType = 'Credit' | 'Debit';
+export type DatePresetKey = 'current-month' | 'previous-month' | 'last-30' | 'current-year' | 'all-time';
 
 export interface TransactionDto {
   readonly id: string;

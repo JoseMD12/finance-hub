@@ -50,7 +50,6 @@ export const ConnectionsPage: React.FC = () => {
 
   const connectedItems = items ?? [];
   const hasPluggyItems = connectedItems.length > 0;
-  const instCountText = hasPluggyItems ? connectedItems.length : groupedSavedInstitutions.length;
 
   // Agrupa contas salvas no banco por instituição
   const savedBalances = (dashboard?.accountBalances as any[]) ?? [];
@@ -85,6 +84,7 @@ export const ConnectionsPage: React.FC = () => {
 
   const hasSavedInstitutions = groupedSavedInstitutions.length > 0;
   const hasAnyInstitutions = hasPluggyItems || hasSavedInstitutions;
+  const instCountText = hasPluggyItems ? connectedItems.length : groupedSavedInstitutions.length;
 
   const renderInstitutionsContent = () => {
     if (isLoadingItems || (isLoadingDashboard && !hasSavedInstitutions)) {
