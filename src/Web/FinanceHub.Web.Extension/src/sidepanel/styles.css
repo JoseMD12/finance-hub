@@ -109,9 +109,58 @@ button { font: inherit; }
 .account-type svg { width: 11px; height: 11px; }
 .accounts-state { padding: 12px; color: #475569; font-size: 10px; text-align: center; }
 
-.financehub-button { display: flex; width: 100%; align-items: center; justify-content: center; gap: 7px; margin-top: auto; padding: 10px 12px; border: 1px solid var(--fh-secondary); border-radius: 10px; background: var(--fh-secondary); color: var(--fh-surface-card); cursor: pointer; font-size: 11px; font-weight: 800; transition: var(--fh-transition); }
-.financehub-button:hover { border-color: var(--fh-secondary-dark); background: var(--fh-secondary-dark); box-shadow: var(--fh-shadow-elevated); transform: translateY(-2px); }
-.financehub-button svg { width: 15px; height: 15px; }
+.navigation-actions-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.action-button {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 800;
+  transition: var(--fh-transition);
+}
+
+.action-button svg {
+  width: 15px;
+  height: 15px;
+}
+
+.action-button-financehub {
+  border: 1px solid var(--fh-secondary);
+  background: var(--fh-secondary);
+  color: var(--fh-surface-card);
+}
+
+.action-button-financehub:hover {
+  border-color: var(--fh-secondary-dark);
+  background: var(--fh-secondary-dark);
+  box-shadow: var(--fh-shadow-elevated);
+  transform: translateY(-2px);
+}
+
+.action-button-pluggy {
+  border: 1px solid var(--fh-border-subtle);
+  background: var(--fh-surface-card);
+  color: var(--fh-secondary);
+  box-shadow: var(--fh-shadow-card);
+}
+
+.action-button-pluggy:hover {
+  border-color: var(--fh-brand);
+  color: var(--fh-brand);
+  box-shadow: var(--fh-shadow-elevated);
+  transform: translateY(-2px);
+}
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }

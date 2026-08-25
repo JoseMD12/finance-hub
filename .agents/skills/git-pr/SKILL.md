@@ -31,9 +31,9 @@ Every Pull Request description MUST adhere to the following standard template st
 - [ ] 🧱 `build` / `deps`: Dependency or build updates
 
 ## 🎯 Affected Microservices & Shared Libraries
-- **Services**: `[ ] AuthConsent [ ] ItauIntegration [ ] MercadoPagoIntegration [ ] InterIntegration [ ] TransactionAggregator [ ] ApiGateway`
-- **Shared Libraries**: `[ ] Shared.Certificates [ ] Shared.Messaging [ ] Shared.Observability`
-- **Infrastructure & DB**: `[ ] PostgreSQL per service [ ] MassTransit Outbox [ ] mTLS Certificates`
+- **Services**: `[ ] PluggyIntegration [ ] FileImporter [ ] TransactionAggregator [ ] ApiGateway [ ] FinanceHub.Web`
+- **Shared Libraries**: `[ ] Shared.Messaging [ ] Shared.Observability`
+- **Infrastructure & DB**: `[ ] PostgreSQL per service [ ] MassTransit Outbox [ ] Redis`
 
 ## 🧪 Testing Checklist
 - [ ] Unit tests added/updated and passing (`dotnet test`)

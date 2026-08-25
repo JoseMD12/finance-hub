@@ -19,14 +19,17 @@ Executa obrigatoriamente o ciclo TDD: **1. Red** (Escrever teste e rodar até fa
 Cada microsserviço deve ter testes nas seguintes camadas:
 
 ```
-tests/FinanceHub.UnitTests/
-  ├── Shared/                    ← Testes dos módulos compartilhados
-  ├── AuthConsent/               ← Testes do serviço de consentimento
-  ├── ItauIntegration/           ← Testes do conector Itaú
-  ├── MercadoPagoIntegration/    ← Testes do conector Mercado Pago
-  ├── TransactionAggregator/     ← Testes do agregador de transações
-  └── ApiGateway/                ← Testes do BFF / Gateway
+tests/FinanceHub.Tests/
+  ├── Unit/
+  │   ├── ApiGateway/             ← Testes do BFF / Gateway
+  │   ├── PluggyIntegration/     ← Testes do conector Pluggy
+  │   ├── TransactionAggregator/  ← Testes do agregador de transações
+  │   └── Shared/                 ← Testes de Messaging e Observability
+  ├── Integration/                ← Testes de integração com Testcontainers
+  └── Architecture/               ← Testes de conformidade arquitetural
 ```
+
+> **Histórico**: Conectores legados individuais (`AuthConsent`, `ItauIntegration`, `MercadoPagoIntegration`, `InterIntegration`) foram consolidados no `PluggyIntegration`.
 
 **Cobertura mínima exigida: 80% por microsserviço.**
 

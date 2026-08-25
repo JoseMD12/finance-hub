@@ -27,6 +27,11 @@ public static class ObservabilityExtensions
                         options.RecordException = true;
                     })
                     .AddHttpClientInstrumentation()
+                    .AddEntityFrameworkCoreInstrumentation(options =>
+                    {
+                        options.SetDbStatementForText = true;
+                    })
+                    .AddSource("MassTransit")
                     .AddOtlpExporter(options =>
                     {
                         options.Endpoint = new Uri(otlpEndpoint);

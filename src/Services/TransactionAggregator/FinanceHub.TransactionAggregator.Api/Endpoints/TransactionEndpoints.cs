@@ -1,5 +1,7 @@
+using System;
 using FinanceHub.TransactionAggregator.Application.Commands.CategorizeTransaction;
 using FinanceHub.TransactionAggregator.Application.Commands.IngestTransaction;
+using FinanceHub.TransactionAggregator.Application.DTOs;
 using FinanceHub.TransactionAggregator.Application.Queries.GetConsolidatedBalance;
 using FinanceHub.TransactionAggregator.Application.Queries.GetTransactions;
 using Microsoft.AspNetCore.Builder;
@@ -28,18 +30,28 @@ public static class TransactionEndpoints
         .ProducesProblem(StatusCodes.Status400BadRequest);
 
         group.MapGet("/", async (
-            string userId,
-            int? page,
-            int? pageSize,
+            [AsParameters] GetTransactionsParameters parameters,
             IGetTransactionsQueryHandler handler,
             CancellationToken cancellationToken) =>
         {
-            var query = new GetTransactionsQuery(userId, page ?? 1, pageSize ?? 20);
+            var filter = new TransactionFilterDto(
+                parameters.UserId,
+                parameters.Page ?? 1,
+                parameters.PageSize ?? 20,
+                parameters.StartDate,
+                parameters.EndDate,
+                parameters.InstitutionId,
+                parameters.CategoryId,
+                parameters.Type,
+                parameters.Search,
+                parameters.IncludeIgnoredInTotals ?? false);
+
+            var query = new GetTransactionsQuery(filter);
             var result = await handler.Handle(query, cancellationToken);
             return Results.Ok(result);
         })
         .WithName("GetTransactions")
-        .Produces(StatusCodes.Status200OK);
+        .Produces<PagedTransactionsResponseDto>(StatusCodes.Status200OK);
 
         group.MapGet("/balances/user/{userId}", async (
             string userId,
@@ -63,12 +75,50 @@ public static class TransactionEndpoints
                 id,
                 request.UserId,
                 request.NewCategoryId,
-                request.CreateCustomRule);
+                request.CreateCustomRule,
+                request.ApplyToPastTransactions);
 
             await handler.Handle(command, cancellationToken);
             return Results.NoContent();
         })
         .WithName("CategorizeTransaction")
+        .Produces(StatusCodes.Status204NoContent)
+        .ProducesProblem(StatusCodes.Status404NotFound);
+
+        group.MapPatch("/{id:guid}/neutrality", async (
+            Guid id,
+            ToggleTransactionNeutralityRequest request,
+            FinanceHub.TransactionAggregator.Application.Commands.ToggleTransactionNeutrality.IToggleTransactionNeutralityCommandHandler handler,
+            CancellationToken cancellationToken) =>
+        {
+            var command = new FinanceHub.TransactionAggregator.Application.Commands.ToggleTransactionNeutrality.ToggleTransactionNeutralityCommand(
+                id,
+                request.UserId,
+                request.IsIgnoredInTotals,
+                request.Reason);
+
+            await handler.Handle(command, cancellationToken);
+            return Results.NoContent();
+        })
+        .WithName("ToggleTransactionNeutrality")
+        .Produces(StatusCodes.Status204NoContent)
+        .ProducesProblem(StatusCodes.Status404NotFound);
+
+        group.MapPatch("/{id:guid}/bill-payment", async (
+            Guid id,
+            ToggleTransactionBillPaymentRequest request,
+            FinanceHub.TransactionAggregator.Application.Commands.ToggleBillPayment.IToggleBillPaymentCommandHandler handler,
+            CancellationToken cancellationToken) =>
+        {
+            var command = new FinanceHub.TransactionAggregator.Application.Commands.ToggleBillPayment.ToggleBillPaymentCommand(
+                id,
+                request.UserId,
+                request.IsBillPayment);
+
+            await handler.Handle(command, cancellationToken);
+            return Results.NoContent();
+        })
+        .WithName("ToggleTransactionBillPayment")
         .Produces(StatusCodes.Status204NoContent)
         .ProducesProblem(StatusCodes.Status404NotFound);
 
@@ -79,4 +129,14 @@ public static class TransactionEndpoints
 public record CategorizeTransactionRequest(
     string UserId,
     Guid NewCategoryId,
-    bool CreateCustomRule);
+    bool CreateCustomRule,
+    bool ApplyToPastTransactions = false);
+
+public record ToggleTransactionNeutralityRequest(
+    string UserId,
+    bool IsIgnoredInTotals,
+    string? Reason = null);
+
+public record ToggleTransactionBillPaymentRequest(
+    string UserId,
+    bool IsBillPayment);

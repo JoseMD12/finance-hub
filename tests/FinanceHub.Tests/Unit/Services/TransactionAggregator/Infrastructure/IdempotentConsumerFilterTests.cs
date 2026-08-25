@@ -92,4 +92,42 @@ public class IdempotentConsumerFilterTests
         // Assert
         await next.DidNotReceive().Send(Arg.Any<ConsumeContext<TransactionsBatchIngested>>());
     }
+
+    [Fact]
+    public async Task Send_ShouldProceed_WhenTransactionIngestedIsProcessed()
+    {
+        // Arrange
+        var logger = Substitute.For<ILogger<IdempotentConsumerFilter<TransactionIngested>>>();
+        var filter = new IdempotentConsumerFilter<TransactionIngested>(_dbContext, logger);
+
+        var ingestionId = Guid.NewGuid();
+        var message = new TransactionIngested(
+            IngestionId: ingestionId,
+            UserId: "user-123",
+            Source: "Itau",
+            AccountId: "acc-1",
+            BankTransactionId: "tx-1",
+            Amount: 100m,
+            TransactionDate: DateTime.UtcNow,
+            Description: "Test",
+            Currency: "BRL",
+            RawPayloadJson: null,
+            OccurredAtUtc: DateTime.UtcNow
+        );
+
+        var context = Substitute.For<ConsumeContext<TransactionIngested>>();
+        context.Message.Returns(message);
+        context.CancellationToken.Returns(CancellationToken.None);
+
+        var next = Substitute.For<IPipe<ConsumeContext<TransactionIngested>>>();
+
+        // Act
+        await filter.Send(context, next);
+
+        // Assert
+        await next.Received(1).Send(context);
+        var inboxEntry = await _dbContext.InboxProcessedMessages.FirstOrDefaultAsync(m => m.MessageHash == ingestionId.ToString());
+        inboxEntry.Should().NotBeNull();
+        inboxEntry!.EventType.Should().Be(nameof(TransactionIngested));
+    }
 }

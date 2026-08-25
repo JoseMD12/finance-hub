@@ -15,4 +15,7 @@ public record TransactionIngested(
     string Currency,
     string? RawPayloadJson,
     DateTime OccurredAtUtc
-) : IFinanceHubEvent;
+) : IIdempotentEvent
+{
+    public string MessageHash => IngestionId.ToString();
+}

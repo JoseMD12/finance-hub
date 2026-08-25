@@ -57,11 +57,17 @@ public class CanonicalTransactionConfiguration : IEntityTypeConfiguration<Canoni
             .HasConversion<int>()
             .IsRequired();
 
-        builder.Property(x => x.Description)
-            .HasConversion(d => d.CleanText, v => SanitizedDescription.Create(v))
-            .HasColumnName("description")
-            .IsRequired()
-            .HasMaxLength(255);
+        builder.OwnsOne(x => x.Description, desc =>
+        {
+            desc.Property(d => d.OriginalText)
+                .HasColumnName("original_description")
+                .HasMaxLength(512);
+
+            desc.Property(d => d.CleanText)
+                .HasColumnName("description")
+                .IsRequired()
+                .HasMaxLength(255);
+        });
 
         builder.Property(x => x.CategoryId)
             .IsRequired();
@@ -101,6 +107,30 @@ public class CanonicalTransactionConfiguration : IEntityTypeConfiguration<Canoni
                 .HasColumnName("updated_at_utc")
                 .IsRequired();
         });
+
+        builder.Property(x => x.Nature)
+            .HasColumnName("nature")
+            .HasConversion<int>()
+            .IsRequired()
+            .HasDefaultValue(TransactionNature.Operating);
+
+        builder.Property(x => x.IsBillPayment)
+            .HasColumnName("is_bill_payment")
+            .IsRequired()
+            .HasDefaultValue(false);
+
+        builder.Property(x => x.IsIgnoredInTotals)
+            .HasColumnName("is_ignored_in_totals")
+            .IsRequired()
+            .HasDefaultValue(false);
+
+        builder.Property(x => x.PairedTransactionId)
+            .HasColumnName("paired_transaction_id")
+            .IsRequired(false);
+
+        builder.HasIndex(x => new { x.UserId, x.TransactionDateUtc, x.Type })
+            .HasFilter("\"is_ignored_in_totals\" = false")
+            .HasDatabaseName("idx_canonical_transactions_operating_totals");
 
         // Optimistic Concurrency Token via xmin system column in PostgreSQL
         builder.Property<uint>("xmin")

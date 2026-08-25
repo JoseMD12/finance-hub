@@ -7,6 +7,7 @@ namespace FinanceHub.TransactionAggregator.Infrastructure.Persistence;
 public class TransactionAggregatorDbContext : DbContext
 {
     public DbSet<CanonicalTransaction> Transactions => Set<CanonicalTransaction>();
+    public DbSet<Category> Categories => Set<Category>();
     public DbSet<AccountBalance> AccountBalances => Set<AccountBalance>();
     public DbSet<UserCategoryRule> UserCategoryRules => Set<UserCategoryRule>();
     public DbSet<InboxProcessedMessage> InboxProcessedMessages => Set<InboxProcessedMessage>();

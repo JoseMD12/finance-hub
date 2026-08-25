@@ -26,7 +26,24 @@ public sealed class PluggyIntegrationServiceClient(
         return items ?? [];
     }
 
-    public async Task<GatewayPluggySyncSummaryDto?> TriggerSyncAsync(string? userId, string pluggyAccessToken, CancellationToken ct = default)
+    public async Task<IReadOnlyList<GatewayPluggyAccountDto>> GetAccountsAsync(string pluggyAccessToken, CancellationToken ct = default)
+    {
+        logger.LogInformation("Buscando contas conectadas via downstream PluggyIntegration...");
+
+        var request = new HttpRequestMessage(HttpMethod.Get, "/api/v1/pluggy/accounts");
+        if (!string.IsNullOrWhiteSpace(pluggyAccessToken))
+        {
+            request.Headers.Add(FinanceHubHeaderNames.PluggyAccessToken, pluggyAccessToken);
+        }
+
+        var response = await httpClient.SendAsync(request, ct);
+        await EnsureSuccessOrThrowAsync(response, ct);
+
+        var accounts = await response.Content.ReadFromJsonAsync<IReadOnlyList<GatewayPluggyAccountDto>>(cancellationToken: ct);
+        return accounts ?? [];
+    }
+
+    public async Task<GatewaySyncJobAcceptedDto?> TriggerSyncAsync(string? userId, string pluggyAccessToken, CancellationToken ct = default)
     {
         logger.LogInformation("Disparando sincronização via downstream PluggyIntegration para UserId: {UserId}...", userId);
 
@@ -43,7 +60,21 @@ public sealed class PluggyIntegrationServiceClient(
         var response = await httpClient.SendAsync(request, ct);
         await EnsureSuccessOrThrowAsync(response, ct);
 
-        return await response.Content.ReadFromJsonAsync<GatewayPluggySyncSummaryDto>(cancellationToken: ct);
+        return await response.Content.ReadFromJsonAsync<GatewaySyncJobAcceptedDto>(cancellationToken: ct);
+    }
+
+    public async Task<GatewaySyncJobStatusDto?> GetSyncJobStatusAsync(Guid jobId, CancellationToken ct = default)
+    {
+        logger.LogInformation("Consultando status do job de sincronização {JobId} via downstream PluggyIntegration...", jobId);
+
+        var response = await httpClient.GetAsync($"/api/v1/pluggy/sync/jobs/{jobId}", ct);
+        if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+
+        await EnsureSuccessOrThrowAsync(response, ct);
+        return await response.Content.ReadFromJsonAsync<GatewaySyncJobStatusDto>(cancellationToken: ct);
     }
 
     public async Task<GatewayPluggySyncSummaryDto?> ResyncItemAsync(string itemId, string? userId, string pluggyAccessToken, CancellationToken ct = default)
@@ -59,7 +90,7 @@ public sealed class PluggyIntegrationServiceClient(
         var request = new HttpRequestMessage(HttpMethod.Post, endpoint);
         if (!string.IsNullOrWhiteSpace(pluggyAccessToken))
         {
-            request.Headers.Add(FinanceHub.Shared.Messaging.Constants.FinanceHubHeaderNames.PluggyAccessToken, pluggyAccessToken);
+            request.Headers.Add(FinanceHubHeaderNames.PluggyAccessToken, pluggyAccessToken);
         }
 
         var response = await httpClient.SendAsync(request, ct);

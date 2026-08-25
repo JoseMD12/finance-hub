@@ -11,7 +11,8 @@ public record CategorizeTransactionCommand(
     Guid TransactionId,
     string UserId,
     Guid NewCategoryId,
-    bool CreateCustomRule);
+    bool CreateCustomRule,
+    bool ApplyToPastTransactions = false);
 
 public class CategorizeTransactionCommandHandler : ICategorizeTransactionCommandHandler
 {
@@ -45,6 +46,15 @@ public class CategorizeTransactionCommandHandler : ICategorizeTransactionCommand
                 command.NewCategoryId);
 
             await _userCategoryRuleRepository.AddOrUpdateAsync(rule, cancellationToken);
+        }
+
+        if (command.ApplyToPastTransactions && !string.IsNullOrWhiteSpace(transaction.Description.CleanText))
+        {
+            await _transactionRepository.UpdateCategoryForPatternAsync(
+                command.UserId,
+                transaction.Description.CleanText,
+                command.NewCategoryId,
+                cancellationToken);
         }
     }
 }

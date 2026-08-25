@@ -61,7 +61,5 @@ public class AccountBalanceRepository : IAccountBalanceRepository
                 await _context.AccountBalances.AddAsync(balance, cancellationToken);
             }
         }
-
-        await _context.SaveChangesAsync(cancellationToken);
     }
 }

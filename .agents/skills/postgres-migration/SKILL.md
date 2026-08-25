@@ -11,7 +11,7 @@ This guide establishes the mandatory workflow for schema modifications in **Fina
 
 ## 1. Core Principles for Financial Schema Updates
 
-1. **Database-per-Service Isolation**: Migrations target only the specific microservice database (e.g., `FinanceHub.AuthConsent` or `FinanceHub.TransactionAggregator`). Cross-service database modifications are strictly prohibited.
+1. **Database-per-Service Isolation**: Migrations target only the specific microservice database (e.g., `FinanceHub.PluggyIntegration` or `FinanceHub.TransactionAggregator`). Cross-service database modifications are strictly prohibited.
 2. **Zero Data Loss**: Never drop columns or tables directly in production without a deprecation phase.
 3. **Zero Downtime**: DDL operations must never hold exclusive table locks (`ACCESS EXCLUSIVE`) for long periods.
 4. **Idempotency**: All SQL migration scripts produced for deployment must be idempotent (`IF NOT EXISTS`).

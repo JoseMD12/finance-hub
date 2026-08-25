@@ -54,12 +54,11 @@ Analise o staging e identifique quais Slices / Features distintas foram alterada
 
 ### 3. Estratégia `service` (`/git-commit-many-by service`)
 Agrupe as alterações por projeto/microserviço afetado:
-- `AuthConsent`: `feat(auth): ...`
-- `ItauIntegration`: `feat(itau): ...`
-- `MercadoPagoIntegration`: `feat(mercadopago): ...`
-- `InterIntegration`: `feat(inter): ...`
+- `PluggyIntegration`: `feat(pluggy): ...`
+- `FileImporter`: `feat(fileimporter): ...`
 - `TransactionAggregator`: `feat(aggregator): ...`
 - `ApiGateway`: `feat(gateway): ...`
+- `FinanceHub.Web`: `feat(web): ...`
 - `Shared.*`: `feat(shared): ...`
 
 ---

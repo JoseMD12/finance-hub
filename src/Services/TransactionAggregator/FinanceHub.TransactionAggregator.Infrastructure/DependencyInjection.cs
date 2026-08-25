@@ -34,6 +34,9 @@ public static class DependencyInjection
         services.AddScoped<ITransactionRepository, TransactionRepository>();
         services.AddScoped<IAccountBalanceRepository, AccountBalanceRepository>();
         services.AddScoped<IUserCategoryRuleRepository, UserCategoryRuleRepository>();
+        services.AddScoped<ICategoryRepository, CategoryRepository>();
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddSingleton<IMerchantDatasetProvider, Persistence.Datasets.MerchantDatasetProvider>();
 
         // ── Messaging — MassTransit + Transactional Outbox ──────────────────────
         services.AddFinanceHubMessaging(configuration, busConfig =>
@@ -41,6 +44,7 @@ public static class DependencyInjection
             busConfig.AddConsumer<Messaging.Consumers.TransactionIngestedConsumer>();
             busConfig.AddConsumer<Messaging.Consumers.InvoiceItemIngestedConsumer>();
             busConfig.AddConsumer<Messaging.Consumers.TransactionsBatchIngestedConsumer>();
+            busConfig.AddConsumer<Messaging.Consumers.AccountBalanceSnapshotSynchronizedConsumer>();
 
             busConfig.AddEntityFrameworkOutbox<TransactionAggregatorDbContext>(outbox =>
             {

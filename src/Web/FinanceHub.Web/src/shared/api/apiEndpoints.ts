@@ -10,14 +10,19 @@ export const API_ENDPOINTS = {
   },
   PLUGGY: {
     SYNC: '/api/v1/gateway/pluggy/sync',
+    SYNC_JOB_STATUS: (jobId: string) => `/api/v1/gateway/pluggy/sync/jobs/${jobId}`,
     ITEMS: '/api/v1/gateway/pluggy/items',
+    ACCOUNTS: '/api/v1/gateway/pluggy/accounts',
   },
   DASHBOARD: {
     SUMMARY: '/api/v1/gateway/dashboard',
   },
   TRANSACTIONS: {
     LIST: '/api/v1/gateway/transactions',
+    CATEGORIES: '/api/v1/gateway/transactions/categories',
     CATEGORIZE: (id: string) => `/api/v1/gateway/transactions/${id}/category`,
+    TOGGLE_NEUTRALITY: (id: string) => `/api/v1/gateway/transactions/${id}/neutrality`,
+    TOGGLE_BILL_PAYMENT: (id: string) => `/api/v1/gateway/transactions/${id}/bill-payment`,
   },
 } as const;
 

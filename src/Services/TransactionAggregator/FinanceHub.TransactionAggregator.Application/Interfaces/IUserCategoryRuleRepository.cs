@@ -7,5 +7,6 @@ namespace FinanceHub.TransactionAggregator.Application.Interfaces;
 public interface IUserCategoryRuleRepository
 {
     Task<UserCategoryRule?> FindByPatternAsync(string userId, string cleanPattern, CancellationToken cancellationToken);
+    Task<IEnumerable<UserCategoryRule>> GetByUserIdAsync(string userId, CancellationToken cancellationToken);
     Task AddOrUpdateAsync(UserCategoryRule rule, CancellationToken cancellationToken);
 }

@@ -66,6 +66,27 @@ public sealed class SyncAllPluggyAccountsCommandHandler(
             transactionMapper.MapTransactionToEvents(tx, account, sourceName, command.UserId, checkingEvents, cardEvents);
         }
 
+        var balanceItems = accounts.Select(acc =>
+        {
+            var item = itemMap.GetValueOrDefault(acc.ItemId);
+            var institutionName = item?.Connector.Name ?? acc.Name;
+            var isCard = string.Equals(acc.Type, "CREDIT", StringComparison.OrdinalIgnoreCase);
+            var signedBalance = isCard ? -Math.Abs(acc.Balance) : acc.Balance;
+
+            return new AccountBalanceSnapshotItem(
+                AccountId: acc.Id,
+                InstitutionId: institutionName,
+                AccountType: acc.Type,
+                CurrentBalance: signedBalance,
+                Currency: "BRL",
+                SnapshotAtUtc: DateTime.UtcNow);
+        }).ToList();
+
+        await publishEndpoint.Publish(new AccountBalanceSnapshotSynchronized(
+            command.UserId,
+            balanceItems,
+            DateTime.UtcNow), cancellationToken);
+
         await PublishBatchEventsAsync(command.UserId, checkingEvents, cardEvents, cancellationToken);
 
         int totalCheckingTxs = checkingEvents.Count;

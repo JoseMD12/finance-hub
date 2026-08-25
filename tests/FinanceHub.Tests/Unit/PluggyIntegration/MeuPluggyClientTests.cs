@@ -2,6 +2,7 @@ using System.Net;
 using FinanceHub.PluggyIntegration.Domain.Exceptions;
 using FinanceHub.PluggyIntegration.Infrastructure.Clients;
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using Xunit;
@@ -129,5 +130,34 @@ public class MeuPluggyClientTests
 
         // Assert
         await act.Should().ThrowAsync<PluggyApiCommunicationDomainException>();
+    }
+
+    [Fact]
+    public async Task GetAsync_WhenErrorBodyExceeds500Characters_ShouldTruncateInLogger()
+    {
+        // Arrange
+        var hugeError = new string('A', 600);
+        var handler = new MockHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.InternalServerError)
+        {
+            Content = new StringContent(hugeError, System.Text.Encoding.UTF8, "text/plain")
+        });
+        var httpClient = new HttpClient(handler) { BaseAddress = new Uri("https://my-api.pluggy.ai") };
+        var logger = Substitute.For<ILogger<PluggyHttpExecutor>>();
+        var executor = new PluggyHttpExecutor(httpClient, logger);
+
+        // Act
+        var act = async () => await executor.GetAsync<object>("/test", ValidToken);
+
+        // Assert
+        await act.Should().ThrowAsync<PluggyApiCommunicationDomainException>();
+
+        var expectedTruncated = new string('A', 500) + "...";
+        logger.Received(1).Log(
+            LogLevel.Error,
+            Arg.Any<EventId>(),
+            Arg.Is<object>(v => v.ToString()!.Contains(expectedTruncated) && !v.ToString()!.Contains(hugeError)),
+            Arg.Any<Exception>(),
+            Arg.Any<Func<object, Exception?, string>>()
+        );
     }
 }
