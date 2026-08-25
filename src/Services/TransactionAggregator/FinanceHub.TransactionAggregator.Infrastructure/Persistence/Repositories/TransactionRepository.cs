@@ -35,7 +35,8 @@ public class TransactionRepository : ITransactionRepository
         t.Nature.ToString(),
         t.IsBillPayment,
         t.IsIgnoredInTotals,
-        t.PairedTransactionId);
+        t.PairedTransactionId,
+        t.Notes);
 
     private readonly TransactionAggregatorDbContext _context;
 

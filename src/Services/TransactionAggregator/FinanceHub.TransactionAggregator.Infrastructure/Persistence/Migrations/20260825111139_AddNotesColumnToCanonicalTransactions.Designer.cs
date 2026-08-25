@@ -3,17 +3,20 @@ using System;
 using FinanceHub.TransactionAggregator.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace FinanceHub.TransactionAggregator.Infrastructure.Migrations
+namespace FinanceHub.TransactionAggregator.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(TransactionAggregatorDbContext))]
-    partial class TransactionAggregatorDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260825111139_AddNotesColumnToCanonicalTransactions")]
+    partial class AddNotesColumnToCanonicalTransactions
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
