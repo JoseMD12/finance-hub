@@ -11,4 +11,5 @@ public sealed record TransactionGatewayQueryParameters(
     Guid? CategoryId,
     string? Type,
     string? Search,
-    bool? IncludeIgnoredInTotals);
+    bool? IncludeIgnoredInTotals,
+    string? ChannelGroup);

@@ -151,3 +151,19 @@ export function useUpdateTransactionCategoryMutation(filters: any) {
 }
 ```
 
+---
+
+## ⚡ 6. Prevenção de Layout Thrashing, Congelamentos e Piscar de Skeletons em Filtros
+
+1. **Uso Obrigatório de `placeholderData: keepPreviousData`**:
+   - Em queries paginadas ou com filtros dinâmicos (`useTransactionsQuery`, `useCatalogQuery`), use OBRIGATORIAMENTE `placeholderData: keepPreviousData` importado de `@tanstack/react-query`.
+   - Isso garante que os dados anteriores permaneçam na tela durante a busca em segundo plano, impedindo que a UI desmonte cards, tabelas e re-dispare animações de entrada do Framer Motion a cada filtro alterado.
+
+2. **Renderização de Skeleton Restrita ao Carregamento Inicial**:
+   - Nunca desmonte a interface inteira em trocas de filtro apenas com `if (isLoading)`.
+   - Use SEMPRE `if (isLoading && !data)` (ou `if (isLoading && !summary)`), garantindo que Skeletons apareçam APENAS no primeiro acesso sem cache prévio.
+
+3. **Debounce Obrigatório em Inputs de Busca Textual**:
+   - Campos de busca textual livre em barras de filtro DEVEM utilizar estado local imediato e debounce de no mínimo 300ms antes de repassar a alteração para a query (`filters.search`), impedindo uma avalanche de requisições e re-renderizações a cada caractere digitado.
+
+

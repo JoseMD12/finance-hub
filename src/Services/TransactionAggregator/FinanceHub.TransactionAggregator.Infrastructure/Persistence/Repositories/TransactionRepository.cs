@@ -146,6 +146,19 @@ public class TransactionRepository : ITransactionRepository
                                   || t.BankDetails.MerchantName.ToLower().Contains(searchLower));
         }
 
+        if (!string.IsNullOrWhiteSpace(filter.ChannelGroup))
+        {
+            var channelGroupNormalized = filter.ChannelGroup.Trim().ToLowerInvariant();
+            if (channelGroupNormalized == "credit" || channelGroupNormalized == "cartao")
+            {
+                query = query.Where(t => t.BankDetails.Channel == TransactionChannel.CreditCard);
+            }
+            else if (channelGroupNormalized == "account" || channelGroupNormalized == "saldo" || channelGroupNormalized == "conta")
+            {
+                query = query.Where(t => t.BankDetails.Channel != TransactionChannel.CreditCard);
+            }
+        }
+
         var totalItems = await query.CountAsync(cancellationToken);
 
         // Calcular sumário considerando transações operacionais ou todas caso IncludeIgnoredInTotals seja true

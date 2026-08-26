@@ -116,3 +116,43 @@ Para evitar divergência de bibliotecas entre features:
 2. **Cleanups em useEffect**:
    - Qualquer subscription, timer (`setTimeout`/`setInterval`) ou listener de eventos DEVE possuir função de cleanup retornada no `useEffect`.
 
+---
+
+## ⚡ 8. Otimização de Performance, Memoização e Fluidez de Renderização
+
+1. **Memoização de Componentes Pesados (`React.memo`)**:
+   - Componentes visuais com listas, gráficos, tabelas e barras de filtros complexas DEVEM ser exportados com `React.memo` para evitar re-renderizações desnecessárias por alterações de estado do componente pai.
+2. **Estabilidade de Callbacks (`useCallback`) e Opções (`useMemo`)**:
+   - Handlers de filtro passados para componentes filhos (`handleFilterChange`, `handleResetFilters`) DEVEM ser envolvidos em `useCallback`.
+   - Arrays estáticos de opções de selects (ex: `institutionOptions`, `typeOptions`) DEVEM ser envolvidos em `useMemo` ou declarados fora do corpo do componente para não recriar instâncias JSX a cada ciclo de renderização.
+3. **Scroll Listeners Obrigatoriamente Passivos (`{ passive: true }`)**:
+   - NUNCA registrar `window.addEventListener('scroll', handler, true)` sem `{ passive: true }`. Listeners não-passivos bloqueiam o thread de composição do browser, impedindo scroll suave mesmo que o handler seja rápido.
+   - Padrão obrigatório para todos os popovers e dropdowns com reposicionamento dinâmico:
+     ```typescript
+     window.addEventListener('scroll', updatePosition, { passive: true, capture: true });
+     // Para remover: só precisa do capture flag
+     window.removeEventListener('scroll', updatePosition, { capture: true } as EventListenerOptions);
+     ```
+   - Toda função `updatePosition` DEVE fazer equality check antes de chamar `setState` para evitar re-renders desnecessários:
+     ```typescript
+     setPosition((prev) => {
+       if (prev && Math.abs(prev.top - top) < 1 && Math.abs(prev.left - left) < 1) return prev;
+       return { top, left };
+     });
+     ```
+4. **Proibição de `transition-all` em Listas e Tabelas**:
+   - `transition-all` instrui o browser a observar mudanças em TODAS as propriedades CSS de cada elemento durante hover. Em tabelas com muitas linhas, isso é caro.
+   - Use `transition-colors`, `transition-shadow`, ou `transition-transform` conforme a necessidade real.
+5. **Conflito entre Framer Motion e CSS Transitions em `transform`**:
+   - NUNCA combinar `hover:-translate-y-*` (Tailwind/CSS) com `whileHover: { y: ... }` (Framer Motion) no mesmo elemento ou par pai/filho. O browser aplica ambos simultaneamente, resultando em movimento seco e sem interpolação.
+   - Escolha UMA estratégia exclusivamente por componente: se usar `motion.*` com `whileHover`, desative `hoverable` do `Card` base e remova qualquer `hover:-translate-*` do Tailwind no mesmo elemento.
+6. **Zero Mutações de DOM ou Classes Globais Durante Scroll**:
+   - NUNCA adicionar ou remover classes no `<html>`, `<body>` ou elementos raiz durante o scroll (ex: flags `is-scrolling`). Mutações globais durante o scroll invalidam a árvore de renderização inteira do browser, forçando Style Recalculation e Layout/Reflow contínuos a cada frame.
+7. **Efeitos Glow e Gradientes Ultra-Leves (Zero Composite Masks Pesadas)**:
+   - Evitar pseudo-elementos com `-webkit-mask-composite: xor` ou `mask-composite: exclude` combinados com radial-gradients permanentes em múltiplos cards. Use gradientes radiais leves no background via `::after` com opacidade ativada no `:hover`.
+8. **Subcomponentes de Linha de Tabela Memoizados (`TransactionTableRow`) e Coordenadas Nativas**:
+   - Em tabelas com listas ou dezenas de registros, as linhas individuais DEVEM ser extraídas para subcomponentes memoizados (`React.memo`).
+   - Cálculos de cursor em cards (como o glow follower) DEVEM usar `e.nativeEvent.offsetX` e `e.nativeEvent.offsetY` nativos em vez de chamar `getBoundingClientRect()` repetidamente (zero layout reflow).
+
+
+

@@ -76,6 +76,11 @@ public class TransactionAggregatorServiceClient : ITransactionAggregatorServiceC
             queryParams.Add("includeIgnoredInTotals=true");
         }
 
+        if (!string.IsNullOrWhiteSpace(filter.ChannelGroup))
+        {
+            queryParams.Add($"channelGroup={Uri.EscapeDataString(filter.ChannelGroup)}");
+        }
+
         var queryString = string.Join("&", queryParams);
         using var request = new HttpRequestMessage(HttpMethod.Get, $"/api/v1/transactions?{queryString}");
         var response = await _httpClient.SendAndDeserializeAsync<PagedGatewayTransactionsDto>(request, ServiceName, _logger, ct);

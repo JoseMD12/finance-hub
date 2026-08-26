@@ -40,7 +40,8 @@ public static class TransactionGatewayEndpoints
                 query.CategoryId,
                 query.Type,
                 query.Search,
-                query.IncludeIgnoredInTotals ?? false);
+                query.IncludeIgnoredInTotals ?? false,
+                query.ChannelGroup);
 
             var result = await transactionClient.GetTransactionsAsync(filter, ct);
             return Results.Ok(result);

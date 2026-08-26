@@ -61,4 +61,5 @@ public record GatewayTransactionFilterDto(
     Guid? CategoryId = null,
     string? Type = null,
     string? Search = null,
-    bool IncludeIgnoredInTotals = false);
+    bool IncludeIgnoredInTotals = false,
+    string? ChannelGroup = null);

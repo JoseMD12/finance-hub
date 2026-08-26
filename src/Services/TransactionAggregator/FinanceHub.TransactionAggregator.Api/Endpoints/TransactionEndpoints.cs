@@ -44,7 +44,8 @@ public static class TransactionEndpoints
                 parameters.CategoryId,
                 parameters.Type,
                 parameters.Search,
-                parameters.IncludeIgnoredInTotals ?? false);
+                parameters.IncludeIgnoredInTotals ?? false,
+                parameters.ChannelGroup);
 
             var query = new GetTransactionsQuery(filter);
             var result = await handler.Handle(query, cancellationToken);
