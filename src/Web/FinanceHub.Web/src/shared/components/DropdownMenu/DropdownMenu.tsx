@@ -53,7 +53,10 @@ export const DropdownMenu: React.FC<DropdownMenuProps> = ({
     }
     if (left < 16) left = 16;
 
-    setPosition({ top, left });
+    setPosition((prev) => {
+      if (prev && Math.abs(prev.top - top) < 1 && Math.abs(prev.left - left) < 1) return prev;
+      return { top, left };
+    });
   }, [align, items.length]);
 
   useEffect(() => {
@@ -72,13 +75,13 @@ export const DropdownMenu: React.FC<DropdownMenuProps> = ({
     if (isOpen) {
       updatePosition();
       document.addEventListener('mousedown', handleClickOutside);
-      window.addEventListener('scroll', updatePosition, true);
+      window.addEventListener('scroll', updatePosition, { passive: true, capture: true });
       window.addEventListener('resize', updatePosition);
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
-      window.removeEventListener('scroll', updatePosition, true);
+      window.removeEventListener('scroll', updatePosition, { capture: true } as EventListenerOptions);
       window.removeEventListener('resize', updatePosition);
     };
   }, [isOpen, updatePosition]);

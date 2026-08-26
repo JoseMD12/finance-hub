@@ -132,56 +132,28 @@ body {
   font-family: var(--font-display);
 }
 
-/* Glow card — cursor follower highlight overlay */
+/* Glow card — high-performance hardware-accelerated ambient spotlight */
 .glow-card {
   position: relative;
+  overflow: hidden;
 }
 
-/* Border Spotlight Glow */
-.glow-card::before {
-  content: '';
-  position: absolute;
-  inset: -1px;
-  border-radius: inherit;
-  padding: 1px;
-  background: radial-gradient(
-    320px circle at var(--mouse-x, -999px) var(--mouse-y, -999px),
-    rgba(var(--glow-rgb, 224, 86, 151), 0.75),
-    transparent 65%
-  );
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  opacity: 0;
-  transition: opacity var(--duration-default) var(--ease-default);
-  pointer-events: none;
-  z-index: 15;
-}
-
-/* Surface Ambient Spotlight */
 .glow-card::after {
   content: '';
   position: absolute;
   inset: 0;
   border-radius: inherit;
   background: radial-gradient(
-    380px circle at var(--mouse-x, -999px) var(--mouse-y, -999px),
-    rgba(var(--glow-rgb, 224, 86, 151), 0.08),
+    300px circle at var(--mouse-x, -999px) var(--mouse-y, -999px),
+    rgba(var(--glow-rgb, 224, 86, 151), 0.12),
     transparent 70%
   );
   opacity: 0;
-  transition: opacity var(--duration-default) var(--ease-default);
+  transition: opacity 0.2s ease-out;
   pointer-events: none;
-  z-index: 15;
+  z-index: 10;
 }
 
-.glow-card:hover::before,
 .glow-card:hover::after {
   opacity: 1;
 }
-
-
-
-
-
-

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import { Card } from '@/shared/components/Card/Card';
 import { Skeleton } from '@/shared/components/Skeleton/Skeleton';
 import { formatCurrencyBRL, formatDateBR, formatTimeBR, formatPaymentMethod, maskSensitiveAccount } from '@/shared/utils/formatters';
@@ -18,7 +18,7 @@ export interface TransactionsTableProps {
   onToggleBillPayment: (transaction: TransactionDto) => void;
 }
 
-const BankLogoTag: React.FC<{ institutionId: string }> = ({ institutionId }) => {
+const BankLogoTag = memo<{ institutionId: string }>(({ institutionId }) => {
   const info = getInstitutionInfo(institutionId);
   const [hasError, setHasError] = useState(false);
 
@@ -43,16 +43,161 @@ const BankLogoTag: React.FC<{ institutionId: string }> = ({ institutionId }) => 
       <span className="whitespace-nowrap">{info.code}</span>
     </span>
   );
-};
+});
 
-export const TransactionsTable: React.FC<TransactionsTableProps> = ({
+BankLogoTag.displayName = 'BankLogoTag';
+
+interface TransactionTableRowProps {
+  transaction: TransactionDto;
+  onToggleNeutrality: (transaction: TransactionDto) => void;
+  onToggleBillPayment: (transaction: TransactionDto) => void;
+}
+
+const TransactionTableRow = memo<TransactionTableRowProps>(({
+  transaction: t,
+  onToggleNeutrality,
+  onToggleBillPayment,
+}) => {
+  return (
+    <tr
+      key={t.id}
+      className="hover:bg-slate-100/90 transition-colors duration-150 group"
+    >
+      {/* Data e Hora - Alinhadas à esquerda */}
+      <td className="px-6 py-4 text-left whitespace-nowrap">
+        <div className="flex flex-col">
+          <span className="text-slate-700 font-semibold tabular-nums">
+            {formatDateBR(t.transactionDateUtc)}
+          </span>
+          <span className="text-[10px] text-slate-400 font-mono tabular-nums">
+            {formatTimeBR(t.transactionDateUtc)}
+          </span>
+        </div>
+      </td>
+
+      {/* Descrição e Estabelecimento */}
+      <td className="px-6 py-4 text-left">
+        <div className="flex flex-col gap-0.5">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="font-bold text-slate-800 group-hover:text-secondary transition-colors text-xs">
+              {t.description}
+            </span>
+            {t.nature === 'Transfer' && (
+              <span
+                title="Transferência interna pareada entre contas próprias ou repasse (não computada nos totais)"
+                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200"
+              >
+                <ArrowLeftRight className="w-2.5 h-2.5 text-slate-500" aria-hidden="true" />
+                Transferência
+              </span>
+            )}
+            {t.isBillPayment && (
+              <span
+                title="Pagamento de fatura de cartão de crédito"
+                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200"
+              >
+                <Receipt className="w-2.5 h-2.5 text-blue-600" aria-hidden="true" />
+                Fatura
+              </span>
+            )}
+            {t.isIgnoredInTotals && t.nature !== 'Transfer' && (
+              <span
+                title="Movimentação patrimonial / dinheiro de trânsito (não computada nos totais operacionais)"
+                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-500 border border-slate-200"
+              >
+                Neutro
+              </span>
+            )}
+          </div>
+          {t.merchantName &&
+            t.merchantName.trim().toLowerCase() !== t.description.trim().toLowerCase() && (
+              <span className="text-[11px] text-slate-400 font-mono font-medium truncate max-w-md">
+                {t.merchantName}
+              </span>
+            )}
+        </div>
+      </td>
+
+      {/* Instituição e Conta - Alinhada à esquerda */}
+      <td className="px-6 py-4 text-left whitespace-nowrap">
+        <div className="flex flex-col items-start gap-1">
+          <BankLogoTag institutionId={t.institutionId} />
+          <span className="text-[10px] text-slate-400 font-mono whitespace-nowrap pl-0.5">
+            Conta {maskSensitiveAccount(t.accountNumber)}
+          </span>
+        </div>
+      </td>
+
+      {/* Categoria - Alinhada à esquerda */}
+      <td className="px-6 py-4 text-left whitespace-nowrap">
+        <CategoryTagPopover
+          transactionId={t.id}
+          currentCategoryId={t.categoryId}
+        />
+      </td>
+
+      {/* Meio de Pagamento - Centralizado na célula */}
+      <td className="px-6 py-4 text-center whitespace-nowrap">
+        <div className="flex items-center justify-center">
+          <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-surface-ground border border-border-subtle text-[11px] font-mono text-slate-600 whitespace-nowrap">
+            {formatPaymentMethod(t.channel)}
+          </span>
+        </div>
+      </td>
+
+      {/* Valor - Centralizado na célula com largura protegida e sem quebra */}
+      <td className="px-6 py-4 text-center whitespace-nowrap min-w-[150px]">
+        <div className="flex items-center justify-center">
+          <span
+            className={cn(
+              'tabular-nums tracking-tight font-mono inline-flex items-center justify-center gap-1 font-bold text-sm whitespace-nowrap',
+              t.type === 'Credit'
+                ? 'text-status-success'
+                : 'text-status-danger'
+            )}
+          >
+            {t.type === 'Credit' ? (
+              <ArrowUpRight className="w-4 h-4 shrink-0" aria-hidden="true" />
+            ) : (
+              <ArrowDownRight className="w-4 h-4 shrink-0" aria-hidden="true" />
+            )}
+            <span className="whitespace-nowrap">
+              {t.type === 'Credit' ? '+ ' : '- '}
+              {formatCurrencyBRL(t.amount)}
+            </span>
+          </span>
+        </div>
+      </td>
+
+      {/* Ações - Centralizado com Popover de Nota e DropdownMenu */}
+      <td className="px-6 py-4 text-center whitespace-nowrap min-w-[100px]">
+        <div className="flex items-center justify-center gap-1">
+          <TransactionNotePopover
+            transactionId={t.id}
+            currentNotes={t.notes}
+            description={t.description}
+          />
+          <TransactionActionDropdown
+            transaction={t}
+            onToggleNeutrality={onToggleNeutrality}
+            onToggleBillPayment={onToggleBillPayment}
+          />
+        </div>
+      </td>
+    </tr>
+  );
+});
+
+TransactionTableRow.displayName = 'TransactionTableRow';
+
+const TransactionsTableComponent: React.FC<TransactionsTableProps> = ({
   transactions,
   isLoading,
   onToggleNeutrality,
   onToggleBillPayment,
 }) => {
   const renderTableContent = () => {
-    if (isLoading) {
+    if (isLoading && transactions.length === 0) {
       // Structured Skeleton Loading (8 rows)
       return (
         <tbody className="divide-y divide-border-subtle bg-surface-card">
@@ -126,132 +271,12 @@ export const TransactionsTable: React.FC<TransactionsTableProps> = ({
     return (
       <tbody className="divide-y divide-border-subtle bg-surface-card">
         {transactions.map((t) => (
-          <tr
+          <TransactionTableRow
             key={t.id}
-            className="hover:bg-slate-100/90 transition-all duration-150 group"
-          >
-            {/* Data e Hora - Alinhadas à esquerda */}
-            <td className="px-6 py-4 text-left whitespace-nowrap">
-              <div className="flex flex-col">
-                <span className="text-slate-700 font-semibold tabular-nums">
-                  {formatDateBR(t.transactionDateUtc)}
-                </span>
-                <span className="text-[10px] text-slate-400 font-mono tabular-nums">
-                  {formatTimeBR(t.transactionDateUtc)}
-                </span>
-              </div>
-            </td>
-
-            {/* Descrição e Estabelecimento - Sanitizado no topo em negrito, nome bruto embaixo */}
-            <td className="px-6 py-4 text-left">
-              <div className="flex flex-col gap-0.5">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-bold text-slate-800 group-hover:text-secondary transition-colors text-xs">
-                    {t.description}
-                  </span>
-                  {t.nature === 'Transfer' && (
-                    <span
-                      title="Transferência interna pareada entre contas próprias ou repasse (não computada nos totais)"
-                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200"
-                    >
-                      <ArrowLeftRight className="w-2.5 h-2.5 text-slate-500" aria-hidden="true" />
-                      Transferência
-                    </span>
-                  )}
-                  {t.isBillPayment && (
-                    <span
-                      title="Pagamento de fatura de cartão de crédito"
-                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200"
-                    >
-                      <Receipt className="w-2.5 h-2.5 text-blue-600" aria-hidden="true" />
-                      Fatura
-                    </span>
-                  )}
-                  {t.isIgnoredInTotals && t.nature !== 'Transfer' && (
-                    <span
-                      title="Movimentação patrimonial / dinheiro de trânsito (não computada nos totais operacionais)"
-                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-500 border border-slate-200"
-                    >
-                      Neutro
-                    </span>
-                  )}
-                </div>
-                {t.merchantName &&
-                  t.merchantName.trim().toLowerCase() !== t.description.trim().toLowerCase() && (
-                    <span className="text-[11px] text-slate-400 font-mono font-medium truncate max-w-md">
-                      {t.merchantName}
-                    </span>
-                  )}
-              </div>
-            </td>
-
-            {/* Instituição e Conta - Alinhada à esquerda */}
-            <td className="px-6 py-4 text-left whitespace-nowrap">
-              <div className="flex flex-col items-start gap-1">
-                <BankLogoTag institutionId={t.institutionId} />
-                <span className="text-[10px] text-slate-400 font-mono whitespace-nowrap pl-0.5">
-                  Conta {maskSensitiveAccount(t.accountNumber)}
-                </span>
-              </div>
-            </td>
-
-            {/* Categoria - Alinhada à esquerda */}
-            <td className="px-6 py-4 text-left whitespace-nowrap">
-              <CategoryTagPopover
-                transactionId={t.id}
-                currentCategoryId={t.categoryId}
-              />
-            </td>
-
-            {/* Meio de Pagamento - Centralizado na célula */}
-            <td className="px-6 py-4 text-center whitespace-nowrap">
-              <div className="flex items-center justify-center">
-                <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-surface-ground border border-border-subtle text-[11px] font-mono text-slate-600 whitespace-nowrap">
-                  {formatPaymentMethod(t.channel)}
-                </span>
-              </div>
-            </td>
-
-            {/* Valor - Centralizado na célula com largura protegida e sem quebra */}
-            <td className="px-6 py-4 text-center whitespace-nowrap min-w-[150px]">
-              <div className="flex items-center justify-center">
-                <span
-                  className={cn(
-                    'tabular-nums tracking-tight font-mono inline-flex items-center justify-center gap-1 font-bold text-sm whitespace-nowrap',
-                    t.type === 'Credit'
-                      ? 'text-status-success'
-                      : 'text-status-danger'
-                  )}
-                >
-                  {t.type === 'Credit' ? (
-                    <ArrowUpRight className="w-4 h-4 shrink-0" aria-hidden="true" />
-                  ) : (
-                    <ArrowDownRight className="w-4 h-4 shrink-0" aria-hidden="true" />
-                  )}
-                  <span className="whitespace-nowrap">
-                    {t.type === 'Credit' ? '+ ' : '- '}
-                    {formatCurrencyBRL(t.amount)}
-                  </span>
-                </span>
-              </div>
-            </td>
-
-            {/* Ações - Centralizado com Popover de Nota (primeiro) e DropdownMenu (segundo) */}
-            <td className="px-6 py-4 text-center whitespace-nowrap min-w-[100px]">
-              <div className="flex items-center justify-center gap-1">
-                <TransactionNotePopover
-                  transactionId={t.id}
-                  currentNotes={t.notes}
-                  description={t.description}
-                />
-                <TransactionActionDropdown
-                  transaction={t}
-                  onToggleNeutrality={onToggleNeutrality}
-                  onToggleBillPayment={onToggleBillPayment}
-                />
-              </div>
-            </td>
-          </tr>
+            transaction={t}
+            onToggleNeutrality={onToggleNeutrality}
+            onToggleBillPayment={onToggleBillPayment}
+          />
         ))}
       </tbody>
     );
@@ -279,3 +304,4 @@ export const TransactionsTable: React.FC<TransactionsTableProps> = ({
   );
 };
 
+export const TransactionsTable = memo(TransactionsTableComponent);

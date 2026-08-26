@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { useReducedMotion } from 'framer-motion';
 import { cn } from '@/shared/utils/cn';
 
@@ -19,15 +19,19 @@ export const Card: React.FC<CardProps> = ({
   ...props
 }) => {
   const prefersReduced = useReducedMotion();
+  const hasGlow = Boolean(glowRgb && !prefersReduced);
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!prefersReduced && glowRgb) {
-      const rect = e.currentTarget.getBoundingClientRect();
-      e.currentTarget.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
-      e.currentTarget.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (hasGlow) {
+      // Usa offsetX/offsetY nativos do evento sem chamar getBoundingClientRect() (zero layout reflow)
+      const target = e.currentTarget;
+      const x = (e.nativeEvent as MouseEvent).offsetX;
+      const y = (e.nativeEvent as MouseEvent).offsetY;
+      target.style.setProperty('--mouse-x', `${x}px`);
+      target.style.setProperty('--mouse-y', `${y}px`);
     }
     onMouseMove?.(e);
-  };
+  }, [hasGlow, onMouseMove]);
 
   const variantStyles = {
     default: 'bg-surface-card border border-border-subtle shadow-card',
@@ -35,17 +39,15 @@ export const Card: React.FC<CardProps> = ({
     muted: 'bg-surface-muted border border-border-subtle',
   };
 
-  const hasGlow = Boolean(glowRgb && !prefersReduced);
-
   return (
     <div
-      onMouseMove={handleMouseMove}
+      onMouseMove={hasGlow ? handleMouseMove : onMouseMove}
       style={{
         ...style,
         ...(glowRgb ? { ['--glow-rgb' as string]: glowRgb } : {}),
       }}
       className={cn(
-        'relative rounded-2xl p-6 transition-[box-shadow,transform] duration-200 block',
+        'relative rounded-2xl p-6 transition-[box-shadow] duration-200 block',
         variantStyles[variant],
         hoverable && 'hover:shadow-elevated hover:-translate-y-0.5',
         hasGlow && 'glow-card',
@@ -57,5 +59,3 @@ export const Card: React.FC<CardProps> = ({
     </div>
   );
 };
-
-

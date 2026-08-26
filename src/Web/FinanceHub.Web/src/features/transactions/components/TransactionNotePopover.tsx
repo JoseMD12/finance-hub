@@ -43,7 +43,10 @@ export const TransactionNotePopover: React.FC<TransactionNotePopoverProps> = ({
       top = Math.max(16, rect.top - popoverHeight - 6);
     }
 
-    setCoords({ top, left });
+    setCoords((prev) => {
+      if (Math.abs(prev.top - top) < 1 && Math.abs(prev.left - left) < 1) return prev;
+      return { top, left };
+    });
   }, []);
 
   const handleOpen = () => {
@@ -69,13 +72,13 @@ export const TransactionNotePopover: React.FC<TransactionNotePopoverProps> = ({
     if (isOpen) {
       updatePosition();
       document.addEventListener('mousedown', handleClickOutside);
-      window.addEventListener('scroll', updatePosition, true);
+      window.addEventListener('scroll', updatePosition, { passive: true, capture: true });
       window.addEventListener('resize', updatePosition);
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
-      window.removeEventListener('scroll', updatePosition, true);
+      window.removeEventListener('scroll', updatePosition, { capture: true } as EventListenerOptions);
       window.removeEventListener('resize', updatePosition);
     };
   }, [isOpen, updatePosition]);

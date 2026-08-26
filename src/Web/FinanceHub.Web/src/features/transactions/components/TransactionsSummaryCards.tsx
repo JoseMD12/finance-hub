@@ -13,13 +13,15 @@ export interface TransactionsSummaryCardsProps {
   isLoading?: boolean;
 }
 
-export const TransactionsSummaryCards: React.FC<TransactionsSummaryCardsProps> = ({
+const CARD_HOVER_CLASS = 'hover:-translate-y-1 transition-transform duration-[180ms] ease-out h-full';
+
+const TransactionsSummaryCardsComponent: React.FC<TransactionsSummaryCardsProps> = ({
   summary,
   isLoading,
 }) => {
   const prefersReduced = useReducedMotion();
 
-  if (isLoading) {
+  if (isLoading && !summary) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" aria-busy="true" aria-label="Carregando resumo financeiro">
         {[1, 2, 3, 4].map((i) => (
@@ -42,142 +44,158 @@ export const TransactionsSummaryCards: React.FC<TransactionsSummaryCardsProps> =
   const expense = summary?.totalExpense ?? 0;
   const net = summary?.netBalance ?? 0;
 
-  const getMotionProps = (delay: number) => {
+  // Animação de entrada apenas — hover lift via CSS puro (sem Framer Motion no hover)
+  // para evitar que o Framer Motion detecte hover-state durante scroll e execute animações no main thread
+  const getEntryAnimation = (delay: number) => {
     if (prefersReduced) return {};
     return {
-      initial: { opacity: 0, y: 12 },
+      initial: { opacity: 0, y: 6 },
       animate: { opacity: 1, y: 0 },
-      transition: { duration: 0.3, delay, ease: [0.4, 0, 0.2, 1] as const },
+      transition: { duration: 0.2, delay, ease: [0.25, 0.1, 0.25, 1] as const },
     };
   };
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       {/* 1. Saldo Real Consolidado em Contas */}
-      <motion.div {...getMotionProps(0)}>
-        <GlowCard
-          glowRgb="59, 130, 246"
-          className="p-4 flex flex-col justify-between hover:border-slate-300 hover:shadow-elevated transition-all duration-200 h-full"
-        >
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs font-semibold text-slate-500">Saldo em Contas</span>
-              <Tooltip content="Compras podem demorar até 48h para entrar no seu histórico" position="right">
-                <button
-                  type="button"
-                  aria-label="Informações sobre o prazo de sincronização"
-                  className="p-0.5 rounded-full text-slate-400 hover:text-brand transition-colors cursor-help focus:outline-none bg-transparent border-0"
-                >
-                  <Info className="w-3.5 h-3.5" aria-hidden="true" />
-                </button>
-              </Tooltip>
+      <motion.div {...getEntryAnimation(0)}>
+        <div className={CARD_HOVER_CLASS}>
+          <GlowCard
+            hoverable={false}
+            glowRgb="59, 130, 246"
+            className="p-4 flex flex-col justify-between hover:border-slate-300 hover:shadow-elevated transition-shadow duration-200 h-full cursor-default"
+          >
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-semibold text-slate-500">Saldo em Contas</span>
+                <Tooltip content="Compras podem demorar até 48h para entrar no seu histórico" position="right">
+                  <button
+                    type="button"
+                    aria-label="Informações sobre o prazo de sincronização"
+                    className="p-0.5 rounded-full text-slate-400 hover:text-brand transition-colors cursor-help focus:outline-none bg-transparent border-0"
+                  >
+                    <Info className="w-3.5 h-3.5" aria-hidden="true" />
+                  </button>
+                </Tooltip>
+              </div>
+              <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 ring-1 ring-blue-500/20 shrink-0">
+                <Landmark className="w-4 h-4" aria-hidden="true" />
+              </div>
             </div>
-            <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 ring-1 ring-blue-500/20 shrink-0">
-              <Landmark className="w-4 h-4" aria-hidden="true" />
+
+            <div className="my-2">
+              <span className="text-xl font-black font-display text-slate-900 tabular-nums tracking-tight block">
+                {formatCurrencyBRL(realBalance)}
+              </span>
             </div>
-          </div>
 
-          <div className="my-2">
-            <span className="text-xl font-black font-display text-slate-900 tabular-nums tracking-tight block">
-              {formatCurrencyBRL(realBalance)}
-            </span>
-          </div>
-
-          <div className="flex items-center justify-between text-[11px] pt-1.5 border-t border-slate-100/80 text-slate-500">
-            <span className="inline-flex items-center gap-1 font-medium text-slate-500">
-              <CreditCard className="w-3 h-3 text-slate-400" aria-hidden="true" />
-              Faturas:
-            </span>
-            <span className="font-semibold font-mono text-slate-700">
-              {formatCurrencyBRL(openCreditCards)}
-            </span>
-          </div>
-        </GlowCard>
+            <div className="flex items-center justify-between text-[11px] pt-1.5 border-t border-slate-100/80 text-slate-500">
+              <span className="inline-flex items-center gap-1 font-medium text-slate-500">
+                <CreditCard className="w-3 h-3 text-slate-400" aria-hidden="true" />
+                Faturas:
+              </span>
+              <span className="font-semibold font-mono text-slate-700">
+                {formatCurrencyBRL(openCreditCards)}
+              </span>
+            </div>
+          </GlowCard>
+        </div>
       </motion.div>
 
       {/* 2. Entradas do Período */}
-      <motion.div {...getMotionProps(0.04)}>
-        <GlowCard
-          glowRgb="46, 204, 113"
-          className="p-4 flex flex-col justify-between hover:border-slate-300 hover:shadow-elevated transition-all duration-200 h-full"
-        >
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-xs font-semibold text-slate-500">Entradas do Mês</span>
-            <div className="w-9 h-9 rounded-xl bg-status-success-bg flex items-center justify-center text-status-success ring-1 ring-status-success/20 shrink-0">
-              <ArrowUpRight className="w-4 h-4" aria-hidden="true" />
+      <motion.div {...getEntryAnimation(0.02)}>
+        <div className={CARD_HOVER_CLASS}>
+          <GlowCard
+            hoverable={false}
+            glowRgb="46, 204, 113"
+            className="p-4 flex flex-col justify-between hover:border-slate-300 hover:shadow-elevated transition-shadow duration-200 h-full cursor-default"
+          >
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-semibold text-slate-500">Entradas do Mês</span>
+              <div className="w-9 h-9 rounded-xl bg-status-success-bg flex items-center justify-center text-status-success ring-1 ring-status-success/20 shrink-0">
+                <ArrowUpRight className="w-4 h-4" aria-hidden="true" />
+              </div>
             </div>
-          </div>
 
-          <div className="my-2">
-            <span className="text-xl font-black font-display text-status-success tabular-nums tracking-tight block">
-              + {formatCurrencyBRL(income)}
-            </span>
-          </div>
+            <div className="my-2">
+              <span className="text-xl font-black font-display text-status-success tabular-nums tracking-tight block">
+                + {formatCurrencyBRL(income)}
+              </span>
+            </div>
 
-          <div className="text-[11px] pt-1.5 border-t border-slate-100/80 text-slate-400 font-medium truncate">
-            Receitas operacionais
-          </div>
-        </GlowCard>
+            <div className="text-[11px] pt-1.5 border-t border-slate-100/80 text-slate-400 font-medium truncate">
+              Receitas operacionais
+            </div>
+          </GlowCard>
+        </div>
       </motion.div>
 
       {/* 3. Saídas do Período */}
-      <motion.div {...getMotionProps(0.08)}>
-        <GlowCard
-          glowRgb="255, 89, 100"
-          className="p-4 flex flex-col justify-between hover:border-slate-300 hover:shadow-elevated transition-all duration-200 h-full"
-        >
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-xs font-semibold text-slate-500">Saídas do Mês</span>
-            <div className="w-9 h-9 rounded-xl bg-status-danger-bg flex items-center justify-center text-status-danger ring-1 ring-status-danger/20 shrink-0">
-              <ArrowDownRight className="w-4 h-4" aria-hidden="true" />
+      <motion.div {...getEntryAnimation(0.04)}>
+        <div className={CARD_HOVER_CLASS}>
+          <GlowCard
+            hoverable={false}
+            glowRgb="255, 89, 100"
+            className="p-4 flex flex-col justify-between hover:border-slate-300 hover:shadow-elevated transition-shadow duration-200 h-full cursor-default"
+          >
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-semibold text-slate-500">Saídas do Mês</span>
+              <div className="w-9 h-9 rounded-xl bg-status-danger-bg flex items-center justify-center text-status-danger ring-1 ring-status-danger/20 shrink-0">
+                <ArrowDownRight className="w-4 h-4" aria-hidden="true" />
+              </div>
             </div>
-          </div>
 
-          <div className="my-2">
-            <span className="text-xl font-black font-display text-status-danger tabular-nums tracking-tight block">
-              - {formatCurrencyBRL(expense)}
-            </span>
-          </div>
+            <div className="my-2">
+              <span className="text-xl font-black font-display text-status-danger tabular-nums tracking-tight block">
+                - {formatCurrencyBRL(expense)}
+              </span>
+            </div>
 
-          <div className="text-[11px] pt-1.5 border-t border-slate-100/80 text-slate-400 font-medium truncate">
-            Despesas de vida
-          </div>
-        </GlowCard>
+            <div className="text-[11px] pt-1.5 border-t border-slate-100/80 text-slate-400 font-medium truncate">
+              Despesas de vida
+            </div>
+          </GlowCard>
+        </div>
       </motion.div>
 
       {/* 4. Resultado / Economia Líquida */}
-      <motion.div {...getMotionProps(0.12)}>
-        <GlowCard
-          glowRgb={net >= 0 ? "46, 204, 113" : "224, 86, 151"}
-          className="p-4 flex flex-col justify-between hover:border-slate-300 hover:shadow-elevated transition-all duration-200 h-full"
-        >
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-xs font-semibold text-slate-500">Resultado do Mês</span>
-            <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ring-1 ${
-              net >= 0 
-                ? 'bg-emerald-50 text-emerald-600 ring-emerald-500/20' 
-                : 'bg-brand-light text-brand ring-brand/20'
-            }`}>
-              <Wallet className="w-4 h-4" aria-hidden="true" />
+      <motion.div {...getEntryAnimation(0.06)}>
+        <div className={CARD_HOVER_CLASS}>
+          <GlowCard
+            hoverable={false}
+            glowRgb={net >= 0 ? "46, 204, 113" : "224, 86, 151"}
+            className="p-4 flex flex-col justify-between hover:border-slate-300 hover:shadow-elevated transition-shadow duration-200 h-full cursor-default"
+          >
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-semibold text-slate-500">Resultado do Mês</span>
+              <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ring-1 ${
+                net >= 0 
+                  ? 'bg-emerald-50 text-emerald-600 ring-emerald-500/20' 
+                  : 'bg-brand-light text-brand ring-brand/20'
+              }`}>
+                <Wallet className="w-4 h-4" aria-hidden="true" />
+              </div>
             </div>
-          </div>
 
-          <div className="my-2">
-            <span
-              className={`text-xl font-black font-display tabular-nums tracking-tight block ${
-                net >= 0 ? 'text-emerald-700' : 'text-brand-dark'
-              }`}
-            >
-              {net >= 0 ? '+ ' : '- '}
-              {formatCurrencyBRL(Math.abs(net))}
-            </span>
-          </div>
+            <div className="my-2">
+              <span
+                className={`text-xl font-black font-display tabular-nums tracking-tight block ${
+                  net >= 0 ? 'text-emerald-700' : 'text-brand-dark'
+                }`}
+              >
+                {net >= 0 ? '+ ' : '- '}
+                {formatCurrencyBRL(Math.abs(net))}
+              </span>
+            </div>
 
-          <div className="text-[11px] pt-1.5 border-t border-slate-100/80 text-slate-500 font-medium truncate">
-            {net >= 0 ? 'Superávit no período' : 'Déficit no período'}
-          </div>
-        </GlowCard>
+            <div className="text-[11px] pt-1.5 border-t border-slate-100/80 text-slate-500 font-medium truncate">
+              {net >= 0 ? 'Superávit no período' : 'Déficit no período'}
+            </div>
+          </GlowCard>
+        </div>
       </motion.div>
     </div>
   );
 };
+
+export const TransactionsSummaryCards = React.memo(TransactionsSummaryCardsComponent);

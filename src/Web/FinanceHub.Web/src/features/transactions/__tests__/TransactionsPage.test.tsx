@@ -181,4 +181,34 @@ describe('TransactionsPage', () => {
       reason: 'Marcado manualmente como neutro/trânsito',
     });
   });
+
+  it('deve disparar a busca com channelGroup ao selecionar Meio de Pagamento', async () => {
+    const user = userEvent.setup();
+    const queryClient = createTestQueryClient();
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <TransactionsPage />
+      </QueryClientProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Supermercado Silva')).toBeInTheDocument();
+    });
+
+    const channelSelectTrigger = screen.getByRole('button', { name: 'Meio de Pagamento' });
+    await user.click(channelSelectTrigger);
+
+    const creditOption = screen.getByRole('option', { name: 'Cartão de Crédito' });
+    await user.click(creditOption);
+
+    await waitFor(() => {
+      expect(transactionsApi.getTransactionsApi).toHaveBeenCalledWith(
+        expect.objectContaining({
+          channelGroup: 'credit',
+        }),
+        expect.anything()
+      );
+    });
+  });
 });

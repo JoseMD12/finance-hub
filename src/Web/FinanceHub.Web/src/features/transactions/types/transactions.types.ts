@@ -11,7 +11,8 @@ export interface CategoryDto {
 }
 
 export type TransactionType = 'Credit' | 'Debit';
-export type DatePresetKey = 'current-month' | 'previous-month' | 'last-30' | 'current-year' | 'all-time';
+export type DatePresetKey = 'current-month' | 'previous-month' | 'last-30' | 'current-year' | 'all-time' | 'custom';
+export type ChannelGroupFilter = 'account' | 'credit';
 
 export interface TransactionDto {
   readonly id: string;
@@ -60,7 +61,8 @@ export interface TransactionFilterParams {
   readonly pageSize?: number;
   readonly startDate?: string;
   readonly endDate?: string;
-  readonly datePreset?: string;
+  readonly datePreset?: DatePresetKey;
+  readonly channelGroup?: ChannelGroupFilter;
   readonly institutionId?: string;
   readonly categoryId?: string;
   readonly type?: string;

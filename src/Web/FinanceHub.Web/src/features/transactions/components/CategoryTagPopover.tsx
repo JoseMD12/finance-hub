@@ -39,18 +39,19 @@ export const CategoryTagPopover: React.FC<CategoryTagPopoverProps> = ({
     const dropdownWidth = 288; // w-72 (18rem = 288px)
 
     let top = rect.bottom + 6;
-    // Se estourar a parte inferior da janela, abre para cima
     if (top + dropdownHeight > window.innerHeight && rect.top > dropdownHeight) {
       top = Math.max(10, rect.top - dropdownHeight - 6);
     }
 
     let left = rect.left;
-    // Se estourar a borda direita da janela, ajusta para a esquerda
     if (left + dropdownWidth > window.innerWidth - 16) {
       left = Math.max(16, window.innerWidth - dropdownWidth - 16);
     }
 
-    setPosition({ top, left });
+    setPosition((prev) => {
+      if (prev && Math.abs(prev.top - top) < 1 && Math.abs(prev.left - left) < 1) return prev;
+      return { top, left };
+    });
   }, []);
 
   // Fechar ao clicar fora (verificando tanto o gatilho quanto o conteúdo do portal)
@@ -68,7 +69,7 @@ export const CategoryTagPopover: React.FC<CategoryTagPopoverProps> = ({
     if (isOpen) {
       updatePosition();
       document.addEventListener('mousedown', handleClickOutside);
-      window.addEventListener('scroll', updatePosition, true);
+      window.addEventListener('scroll', updatePosition, { passive: true, capture: true });
       window.addEventListener('resize', updatePosition);
 
       // Foco automático no input de busca ao abrir
@@ -79,7 +80,7 @@ export const CategoryTagPopover: React.FC<CategoryTagPopoverProps> = ({
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
-      window.removeEventListener('scroll', updatePosition, true);
+      window.removeEventListener('scroll', updatePosition, { capture: true } as EventListenerOptions);
       window.removeEventListener('resize', updatePosition);
     };
   }, [isOpen, updatePosition]);

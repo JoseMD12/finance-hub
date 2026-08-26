@@ -1,12 +1,14 @@
 import React from 'react';
-import { Search, RotateCcw, X, SlidersHorizontal, Calendar, Landmark, ArrowUpRight, ArrowDownRight, ArrowLeftRight } from 'lucide-react';
+import { Search, RotateCcw, X, SlidersHorizontal, Calendar, Landmark, ArrowUpRight, ArrowDownRight, ArrowLeftRight, CreditCard } from 'lucide-react';
 import { CustomSelect } from '@/shared/components/Select/CustomSelect';
 import { CategoryFilterSelect } from './CategoryFilterSelect';
 import { cn } from '@/shared/utils/cn';
 import { useCategoriesQuery } from '../hooks/useCategoriesQuery';
 import { getInstitutionLogoUrl } from '@/shared/constants/institutions';
 import { Switch } from '@/shared/components/Switch/Switch';
-import type { TransactionFilterParams, DatePresetKey } from '../types/transactions.types';
+import { DateRangePicker } from '@/shared/components/DateRangePicker/DateRangePicker';
+import type { DateRangeValue } from '@/shared/components/DateRangePicker/DateRangePicker';
+import type { TransactionFilterParams, DatePresetKey, ChannelGroupFilter } from '../types/transactions.types';
 import { getPresetDateRange } from '../utils/datePresets';
 
 export interface TransactionsFilterBarProps {
@@ -30,7 +32,7 @@ const DATE_PRESET_OPTIONS: DatePresetOption[] = [
   { key: 'all-time', label: 'Todo o Histórico' },
 ];
 
-export const TransactionsFilterBar: React.FC<TransactionsFilterBarProps> = ({
+const TransactionsFilterBarComponent: React.FC<TransactionsFilterBarProps> = ({
   filters,
   onFilterChange,
   onResetFilters,
@@ -39,7 +41,23 @@ export const TransactionsFilterBar: React.FC<TransactionsFilterBarProps> = ({
 }) => {
   const { data: categories = [] } = useCategoriesQuery();
 
-  const institutionOptions = [
+  // Estado local para busca com debounce de 300ms
+  const [searchInput, setSearchInput] = React.useState(filters.search ?? '');
+
+  React.useEffect(() => {
+    setSearchInput(filters.search ?? '');
+  }, [filters.search]);
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      if ((searchInput || undefined) !== (filters.search || undefined)) {
+        onFilterChange({ search: searchInput || undefined, page: 1 });
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchInput, filters.search, onFilterChange]);
+
+  const institutionOptions = React.useMemo(() => [
     {
       value: '',
       label: 'Todas as Instituições',
@@ -60,9 +78,9 @@ export const TransactionsFilterBar: React.FC<TransactionsFilterBarProps> = ({
       label: 'Mercado Pago',
       icon: <img src={getInstitutionLogoUrl('mercadopago') || ''} alt="" className="w-3.5 h-3.5 object-contain rounded-xs" />,
     },
-  ];
+  ], []);
 
-  const typeOptions = [
+  const typeOptions = React.useMemo(() => [
     {
       value: '',
       label: 'Todos os Tipos',
@@ -78,7 +96,25 @@ export const TransactionsFilterBar: React.FC<TransactionsFilterBarProps> = ({
       label: 'Entradas / Receitas',
       icon: <ArrowUpRight className="w-3.5 h-3.5 text-status-success shrink-0" />,
     },
-  ];
+  ], []);
+
+  const channelGroupOptions = React.useMemo(() => [
+    {
+      value: '',
+      label: 'Todos os Meios',
+      icon: <ArrowLeftRight className="w-3.5 h-3.5 text-brand shrink-0" />,
+    },
+    {
+      value: 'account',
+      label: 'Conta / Saldo',
+      icon: <Landmark className="w-3.5 h-3.5 text-brand shrink-0" />,
+    },
+    {
+      value: 'credit',
+      label: 'Cartão de Crédito',
+      icon: <CreditCard className="w-3.5 h-3.5 text-brand shrink-0" />,
+    },
+  ], []);
 
   const allCategories = React.useMemo(() => {
     const list: { id: string; name: string }[] = [];
@@ -98,12 +134,14 @@ export const TransactionsFilterBar: React.FC<TransactionsFilterBarProps> = ({
     (filters.institutionId ? 1 : 0) +
     (filters.categoryId ? 1 : 0) +
     (filters.type ? 1 : 0) +
+    (filters.channelGroup ? 1 : 0) +
     (activePreset !== 'current-month' ? 1 : 0);
 
   const selectedInstitutionLabel = institutionOptions.find(
     (o) => o.value === filters.institutionId
   )?.label;
   const selectedTypeLabel = typeOptions.find((o) => o.value === filters.type)?.label;
+  const selectedChannelLabel = channelGroupOptions.find((o) => o.value === filters.channelGroup)?.label;
   const selectedCategoryLabel = allCategories.find(
     (o) => o.id === filters.categoryId
   )?.name;
@@ -118,11 +156,20 @@ export const TransactionsFilterBar: React.FC<TransactionsFilterBarProps> = ({
     });
   };
 
+  const handleApplyCustomDateRange = (range: DateRangeValue) => {
+    onFilterChange({
+      startDate: range.startDate,
+      endDate: range.endDate,
+      datePreset: 'custom',
+      page: 1,
+    });
+  };
+
   return (
     <div className="p-4 bg-surface-card rounded-2xl border border-border-subtle shadow-card flex flex-col gap-4">
-      {/* Grid Principal de Filtros */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-end">
-        {/* Busca textual */}
+      {/* Grid Principal de 5 Filtros */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 items-end">
+        {/* Busca textual com debounce */}
         <div className="flex flex-col gap-1.5 w-full">
           <label htmlFor="transactions-search-input" className="text-xs font-semibold text-slate-700 pl-1">
             Buscar por Termo
@@ -132,15 +179,18 @@ export const TransactionsFilterBar: React.FC<TransactionsFilterBarProps> = ({
             <input
               id="transactions-search-input"
               type="text"
-              placeholder="Descrição, loja ou estabelecimento..."
-              value={filters.search ?? ''}
-              onChange={(e) => onFilterChange({ search: e.target.value || undefined, page: 1 })}
+              placeholder="Descrição ou loja..."
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
               className="w-full h-full pl-10 pr-8 text-xs rounded-xl border border-border-subtle bg-surface-ground text-slate-800 focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 transition-all"
             />
-            {filters.search && (
+            {searchInput && (
               <button
                 type="button"
-                onClick={() => onFilterChange({ search: undefined, page: 1 })}
+                onClick={() => {
+                  setSearchInput('');
+                  onFilterChange({ search: undefined, page: 1 });
+                }}
                 aria-label="Limpar busca"
                 className="absolute right-2.5 p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-200/60 transition-colors cursor-pointer"
               >
@@ -178,6 +228,16 @@ export const TransactionsFilterBar: React.FC<TransactionsFilterBarProps> = ({
             label="Tipo de Lançamento"
           />
         </div>
+
+        {/* Filtro Meio de Pagamento */}
+        <div>
+          <CustomSelect
+            options={channelGroupOptions}
+            value={filters.channelGroup ?? ''}
+            onChange={(val) => onFilterChange({ channelGroup: (val as ChannelGroupFilter) || undefined, page: 1 })}
+            label="Meio de Pagamento"
+          />
+        </div>
       </div>
 
       {/* Barra de Presets Rápidos de Período e Switch de Totais Neutros */}
@@ -208,10 +268,18 @@ export const TransactionsFilterBar: React.FC<TransactionsFilterBarProps> = ({
                 </button>
               );
             })}
+
+            {/* DateRangePicker para o preset Personalizado */}
+            <DateRangePicker
+              startDate={filters.startDate}
+              endDate={filters.endDate}
+              isActive={activePreset === 'custom' && Boolean(filters.startDate && filters.endDate)}
+              onApply={handleApplyCustomDateRange}
+            />
           </div>
         </div>
 
-        {/* Novo Switch para controle de cálculo de Neutros / Transferências */}
+        {/* Switch para controle de cálculo de Neutros / Transferências */}
         <div className="p-2 rounded-xl bg-surface-ground border border-border-subtle flex items-center gap-2">
           <Switch
             checked={Boolean(includeIgnoredInTotals)}
@@ -235,7 +303,7 @@ export const TransactionsFilterBar: React.FC<TransactionsFilterBarProps> = ({
             <>
               {activePreset && (
                 <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-surface-ground border border-border-subtle text-slate-700 font-medium">
-                  {DATE_PRESET_OPTIONS.find(p => p.key === activePreset)?.label ?? activePreset}
+                  {DATE_PRESET_OPTIONS.find(p => p.key === activePreset)?.label ?? (activePreset === 'custom' ? 'Personalizado' : activePreset)}
                 </span>
               )}
 
@@ -294,6 +362,20 @@ export const TransactionsFilterBar: React.FC<TransactionsFilterBarProps> = ({
                   </button>
                 </span>
               )}
+
+              {filters.channelGroup && selectedChannelLabel && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-surface-ground border border-border-subtle text-slate-700 font-medium">
+                  Meio: {selectedChannelLabel}
+                  <button
+                    type="button"
+                    onClick={() => onFilterChange({ channelGroup: undefined, page: 1 })}
+                    className="hover:text-brand transition-colors cursor-pointer"
+                    aria-label="Remover filtro de meio de pagamento"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </span>
+              )}
             </>
           )}
         </div>
@@ -312,3 +394,5 @@ export const TransactionsFilterBar: React.FC<TransactionsFilterBarProps> = ({
     </div>
   );
 };
+
+export const TransactionsFilterBar = React.memo(TransactionsFilterBarComponent);

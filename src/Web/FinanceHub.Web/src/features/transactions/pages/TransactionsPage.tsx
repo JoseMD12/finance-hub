@@ -33,11 +33,11 @@ export const TransactionsPage: React.FC = () => {
   const currentPage = filters.page ?? 1;
   const pageSize = filters.pageSize ?? 20;
 
-  const handleFilterChange = (newFilters: Partial<TransactionFilterParams>) => {
+  const handleFilterChange = React.useCallback((newFilters: Partial<TransactionFilterParams>) => {
     setFilters((prev) => ({ ...prev, ...newFilters }));
-  };
+  }, []);
 
-  const handleResetFilters = () => {
+  const handleResetFilters = React.useCallback(() => {
     const range = getPresetDateRange('current-month');
     setFilters({
       page: 1,
@@ -47,24 +47,24 @@ export const TransactionsPage: React.FC = () => {
       datePreset: 'current-month',
       includeIgnoredInTotals: false,
     });
-  };
+  }, []);
 
-  const handleToggleNeutrality = async (transaction: TransactionDto) => {
+  const handleToggleNeutrality = React.useCallback(async (transaction: TransactionDto) => {
     const nextIgnored = !transaction.isIgnoredInTotals;
     await toggleNeutralityMutation.mutateAsync({
       transactionId: transaction.id,
       isIgnoredInTotals: nextIgnored,
       reason: nextIgnored ? 'Marcado manualmente como neutro/trânsito' : 'Reativado manualmente',
     });
-  };
+  }, [toggleNeutralityMutation]);
 
-  const handleToggleBillPayment = async (transaction: TransactionDto) => {
+  const handleToggleBillPayment = React.useCallback(async (transaction: TransactionDto) => {
     const nextIsBillPayment = !transaction.isBillPayment;
     await toggleBillPaymentMutation.mutateAsync({
       transactionId: transaction.id,
       isBillPayment: nextIsBillPayment,
     });
-  };
+  }, [toggleBillPaymentMutation]);
 
   return (
     <PageContainer
