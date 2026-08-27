@@ -12,7 +12,14 @@ export interface TransactionsPaginationProps {
   onPageSizeChange: (pageSize: number) => void;
 }
 
-export const TransactionsPagination: React.FC<TransactionsPaginationProps> = ({
+const PAGE_SIZE_OPTIONS = [
+  { value: '10', label: '10 itens' },
+  { value: '20', label: '20 itens' },
+  { value: '50', label: '50 itens' },
+  { value: '100', label: '100 itens' },
+];
+
+export const TransactionsPaginationComponent: React.FC<TransactionsPaginationProps> = ({
   currentPage,
   totalPages,
   pageSize,
@@ -20,18 +27,11 @@ export const TransactionsPagination: React.FC<TransactionsPaginationProps> = ({
   onPageChange,
   onPageSizeChange,
 }) => {
-  const pageSizeOptions = [
-    { value: '10', label: '10 itens' },
-    { value: '20', label: '20 itens' },
-    { value: '50', label: '50 itens' },
-    { value: '100', label: '100 itens' },
-  ];
-
   const startItem = totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1;
   const endItem = Math.min(currentPage * pageSize, totalItems);
 
-  // Gerar botões de página numerados
-  const getPageNumbers = () => {
+  // Gerar botões de página numerados memoizados
+  const pageNumbers = React.useMemo(() => {
     const maxVisible = 5;
 
     if (totalPages <= maxVisible) {
@@ -72,7 +72,7 @@ export const TransactionsPagination: React.FC<TransactionsPaginationProps> = ({
       { id: 'ellipsis-end', label: '...' },
       { id: `page-${totalPages}`, label: totalPages, pageNumber: totalPages },
     ];
-  };
+  }, [currentPage, totalPages]);
 
   if (totalItems === 0) return null;
 
@@ -93,7 +93,7 @@ export const TransactionsPagination: React.FC<TransactionsPaginationProps> = ({
           <div className="w-28">
             <CustomSelect
               size="sm"
-              options={pageSizeOptions}
+              options={PAGE_SIZE_OPTIONS}
               value={String(pageSize)}
               onChange={(val) => onPageSizeChange(Number(val))}
               clearable={false}
@@ -109,13 +109,13 @@ export const TransactionsPagination: React.FC<TransactionsPaginationProps> = ({
             onClick={() => onPageChange(currentPage - 1)}
             disabled={currentPage <= 1}
             aria-label="Página anterior"
-            className="w-8 h-8 flex items-center justify-center rounded-xl border border-border-subtle bg-surface-ground text-slate-600 hover:bg-slate-100 hover:text-slate-900 disabled:opacity-30 disabled:pointer-events-none transition-all cursor-pointer"
+            className="w-8 h-8 flex items-center justify-center rounded-xl border border-border-subtle bg-surface-ground text-slate-600 hover:bg-slate-100 hover:text-slate-900 disabled:opacity-30 disabled:pointer-events-none transition-colors duration-150 cursor-pointer"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
 
           {/* Páginas numeradas */}
-          {getPageNumbers().map((item) =>
+          {pageNumbers.map((item) =>
             item.pageNumber !== undefined ? (
               <button
                 key={item.id}
@@ -124,7 +124,7 @@ export const TransactionsPagination: React.FC<TransactionsPaginationProps> = ({
                 aria-label={`Página ${item.label}`}
                 aria-current={item.pageNumber === currentPage ? 'page' : undefined}
                 className={cn(
-                  'min-w-8 h-8 px-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer',
+                  'min-w-8 h-8 px-2.5 rounded-xl text-xs font-bold transition-colors duration-150 cursor-pointer',
                   item.pageNumber === currentPage
                     ? 'bg-brand text-white shadow-2xs'
                     : 'bg-surface-ground text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-border-subtle'
@@ -145,7 +145,7 @@ export const TransactionsPagination: React.FC<TransactionsPaginationProps> = ({
             onClick={() => onPageChange(currentPage + 1)}
             disabled={currentPage >= totalPages}
             aria-label="Próxima página"
-            className="w-8 h-8 flex items-center justify-center rounded-xl border border-border-subtle bg-surface-ground text-slate-600 hover:bg-slate-100 hover:text-slate-900 disabled:opacity-30 disabled:pointer-events-none transition-all cursor-pointer"
+            className="w-8 h-8 flex items-center justify-center rounded-xl border border-border-subtle bg-surface-ground text-slate-600 hover:bg-slate-100 hover:text-slate-900 disabled:opacity-30 disabled:pointer-events-none transition-colors duration-150 cursor-pointer"
           >
             <ChevronRight className="w-4 h-4" />
           </button>
@@ -154,3 +154,6 @@ export const TransactionsPagination: React.FC<TransactionsPaginationProps> = ({
     </div>
   );
 };
+
+export const TransactionsPagination = React.memo(TransactionsPaginationComponent);
+

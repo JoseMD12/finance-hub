@@ -10,7 +10,7 @@ export interface TransactionNotePopoverProps {
   description: string;
 }
 
-export const TransactionNotePopover: React.FC<TransactionNotePopoverProps> = ({
+const TransactionNotePopoverComponent: React.FC<TransactionNotePopoverProps> = ({
   transactionId,
   currentNotes,
   description,
@@ -116,7 +116,7 @@ export const TransactionNotePopover: React.FC<TransactionNotePopoverProps> = ({
         title={hasNotes ? `Nota: ${currentNotes}` : 'Adicionar observação'}
         aria-label={`Observações da transação ${description}`}
         className={cn(
-          'w-8 h-8 p-2 rounded-xl border transition-all duration-150 cursor-pointer active:scale-95 flex items-center justify-center shrink-0',
+          'w-8 h-8 p-2 rounded-xl border transition-colors duration-150 cursor-pointer active:scale-95 flex items-center justify-center shrink-0',
           hasNotes
             ? 'bg-secondary-light text-secondary border-secondary/30 hover:bg-secondary/20 shadow-2xs'
             : 'bg-transparent text-slate-400 border-transparent hover:text-secondary hover:bg-secondary-light hover:border-secondary/20'
@@ -155,7 +155,7 @@ export const TransactionNotePopover: React.FC<TransactionNotePopoverProps> = ({
                   onChange={(e) => setNotes(e.target.value)}
                   maxLength={500}
                   placeholder="Escreva uma anotação sobre esta transação..."
-                  className="w-full h-24 p-3 rounded-lg border border-border-subtle bg-surface-ground text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all resize-none leading-relaxed"
+                  className="w-full h-24 p-3 rounded-lg border border-border-subtle bg-surface-ground text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-colors resize-none leading-relaxed"
                   autoFocus
                 />
                 <div className="flex justify-end text-[10px] text-slate-400 font-medium px-0.5">
@@ -170,7 +170,7 @@ export const TransactionNotePopover: React.FC<TransactionNotePopoverProps> = ({
                     type="button"
                     onClick={handleRemove}
                     disabled={notesMutation.isPending}
-                    className="px-2 py-1.5 rounded-lg text-rose-500 hover:bg-rose-50 hover:text-rose-600 text-xs font-semibold flex items-center gap-1 cursor-pointer transition-all active:scale-95"
+                    className="px-2 py-1.5 rounded-lg text-rose-500 hover:bg-rose-50 hover:text-rose-600 text-xs font-semibold flex items-center gap-1 cursor-pointer transition-colors active:scale-95"
                     title="Excluir nota"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
@@ -184,7 +184,7 @@ export const TransactionNotePopover: React.FC<TransactionNotePopoverProps> = ({
                   <button
                     type="button"
                     onClick={handleClose}
-                    className="px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 text-xs font-semibold hover:bg-slate-200 active:scale-95 cursor-pointer transition-all"
+                    className="px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 text-xs font-semibold hover:bg-slate-200 active:scale-95 cursor-pointer transition-colors"
                   >
                     Cancelar
                   </button>
@@ -192,7 +192,7 @@ export const TransactionNotePopover: React.FC<TransactionNotePopoverProps> = ({
                     type="button"
                     onClick={handleSave}
                     disabled={notesMutation.isPending}
-                    className="px-3 py-1.5 rounded-lg bg-secondary text-white text-xs font-semibold hover:bg-secondary-dark active:scale-95 cursor-pointer transition-all flex items-center gap-1 shadow-2xs"
+                    className="px-3 py-1.5 rounded-lg bg-secondary text-white text-xs font-semibold hover:bg-secondary-dark active:scale-95 cursor-pointer transition-colors flex items-center gap-1 shadow-2xs"
                   >
                     {notesMutation.isPending ? (
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -210,3 +210,6 @@ export const TransactionNotePopover: React.FC<TransactionNotePopoverProps> = ({
     </>
   );
 };
+
+export const TransactionNotePopover = React.memo(TransactionNotePopoverComponent);
+

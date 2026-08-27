@@ -3,17 +3,16 @@ import ReactDOM from 'react-dom';
 import { Search, Tag, Loader2 } from 'lucide-react';
 import { CategoryTag } from './CategoryTag';
 import { CategoryCatalogList } from './CategoryCatalogList';
-import { useCategoriesQuery } from '../hooks/useCategoriesQuery';
+import { useFlattenedCategoriesQuery } from '../hooks/useCategoriesQuery';
 import { useCategorizeTransactionMutation } from '../hooks/useCategorizeTransactionMutation';
 import { Checkbox } from '@/shared/components/Checkbox/Checkbox';
-import type { CategoryDto } from '../types/transactions.types';
 
 export interface CategoryTagPopoverProps {
   transactionId: string;
   currentCategoryId: string;
 }
 
-export const CategoryTagPopover: React.FC<CategoryTagPopoverProps> = ({
+const CategoryTagPopoverComponent: React.FC<CategoryTagPopoverProps> = ({
   transactionId,
   currentCategoryId,
 }) => {
@@ -28,8 +27,11 @@ export const CategoryTagPopover: React.FC<CategoryTagPopoverProps> = ({
   const dropdownContentRef = useRef<HTMLDialogElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  const { data: categories = [], isLoading } = useCategoriesQuery();
+  const { data: categoryData, isLoading } = useFlattenedCategoriesQuery();
   const categorizeMutation = useCategorizeTransactionMutation();
+
+  const categories = categoryData?.categories ?? [];
+  const currentCategory = categoryData?.categoryMap.get(currentCategoryId);
 
   // Calcular posição flutuante precisa para o portal
   const updatePosition = useCallback(() => {
@@ -85,20 +87,6 @@ export const CategoryTagPopover: React.FC<CategoryTagPopoverProps> = ({
     };
   }, [isOpen, updatePosition]);
 
-  // Aplanar categorias e subcategorias para pesquisa rápida
-  const allFlattenedCategories: CategoryDto[] = useMemo(() => {
-    const list: CategoryDto[] = [];
-    categories.forEach((cat) => {
-      list.push(cat);
-      if (cat.subcategories) {
-        cat.subcategories.forEach((sub) => list.push(sub));
-      }
-    });
-    return list;
-  }, [categories]);
-
-  const currentCategory = allFlattenedCategories.find((c) => c.id === currentCategoryId);
-
   // Inicializar o pai da categoria atual expandido quando o popover abrir
   useEffect(() => {
     if (isOpen && currentCategory?.parentCategoryId) {
@@ -106,7 +94,7 @@ export const CategoryTagPopover: React.FC<CategoryTagPopoverProps> = ({
     }
   }, [isOpen, currentCategory]);
 
-  const toggleExpand = (parentId: string, e: React.MouseEvent) => {
+  const toggleExpand = useCallback((parentId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     setExpandedParentIds((prev) => {
       const next = new Set(prev);
@@ -117,7 +105,7 @@ export const CategoryTagPopover: React.FC<CategoryTagPopoverProps> = ({
       }
       return next;
     });
-  };
+  }, []);
 
   const handleSelectCategory = async (categoryId: string) => {
     if (categoryId === currentCategoryId) {
@@ -136,9 +124,14 @@ export const CategoryTagPopover: React.FC<CategoryTagPopoverProps> = ({
   };
 
   const isSearching = searchTerm.trim().length > 0;
-  const filteredSearchCategories = allFlattenedCategories.filter((c) =>
-    c.name.toLowerCase().includes(searchTerm.trim().toLowerCase())
-  );
+  const filteredSearchCategories = useMemo(() => {
+    const list = categoryData?.flatCategories ?? [];
+    if (!isSearching) return list;
+    const term = searchTerm.trim().toLowerCase();
+    return list.filter((c) =>
+      c.name.toLowerCase().includes(term)
+    );
+  }, [categoryData?.flatCategories, isSearching, searchTerm]);
 
   return (
     <div className="relative inline-block" ref={popoverTriggerRef}>
@@ -184,7 +177,7 @@ export const CategoryTagPopover: React.FC<CategoryTagPopoverProps> = ({
                 value={searchTerm}
                 aria-label="Filtrar categorias"
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-border-subtle bg-surface-ground text-slate-800 focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 transition-all"
+                className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-border-subtle bg-surface-ground text-slate-800 focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 transition-colors"
               />
             </div>
 
@@ -222,3 +215,6 @@ export const CategoryTagPopover: React.FC<CategoryTagPopoverProps> = ({
     </div>
   );
 };
+
+export const CategoryTagPopover = React.memo(CategoryTagPopoverComponent);
+

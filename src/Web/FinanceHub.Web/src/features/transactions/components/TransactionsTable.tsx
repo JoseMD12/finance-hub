@@ -34,7 +34,9 @@ const BankLogoTag = memo<{ institutionId: string }>(({ institutionId }) => {
           src={info.logoUrl}
           alt={`Logo ${info.name}`}
           className="w-3.5 h-3.5 object-contain shrink-0"
-          loading="lazy"
+          width={14}
+          height={14}
+          decoding="async"
           onError={() => setHasError(true)}
         />
       ) : (
@@ -61,7 +63,7 @@ const TransactionTableRow = memo<TransactionTableRowProps>(({
   return (
     <tr
       key={t.id}
-      className="hover:bg-slate-100/90 transition-colors duration-150 group"
+      className="hover:bg-slate-100/70"
     >
       {/* Data e Hora - Alinhadas à esquerda */}
       <td className="px-6 py-4 text-left whitespace-nowrap">
@@ -79,7 +81,7 @@ const TransactionTableRow = memo<TransactionTableRowProps>(({
       <td className="px-6 py-4 text-left">
         <div className="flex flex-col gap-0.5">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-bold text-slate-800 group-hover:text-secondary transition-colors text-xs">
+            <span className="font-bold text-slate-800 text-xs">
               {t.description}
             </span>
             {t.nature === 'Transfer' && (

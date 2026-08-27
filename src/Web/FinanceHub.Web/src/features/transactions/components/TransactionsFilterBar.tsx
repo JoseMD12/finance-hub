@@ -182,7 +182,7 @@ const TransactionsFilterBarComponent: React.FC<TransactionsFilterBarProps> = ({
               placeholder="Descrição ou loja..."
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              className="w-full h-full pl-10 pr-8 text-xs rounded-xl border border-border-subtle bg-surface-ground text-slate-800 focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 transition-all"
+              className="w-full h-full pl-10 pr-8 text-xs rounded-xl border border-border-subtle bg-surface-ground text-slate-800 focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 transition-colors"
             />
             {searchInput && (
               <button
@@ -258,7 +258,7 @@ const TransactionsFilterBarComponent: React.FC<TransactionsFilterBarProps> = ({
                   onClick={() => handleSelectDatePreset(key)}
                   aria-pressed={isSelected}
                   className={cn(
-                    'px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150 cursor-pointer select-none',
+                    'px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors duration-150 cursor-pointer select-none',
                     isSelected
                       ? 'bg-brand-light text-brand-dark border-brand font-bold shadow-2xs ring-1 ring-brand/20'
                       : 'bg-surface-ground text-slate-600 border-border-subtle hover:bg-slate-200/60 hover:text-slate-800'

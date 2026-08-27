@@ -22,8 +22,8 @@ export const TransactionsPage: React.FC = () => {
   });
 
   const { data, isLoading } = useTransactionsQuery(filters);
-  const toggleNeutralityMutation = useToggleNeutralityMutation();
-  const toggleBillPaymentMutation = useToggleBillPaymentMutation();
+  const { mutateAsync: toggleNeutralityAsync } = useToggleNeutralityMutation();
+  const { mutateAsync: toggleBillPaymentAsync } = useToggleBillPaymentMutation();
 
   const transactions = data?.items ?? [];
   const summary = data?.summary;
@@ -51,20 +51,34 @@ export const TransactionsPage: React.FC = () => {
 
   const handleToggleNeutrality = React.useCallback(async (transaction: TransactionDto) => {
     const nextIgnored = !transaction.isIgnoredInTotals;
-    await toggleNeutralityMutation.mutateAsync({
+    await toggleNeutralityAsync({
       transactionId: transaction.id,
       isIgnoredInTotals: nextIgnored,
       reason: nextIgnored ? 'Marcado manualmente como neutro/trânsito' : 'Reativado manualmente',
     });
-  }, [toggleNeutralityMutation]);
+  }, [toggleNeutralityAsync]);
 
   const handleToggleBillPayment = React.useCallback(async (transaction: TransactionDto) => {
     const nextIsBillPayment = !transaction.isBillPayment;
-    await toggleBillPaymentMutation.mutateAsync({
+    await toggleBillPaymentAsync({
       transactionId: transaction.id,
       isBillPayment: nextIsBillPayment,
     });
-  }, [toggleBillPaymentMutation]);
+  }, [toggleBillPaymentAsync]);
+
+  const handleIncludeIgnoredChange = React.useCallback((include: boolean) => {
+    handleFilterChange({ includeIgnoredInTotals: include });
+  }, [handleFilterChange]);
+
+  const handlePageChange = React.useCallback((page: number) => {
+    setFilters((prev) => ({ ...prev, page }));
+    window.scrollTo({ top: 0, behavior: 'auto' });
+  }, []);
+
+  const handlePageSizeChange = React.useCallback((newPageSize: number) => {
+    setFilters((prev) => ({ ...prev, pageSize: newPageSize, page: 1 }));
+    window.scrollTo({ top: 0, behavior: 'auto' });
+  }, []);
 
   return (
     <PageContainer
@@ -80,7 +94,7 @@ export const TransactionsPage: React.FC = () => {
         onFilterChange={handleFilterChange}
         onResetFilters={handleResetFilters}
         includeIgnoredInTotals={Boolean(filters.includeIgnoredInTotals)}
-        onIncludeIgnoredChange={(include) => handleFilterChange({ includeIgnoredInTotals: include })}
+        onIncludeIgnoredChange={handleIncludeIgnoredChange}
       />
 
       {/* Tabela de Transações */}
@@ -97,8 +111,8 @@ export const TransactionsPage: React.FC = () => {
         totalPages={totalPages}
         pageSize={pageSize}
         totalItems={totalItems}
-        onPageChange={(page) => handleFilterChange({ page })}
-        onPageSizeChange={(newPageSize) => handleFilterChange({ pageSize: newPageSize, page: 1 })}
+        onPageChange={handlePageChange}
+        onPageSizeChange={handlePageSizeChange}
       />
     </PageContainer>
   );
