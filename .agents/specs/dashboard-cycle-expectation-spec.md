@@ -394,6 +394,22 @@ como `Transferências` com `createCustomRule: true` e `applyToPastTransactions: 
 `UserCategoryRule` que cobre o histórico e as futuras — que é exatamente a migração de código
 para dado.
 
+#### Correção de acompanhamento: a dívida sobrevivia num segundo lugar `✅ Corrigida`
+
+Auditoria posterior encontrou o mesmo bloco replicado no backfill de inicialização
+(`Program.cs`), que o refactor da P0 não tocou. Ele repetia os três `Guid.Parse` inline,
+incluindo o identificador errado que tratava `Finanças > Tarifas` como pagamento de fatura —
+ou seja, **a cada boot da aplicação o bug corrigido na ingestão era reintroduzido no histórico**,
+fazendo tarifa bancária desaparecer dos totais.
+
+Lição registrada: ao remover uma regra duplicada, procurar todas as cópias antes de considerar
+a correção concluída. Neste projeto a lógica de neutralidade vivia em três lugares — os dois
+consumers e o backfill de startup.
+
+O backfill agora deriva as categorias neutras de `Category.Nature`, a mesma fonte usada na
+ingestão, e usa `ExecuteUpdateAsync` para atualizar no banco em vez de materializar a tabela
+inteira e carregar o change tracker a cada inicialização.
+
 ### 4-A.0.1 Referência: como era a dívida
 
 `IngestTransactionCommandHandler.cs:105-118` classifica transferências como neutras usando o

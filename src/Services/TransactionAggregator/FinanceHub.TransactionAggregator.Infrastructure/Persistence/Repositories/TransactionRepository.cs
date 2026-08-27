@@ -131,6 +131,7 @@ public class TransactionRepository : ITransactionRepository
 
         // Buscar posição instantânea consolidada de saldos bancários e cartões do usuário
         var accountBalances = await _context.AccountBalances
+            .AsNoTracking()
             .Where(b => b.UserId == filter.UserId)
             .ToListAsync(cancellationToken);
 
