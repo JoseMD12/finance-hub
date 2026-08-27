@@ -64,13 +64,20 @@ public class AccountBalanceSnapshotSynchronizedConsumer : IConsumer<AccountBalan
             {
                 var newBalance = AccountBalance.Create(msg.UserId, accountInfo, money);
                 newBalance.SynchronizeWithBankSnapshot(money, accountItem.SnapshotAtUtc);
-                newBalance.SynchronizeCreditData(creditInfo);
+                newBalance.SynchronizeCreditData(creditInfo ?? CreditAccountInfo.None);
                 await _dbContext.AccountBalances.AddAsync(newBalance, context.CancellationToken);
             }
             else
             {
                 existing.SynchronizeWithBankSnapshot(money, accountItem.SnapshotAtUtc);
-                existing.SynchronizeCreditData(creditInfo);
+
+                // Mensagem sem informação de crédito preserva o que já está gravado, em vez de
+                // zerar limites e vencimentos de contas já sincronizadas.
+                if (creditInfo is not null)
+                {
+                    existing.SynchronizeCreditData(creditInfo);
+                }
+
                 _dbContext.AccountBalances.Update(existing);
             }
         }
@@ -79,9 +86,18 @@ public class AccountBalanceSnapshotSynchronizedConsumer : IConsumer<AccountBalan
         _logger.LogInformation("Snapshot oficial de saldos atualizado com sucesso para UserId: {UserId}", msg.UserId);
     }
 
-    private static CreditAccountInfo BuildCreditInfo(AccountBalanceSnapshotItem accountItem)
+    /// <summary>
+    /// Devolve <c>null</c> quando o publisher não informou nada sobre crédito, sinalizando ao
+    /// chamador que o estado atual deve ser preservado.
+    /// </summary>
+    private static CreditAccountInfo? BuildCreditInfo(AccountBalanceSnapshotItem accountItem)
     {
-        if (!accountItem.IsCreditCard)
+        if (accountItem.IsCreditCard is null)
+        {
+            return null;
+        }
+
+        if (accountItem.IsCreditCard == false)
         {
             return CreditAccountInfo.None;
         }

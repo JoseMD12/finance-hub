@@ -10,7 +10,12 @@ public record AccountBalanceSnapshotItem(
     decimal CurrentBalance,
     string Currency,
     DateTime SnapshotAtUtc,
-    bool IsCreditCard = false,
+    /// <summary>
+    /// <c>null</c> significa "o publisher não informou" — mensagem de uma versão anterior, ou já
+    /// enfileirada antes do deploy. É diferente de <c>false</c>, que afirma não ser cartão.
+    /// Sem essa distinção, um deploy parcial apagaria limites e vencimentos já sincronizados.
+    /// </summary>
+    bool? IsCreditCard = null,
     decimal? CreditLimit = null,
     decimal? AvailableCreditLimit = null,
     DateTime? InvoiceDueDateUtc = null,

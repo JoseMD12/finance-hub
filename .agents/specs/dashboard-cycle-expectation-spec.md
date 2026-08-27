@@ -74,6 +74,11 @@ Verificado no código, não presumido:
 
 ### 2.2 Resultado de A.1 — observação direta da API (27/08/2026)
 
+> **Política de dados neste documento.** As conclusões abaixo vêm de consulta à API com as
+> conexões reais do usuário, mas os **valores, datas, contrapartes, limites e identificadores
+> foram redigidos**. Séries de exemplo são ilustrativas. Dado financeiro pessoal não entra no
+> repositório — a mesma regra que a §4-A.5 impõe às fixtures de teste vale para a spec.
+
 Consulta real a `https://my-api.pluggy.ai` com token do usuário, sobre três conexões ativas
 (Itaú, Banco Inter e Mercado Pago), 4 contas de crédito e 500 transações de cartão.
 
@@ -87,8 +92,8 @@ Campos realmente devolvidos: `level`, `brand`, `brandAdditionalInfo`, `balanceCl
 | Achado | Consequência |
 | --- | --- |
 | **`balanceCloseDate` veio `null` nos três cartões** | A cascata de fallback do fechamento é **obrigatória**, não opcional. A decisão híbrida (seção 4.1) estava certa. |
-| **`balanceDueDate` vem preenchido, mas no passado**: Itaú `2026-08-25`, MP `2026-08-13`, Inter `2026-08-12`, contra hoje `2026-08-27` | A Pluggy reporta o vencimento da **última fatura fechada**, não da próxima. É preciso rolar a data para frente pelo dia do mês, nunca usar o campo cru como "próximo vencimento". |
-| `minimumPayment` disponível (valores redigidos) | Permite mostrar o mínimo ao lado do total da fatura. Mapeado. |
+| **`balanceDueDate` vem preenchido, mas no passado**: três cartões com vencimento anterior à data corrente | A Pluggy reporta o vencimento da **última fatura fechada**, não da próxima. É preciso rolar a data para frente pelo dia do mês, nunca usar o campo cru como "próximo vencimento". |
+| `minimumPayment` disponível nos três cartões | Permite mostrar o mínimo ao lado do total da fatura. Mapeado. |
 | `creditLimit` e `availableCreditLimit` sempre presentes e coerentes | A barra de uso do limite é viável de imediato. |
 | `disaggregatedCreditLimits[].customizedLimitAmount` (limite personalizado menor que o do banco em um dos cartões) | O usuário tem limite personalizado menor que o do banco. A barra de uso deve considerar o personalizado, senão subestima o consumo. |
 
@@ -101,9 +106,9 @@ Campos devolvidos: `billForecastDate`, `billId`, `cardNumber`, `installmentNumbe
 | --- | --- |
 | **`billForecastDate` (`"YYYY-MM"`) é a competência da fatura, dada diretamente pela Pluggy** | **Muda a Fatia B**: na maioria dos casos não é preciso derivar o fechamento para saber a que fatura a compra pertence — a Pluggy já diz. |
 | **Mas vem `null` em 166 de 500 transações (33%)** | A regra de fechamento continua necessária como fallback para o terço restante. As duas estratégias coexistem: `billForecastDate` quando existe, regra derivada quando não. |
-| **`billId` é um UUID estável por fatura** (8 distintos na amostra) | Identidade de fatura melhor que `(conta, competência)`. `CreditCardInvoice` deve chavear por `billId` quando disponível. |
+| **`billId` é um UUID estável por fatura** (vários distintos na amostra) | Identidade de fatura melhor que `(conta, competência)`. `CreditCardInvoice` deve chavear por `billId` quando disponível. |
 | `installmentNumber` / `totalInstallments` presentes em 27 transações | Parcelamento é real e utilizável para projetar faturas futuras. |
-| **`purchaseDate` difere de `date` em parcelamentos** — parcela `2/2` com compra em `2026-07-06` e lançamento em `2026-08-19` | A ingestão hoje usa a data de lançamento. Para "quando eu comprei" a data certa é `purchaseDate`; para "em que fatura cai" é `billForecastDate`. São três datas distintas e o modelo precisa guardar as três. |
+| **`purchaseDate` difere de `date` em parcelamentos** — parcela `2/2` com compra e lançamento em meses diferentes | A ingestão hoje usa a data de lançamento. Para "quando eu comprei" a data certa é `purchaseDate`; para "em que fatura cai" é `billForecastDate`. São três datas distintas e o modelo precisa guardar as três. |
 
 > **Conclusão de A.1**: a fundação é viável com o plano gratuito. Os dois ajustes de rota são
 > tratar `balanceDueDate` como data passada a ser rolada, e usar `billForecastDate`/`billId`
@@ -146,7 +151,7 @@ Esta é a mudança que resolve a separação entre "a fatura de agosto" e "a de 
 Nova agregação `CreditCardInvoice` no `TransactionAggregator`:
 
 ```
-ExternalBillId   <uuid>                                   (billId da Pluggy, quando houver)
+ExternalBillId   <uuid>                                  (billId da Pluggy, quando houver)
 ReferenceMonth   2026-09                                 (competência)
 ClosingDateUtc   2026-09-25                              (derivado — a API devolve null)
 DueDateUtc       2026-10-05                              (rolado para frente, ver 3.3)
@@ -179,13 +184,13 @@ Com fechamento no dia 25, em 27/08/2026 existem simultaneamente:
 ### 3.3 As três datas de uma compra no cartão
 
 A.1 revelou que uma compra parcelada carrega **três datas distintas**, e confundi-las produz
-números errados. Exemplo real observado — parcela `2/2` de um lojista:
+números errados. Exemplo real observado — uma parcela `2/2`:
 
 | Data | Valor no exemplo | Responde |
 | --- | --- | --- |
-| `purchaseDate` | `2026-07-06` | "quando eu comprei" |
-| `date` (lançamento) | `2026-08-19` | "quando entrou no extrato" |
-| `billForecastDate` | `2026-08` | "em qual fatura vai ser cobrado" |
+| `purchaseDate` | mês da compra | "quando eu comprei" |
+| `date` (lançamento) | mês do lançamento | "quando entrou no extrato" |
+| `billForecastDate` | competência | "em qual fatura vai ser cobrado" |
 
 A ingestão atual usa apenas a data de lançamento. O modelo precisa guardar as três.
 
@@ -202,7 +207,7 @@ A ingestão atual usa apenas a data de lançamento. O modelo precisa guardar as 
 #### 3.4.1 O fechamento é derivável do próprio histórico
 
 Agrupando as compras por `billForecastDate`, a fronteira entre duas competências consecutivas
-**é** a data de fechamento. Observado no cartão dos cartões em 27/08/2026:
+**é** a data de fechamento. Observado num dos cartões em 27/08/2026:
 
 | Competência | Compras de … até |
 | --- | --- |
@@ -272,16 +277,14 @@ normalizada e por dia do mês:
 
 ```
 EMPREGADOR (conta corrente)          — série ilustrativa, não é dado real
-  ciclo M-3, dia 25   R$ C
-  ciclo M-2, dia 08   R$ A,00      ← 1º salário
-  ciclo M-2, dia 24   R$ B      ← 2º salário
-  ciclo M-1, dia 08   R$ A,00      ← 1º salário
-  ciclo M-1, dia 24   R$ B'      ← 2º salário
+  ciclo M-2, dia 08   R$ A,00      ← 1º salário, valor fixo
+  ciclo M-2, dia 24   R$ B         ← 2º salário, valor variável
+  ciclo M-1, dia 08   R$ A,00
+  ciclo M-1, dia 24   R$ B'
 ```
 
 O padrão do usuário aparece sozinho nos dados: **dois créditos por mês**, um por volta do dia
-8–10 com **valor fixo**, e outro por volta do dia 24–25 com valor variável entre
-B e C. É exatamente o modelo de adiantamento e pagamento que motiva o ciclo.
+8–10 com **valor fixo**, e outro por volta do dia 24–25 com valor variável.
 
 **Algoritmo**: agrupar créditos por descrição normalizada (removendo dígitos), exigir ocorrência
 em ≥3 meses distintos, e então separar os lançamentos em *clusters* por dia do mês. Dois
@@ -292,8 +295,8 @@ clusters bem separados significam duas receitas fixas no ciclo, não uma.
 ```
 CONTRAPARTE PJ RECORRENTE — sempre no dia 1   — série ilustrativa
   7 meses consecutivos   R$ X
-  3 meses seguintes      R$ X/2,5
-  jul/26 em diante  (nada)
+  3 meses seguintes      R$ X/2,5   ← valor cai
+  a partir daí           (nada)     ← encerrada
 ```
 
 Oito ocorrências, sempre no dia 1, absolutamente regular — e **encerrada em junho**. A mediana
@@ -688,6 +691,38 @@ status violam é a de *séries de gráfico*, não a de indicadores com rótulo.
 
 As cores por instituição continuam pendentes de validação — só serão adjacentes quando a Fatia B
 trouxer as colunas empilhadas por cartão.
+
+---
+
+## ⚖️ 6-B. Tribunal de revisão — achados e correções (27/08/2026)
+
+Três juízes independentes auditaram a branch: arquitetura/DDD **8.0/10**, QA/segurança **6.5/10**,
+DevOps **5.5/10**. O resultado mais valioso não foram as notas, e sim seis defeitos que a
+implementação e a autorrevisão não pegaram.
+
+### Corrigidos nesta branch
+
+| # | Achado | Por que importava |
+| --- | --- | --- |
+| 1 | **Dado financeiro pessoal commitado nesta própria spec** | A branch que existia para tirar PII do código introduziu, em texto claro e versionado, salários, empregador, contrapartes de PIX, limites reais e identificadores de fatura. Violava a §4-A.5 desta mesma spec. **Redigido.** |
+| 2 | Nome e e-mail do titular no JSX da `Sidebar` | Pré-existente, mas invalidava a afirmação de que a P0 estava concluída. Passou a derivar das claims do JWT via `getSessionUser()`. |
+| 3 | `CategorizeManually` não re-derivava natureza nem neutralidade | Recategorizar para "Transferências" mantinha o lançamento contando como gasto; tirá-lo de lá o mantinha fora dos totais para sempre. A neutralidade derivava da categoria **só na ingestão**. |
+| 4 | Backfill de boot revertia a escolha manual do usuário | O predicado "ainda não é neutra" selecionava exatamente as transações que o usuário tinha destravado via `ToggleNeutrality`, revertendo-as a cada reinício. Virou migração one-shot. |
+| 5 | Deploy parcial **apagava** dados de crédito | `IsCreditCard = false` por default de desserialização era indistinguível de `false` afirmado; toda mensagem da versão anterior zerava limites e vencimentos. `IsCreditCard` virou `bool?` e o consumer preserva o estado quando a mensagem nada informa. |
+| 6 | `canonical_transactions.CategoryId` sem índice | A quebra por categoria e o backfill faziam varredura sequencial. Índice criado, e o backfill movido para depois dele. |
+
+### Abertos — decisão do usuário
+
+| Achado | Situação |
+| --- | --- |
+| **Histórico do git contém a PII do achado 1** | A redação corrige o estado atual, não o histórico. Como nada foi enviado ao remoto, um `rebase` resolve; depois de um push, exigiria reescrita coordenada. |
+| **A lacuna da P0 infla a receita** | A perna de débito de uma transferência própria é neutra, mas a de crédito cai em `Receitas > Pix Recebido` (`Operating`) e **soma às entradas**. O erro é `+V` no disponível. Mitigado em parte pelo `TransferPairMatchingEngine` (valores idênticos, janela de 96h). Fecha na fatia P. |
+| `disaggregatedCreditLimits` nunca mapeado | A barra de limite usa `creditLimit` do banco, e o comentário do componente afirma usar o personalizado. Mostra 23% onde o real é 71%. |
+| Evolução mensal ignora filtro de instituição | Filtrar por um banco estreita KPIs e categorias, mas não o gráfico — dois recortes na mesma tela. |
+| `GroupBy` cai em subconsulta correlacionada | O `Sum` sobre o owned type `Money` impede o agregado plano. Projetar antes do `GroupBy` resolve. |
+| `Down()` de `AddNatureToCategories` não reverte dado | Deliberado: a correção de `CategoryId` perde a informação que permitiria distinguir as linhas movidas. Rollback real é restore de backup. |
+| Aggregator publicado em `5002` sem autorização | Pré-existente, mas esta branch acrescenta a esse perímetro o endpoint mais denso em dados. `expose:` em vez de `ports:` resolve. |
+| Migração no startup sem lock distribuído | Com múltiplas réplicas, `MigrateAsync` concorrente pode falhar no boot. |
 
 ---
 

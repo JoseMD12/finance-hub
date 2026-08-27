@@ -78,7 +78,18 @@ public class CanonicalTransaction
             new TransactionAuditInfo(now, now));
     }
 
-    public void CategorizeManually(Guid newCategoryId)
+    /// <summary>
+    /// Recategoriza manualmente e <b>re-deriva</b> a natureza econômica e a neutralidade a partir
+    /// da nova categoria.
+    ///
+    /// Sem re-derivar, categoria e natureza se descolavam de forma permanente após a ingestão:
+    /// mover um lançamento para "Transferências" o mantinha contando como gasto, e movê-lo de
+    /// "Transferências" para uma categoria operacional o mantinha fora dos totais para sempre.
+    /// A neutralidade deriva da categoria em toda mutação, não apenas na ingestão.
+    ///
+    /// Quem quiser divergir dessa derivação usa <see cref="ToggleIgnoreInTotals"/> depois.
+    /// </summary>
+    public void CategorizeManually(Guid newCategoryId, TransactionNature nature = TransactionNature.Operating)
     {
         if (newCategoryId == Guid.Empty)
         {
@@ -88,6 +99,8 @@ public class CanonicalTransaction
         CategoryId = newCategoryId;
         CategorizationSource = CategorizationSource.UserManual;
         IsManuallyCategorized = true;
+        Nature = nature;
+        IsIgnoredInTotals = IsNeutralByNature(nature);
         AuditInfo = new TransactionAuditInfo(AuditInfo.CreatedAtUtc, DateTime.UtcNow);
     }
 

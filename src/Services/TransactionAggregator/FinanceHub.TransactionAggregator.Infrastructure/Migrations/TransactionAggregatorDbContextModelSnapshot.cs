@@ -117,6 +117,9 @@ namespace FinanceHub.TransactionAggregator.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CategoryId")
+                        .HasDatabaseName("idx_canonical_transactions_category");
+
                     b.HasIndex("Hash")
                         .IsUnique()
                         .HasDatabaseName("idx_canonical_transactions_hash");

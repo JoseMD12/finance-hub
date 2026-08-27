@@ -45,7 +45,8 @@ public class UserCategoryRuleIntegrationTests : IDisposable
         var unitOfWork = new UnitOfWork(_context);
         var eventPublisher = NSubstitute.Substitute.For<FinanceHub.TransactionAggregator.Application.Interfaces.IEventPublisher>();
 
-        _categorizeHandler = new CategorizeTransactionCommandHandler(_txRepo, _ruleRepo);
+        var categoryRepoForCategorize = new FinanceHub.TransactionAggregator.Infrastructure.Persistence.Repositories.CategoryRepository(_context);
+        _categorizeHandler = new CategorizeTransactionCommandHandler(_txRepo, _ruleRepo, categoryRepoForCategorize);
         var categoryRepo = new FinanceHub.TransactionAggregator.Infrastructure.Persistence.Repositories.CategoryRepository(_context);
         _ingestHandler = new IngestTransactionCommandHandler(_txRepo, _balanceRepo, categoryRepo, pipeline, eventPublisher, unitOfWork);
     }
