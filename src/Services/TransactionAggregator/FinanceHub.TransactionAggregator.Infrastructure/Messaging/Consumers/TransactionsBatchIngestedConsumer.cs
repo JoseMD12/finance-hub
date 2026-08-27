@@ -67,7 +67,10 @@ public class TransactionsBatchIngestedConsumer : IConsumer<TransactionsBatchInge
                 RawDescription: cardTx.Description,
                 TransactionDateUtc: cardTx.TransactionDate,
                 Channel: TransactionChannel.CreditCard,
-                MerchantName: cardTx.Description
+                MerchantName: cardTx.Description,
+                InvoiceDueDateUtc: cardTx.InvoiceDueDate,
+                CurrentInstallment: cardTx.CurrentInstallment,
+                TotalInstallments: cardTx.TotalInstallments
             );
 
             await _handler.Handle(command, context.CancellationToken);

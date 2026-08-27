@@ -21,7 +21,10 @@ public record IngestTransactionCommand(
     string RawDescription,
     DateTime TransactionDateUtc,
     TransactionChannel Channel,
-    string MerchantName);
+    string MerchantName,
+    DateTime? InvoiceDueDateUtc = null,
+    int? CurrentInstallment = null,
+    int? TotalInstallments = null);
 
 public class IngestTransactionCommandHandler : IIngestTransactionCommandHandler
 {
@@ -74,7 +77,10 @@ public class IngestTransactionCommandHandler : IIngestTransactionCommandHandler
         var bankDetails = new BankTransactionDetails(
             command.BankTransactionId,
             channel,
-            command.MerchantName);
+            command.MerchantName,
+            command.InvoiceDueDateUtc,
+            command.CurrentInstallment,
+            command.TotalInstallments);
 
         var creationParams = new CanonicalTransactionCreationParams(
             command.UserId,
@@ -101,11 +107,10 @@ public class IngestTransactionCommandHandler : IIngestTransactionCommandHandler
             transaction.MarkAsBillPayment();
         }
 
-        if (categorization.CategoryId == transferCategoryId || 
-            categorization.CategoryId == investmentsCategoryId || 
-            ((descUpper.Contains("JOSE HENRIQUE MARTINS DOTTA") || descUpper.Contains("JOSÉ HENRIQUE MARTINS DOTTA")) && !descUpper.Contains("WELLHUB")) ||
-            descUpper.Contains("NOSSA GRANA") || 
-            descUpper.Contains("DINHEIRO RETIRADO") || 
+        if (categorization.CategoryId == transferCategoryId ||
+            categorization.CategoryId == investmentsCategoryId ||
+            descUpper.Contains("NOSSA GRANA") ||
+            descUpper.Contains("DINHEIRO RETIRADO") ||
             descUpper.Contains("DINHEIRO GUARDADO") ||
             descUpper.Contains("COFRINHO"))
         {

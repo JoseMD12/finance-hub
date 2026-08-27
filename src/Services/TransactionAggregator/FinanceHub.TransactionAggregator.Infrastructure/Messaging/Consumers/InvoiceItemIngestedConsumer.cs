@@ -39,7 +39,10 @@ public class InvoiceItemIngestedConsumer : IConsumer<InvoiceItemIngested>
             RawDescription: msg.Description,
             TransactionDateUtc: msg.TransactionDate,
             Channel: TransactionChannel.CreditCard,
-            MerchantName: msg.Description
+            MerchantName: msg.Description,
+            InvoiceDueDateUtc: msg.InvoiceDueDate,
+            CurrentInstallment: msg.CurrentInstallment,
+            TotalInstallments: msg.TotalInstallments
         );
 
         var id = await _handler.Handle(command, context.CancellationToken);

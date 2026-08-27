@@ -95,6 +95,20 @@ public class CanonicalTransactionConfiguration : IEntityTypeConfiguration<Canoni
             bd.Property(b => b.MerchantName)
                 .HasColumnName("merchant_name")
                 .HasMaxLength(128);
+
+            bd.Property(b => b.InvoiceDueDateUtc)
+                .HasColumnName("invoice_due_date_utc")
+                .IsRequired(false);
+
+            bd.Property(b => b.CurrentInstallment)
+                .HasColumnName("current_installment")
+                .IsRequired(false);
+
+            bd.Property(b => b.TotalInstallments)
+                .HasColumnName("total_installments")
+                .IsRequired(false);
+
+            bd.Ignore(b => b.IsInstallment);
         });
 
         builder.OwnsOne(x => x.AuditInfo, ai =>

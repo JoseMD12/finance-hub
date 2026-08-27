@@ -9,7 +9,12 @@ public record AccountBalanceSnapshotItem(
     string AccountType,
     decimal CurrentBalance,
     string Currency,
-    DateTime SnapshotAtUtc);
+    DateTime SnapshotAtUtc,
+    bool IsCreditCard = false,
+    decimal? CreditLimit = null,
+    decimal? AvailableCreditLimit = null,
+    DateTime? InvoiceDueDateUtc = null,
+    DateTime? InvoiceClosingDateUtc = null);
 
 public record AccountBalanceSnapshotSynchronized(
     string UserId,
