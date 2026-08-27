@@ -1,7 +1,7 @@
 # Especificação Técnica: Dashboard de Expectativa do Ciclo Financeiro
 
 **Documento:** `.agents/specs/dashboard-cycle-expectation-spec.md`
-**Status:** 🟢 `Aprovada / Em Implementação (Fatias A + E)`
+**Status:** 🟢 `Fatias A, P0 e E concluídas / B, C, D e P planejadas`
 **Data:** 27/08/2026
 **Branch:** `feature/dashboard-overview`
 **Serviços Envolvidos:** `FinanceHub.PluggyIntegration`, `FinanceHub.TransactionAggregator`, `FinanceHub.ApiGateway`, `FinanceHub.Web`
@@ -632,6 +632,47 @@ escuro. Se reprovar, derivar uma **rampa de gráfico** separada das cores de tag
 associação instituição→hue, porém re-degrauzada até passar. Tokens novos vão para
 `src/index.css` (Regra 17), nunca hex inline.
 
+### 6.1 Resultado da validação `✅ Executada em 27/08/2026`
+
+A primeira dupla de séries adjacentes a chegar na tela não foi a das instituições, e sim
+**entradas contra saídas** no gráfico de evolução. Ela reprovou:
+
+```
+#2ECC71 (status-success) ↔ #FF5964 (status-danger)
+  [FAIL] CVD separation      ΔE 4.5 (deutan)   — piso é 8
+  [PASS] Normal-vision floor ΔE 35.4
+  [WARN] Contrast vs surface 2.04 e 2.97, abaixo de 3:1
+```
+
+Verde contra vermelho é o caso clássico de falha sob **deuteranopia**, a forma mais comum de
+daltonismo. E aqui a legenda não salva: quem não distingue as duas cores no gráfico também não
+as distingue na legenda.
+
+**Correção aplicada** — rampa de gráfico própria em `src/index.css`, separada dos tokens de
+status:
+
+```css
+--color-chart-income:  #0D9488;   /* teal-600  */
+--color-chart-expense: #E11D48;   /* rose-600  */
+```
+
+```
+  [PASS] CVD separation      ΔE 10.2 (deutan) · 35.3 (tritan)
+  [PASS] Normal-vision floor ΔE 32.4
+  [PASS] Contrast vs surface ambos >= 3:1
+  → ALL CHECKS PASS
+```
+
+A leitura semântica se mantém — frio é entrada, quente é saída — e a associação fica próxima o
+bastante do modelo mental de verde e vermelho.
+
+**Por que os cards de KPI seguem usando verde e vermelho**: lá a cor nunca está sozinha. Vem
+acompanhada de ícone direcional, do sinal `+`/`-` e do rótulo textual. A regra que os tokens de
+status violam é a de *séries de gráfico*, não a de indicadores com rótulo.
+
+As cores por instituição continuam pendentes de validação — só serão adjacentes quando a Fatia B
+trouxer as colunas empilhadas por cartão.
+
 ---
 
 ## 🗂️ 7. Fatiamento
@@ -639,7 +680,7 @@ associação instituição→hue, porém re-degrauzada até passar. Tokens novos
 | Fatia | Entrega | Depende de | Status |
 | --- | --- | --- | --- |
 | **A** | Fundação: descoberta do payload, persistir vencimento/limite/fechamento no sync | — | ✅ Implementada |
-| **E** | Contrato real do dashboard atual, barras ranqueadas, evolução, filtro de período | — | 🔵 Backend pronto (E.1–E.3); frontend (E.4) pendente |
+| **E** | Contrato real do dashboard atual, barras ranqueadas, evolução, filtro de período | — | ✅ Implementada |
 | **B** | `CreditCardInvoice` por `billId`/`billForecastDate`, gráfico "Faturas por Competência" | A | ⚪ Planejada |
 | **C** | `UserFinancialCycleSettings` híbrido, "Fôlego do Ciclo", burn-down | B | ⚪ Planejada |
 | **D** | "Linha do Tempo do Ciclo" | C | ⚪ Planejada |
@@ -796,6 +837,33 @@ incluindo a degradação para Dashboard vazio).
   `isLoading && !data` (Regra 25); sem `whileHover` ou `whileTap` em card acima de área
   rolável, usando CSS puro com `motion-reduce:` (Regra 26); tokens de design, zero emoji,
   ícones outline e `bg-surface-card` (Regras 17, 18, 20, 21 e 22).
+
+#### Estado de E.4 `✅ Implementado`
+
+> Concluído em 27/08/2026. Lint limpo, 50/50 testes de frontend, build passando.
+
+Entregue como planejado, mais três correções de arquitetura encontradas no caminho:
+
+- **Fronteira pública criada.** Nenhuma feature tinha `index.ts`, exigido pela Regra 2.1. O
+  Dashboard passou a ter, e o `ConnectionsPage` — que fazia deep import em
+  `@/features/dashboard/hooks/useDashboardQuery`, violando a Regra 2.2 — agora importa de
+  `@/features/dashboard`.
+- **`as any` eliminado.** O `ConnectionsPage` lia `dashboard.accountBalances as any[]` e inferia
+  cartão de crédito pelo sinal do saldo. Agora consome `institutionBalances` tipado e lê a flag
+  `isCreditCard` vinda do snapshot oficial (Regra 6.1).
+- **`gcTime` explícito** de 10 minutos no hook, conforme a tabela de caching da Regra 3, que o
+  hook anterior não declarava.
+
+Componentes: `DashboardFilterBar`, `DashboardSummaryCards`, `InstitutionBalanceList`,
+`CategoryRankedBars`, `MonthlyCashFlowChart`, `RecentTransactionsCard`, todos em `React.memo`.
+
+O donut deu lugar a **barras horizontais ranqueadas**, dimensionadas contra a maior categoria e
+não contra o total — assim a diferença entre a primeira e a segunda continua legível quando a
+cauda é longa. A barra de uso de limite aparece apenas em conta de cartão e muda de tom em 70%
+e 90%.
+
+O gráfico de evolução tem tooltip, legenda com rótulo direto e uma **alternativa em tabela**,
+para que o dado não dependa exclusivamente da leitura visual.
 
 ---
 
