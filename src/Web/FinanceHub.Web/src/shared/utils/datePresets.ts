@@ -1,4 +1,4 @@
-import type { DatePresetKey } from '../types/transactions.types';
+import type { DatePresetKey, DateRangeFilter } from '@/shared/types/filters.types';
 
 function formatYmd(year: number, monthZeroIndexed: number, day: number): string {
   const y = String(year).padStart(4, '0');
@@ -7,7 +7,7 @@ function formatYmd(year: number, monthZeroIndexed: number, day: number): string 
   return `${y}-${m}-${d}`;
 }
 
-export function getPresetDateRange(preset: DatePresetKey): { startDate?: string; endDate?: string } {
+export function getPresetDateRange(preset: DatePresetKey): DateRangeFilter {
   const now = new Date();
   const year = now.getFullYear();
   const month = now.getMonth(); // 0-indexed

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useTransactionsQuery } from '../hooks/useTransactionsQuery';
 import { TransactionsSummaryCards } from '../components/TransactionsSummaryCards';
 import { TransactionsFilterBar } from '../components/TransactionsFilterBar';
-import { getPresetDateRange } from '../utils/datePresets';
+import { getPresetDateRange } from '@/shared/utils/datePresets';
 import { TransactionsTable } from '../components/TransactionsTable';
 import { TransactionsPagination } from '../components/TransactionsPagination';
 import { PageContainer } from '@/shared/components/PageContainer/PageContainer';

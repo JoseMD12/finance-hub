@@ -11,8 +11,12 @@ export interface CategoryDto {
 }
 
 export type TransactionType = 'Credit' | 'Debit';
-export type DatePresetKey = 'current-month' | 'previous-month' | 'last-30' | 'current-year' | 'all-time' | 'custom';
-export type ChannelGroupFilter = 'account' | 'credit';
+
+// Promovidos para shared/ porque o Dashboard usa o mesmo seletor de período (Regra 2.2).
+// Importados para uso local e re-exportados para não quebrar os imports existentes.
+import type { DatePresetKey, ChannelGroupFilter } from '@/shared/types/filters.types';
+
+export type { DatePresetKey, ChannelGroupFilter };
 
 export interface TransactionDto {
   readonly id: string;
