@@ -52,3 +52,11 @@ export const toggleTransactionBillPaymentApi = async (
     isBillPayment: payload.isBillPayment,
   });
 };
+
+export const updateTransactionNotesApi = async (
+  payload: { transactionId: string; notes: string | null }
+): Promise<void> => {
+  await httpClient.patch(API_ENDPOINTS.TRANSACTIONS.UPDATE_NOTES(payload.transactionId), {
+    notes: payload.notes,
+  });
+};

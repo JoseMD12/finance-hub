@@ -71,4 +71,39 @@ public class TransactionAggregatorServiceClientTests
         await act.Should().ThrowAsync<GatewayDownstreamException>()
             .WithMessage("*TransactionAggregator*");
     }
+
+    [Fact]
+    public async Task GetTransactionsAsync_WithChannelGroup_ShouldIncludeChannelGroupInQueryString()
+    {
+        // Arrange
+        HttpRequestMessage? capturedRequest = null;
+        var mockResponse = new PagedGatewayTransactionsDto(
+            Enumerable.Empty<GatewayTransactionDto>(),
+            new GatewayTransactionSummaryDto(0m, 0m, 0m, 0),
+            1,
+            20,
+            0,
+            0);
+
+        var mockHandler = new MockHttpMessageHandler
+        {
+            ResponseToReturn = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = JsonContent.Create(mockResponse)
+            }
+        };
+
+        var httpClient = new HttpClient(mockHandler) { BaseAddress = new Uri("http://localhost:5002") };
+        var client = new TransactionAggregatorServiceClient(httpClient, _logger);
+        var filter = new GatewayTransactionFilterDto("user-123", 1, 20, ChannelGroup: "credit");
+
+        // Act
+        var result = await client.GetTransactionsAsync(filter);
+
+        // Assert
+        result.Should().NotBeNull();
+        mockHandler.LastRequest.Should().NotBeNull();
+        mockHandler.LastRequest!.RequestUri.Should().NotBeNull();
+        mockHandler.LastRequest!.RequestUri!.Query.Should().Contain("channelGroup=credit");
+    }
 }

@@ -150,7 +150,7 @@ export const CategoryFilterSelect: React.FC<CategoryFilterSelectProps> = ({
           <dialog
             open
             aria-label="Filtrar por Categoria"
-            className="absolute top-[calc(100%+6px)] left-0 right-0 z-50 p-3 bg-surface-card border border-border-subtle rounded-2xl shadow-elevated flex flex-col gap-2.5 min-w-[280px] animate-in fade-in zoom-in-95 duration-150 m-0 w-full"
+            className="absolute top-[calc(100%+6px)] left-0 right-0 z-50 p-3 bg-surface-card border border-border-subtle rounded-2xl shadow-elevated flex flex-col gap-2.5 min-w-[280px] m-0 w-full"
           >
             {/* Campo de Busca */}
             <div className="relative">

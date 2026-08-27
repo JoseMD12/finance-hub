@@ -1,7 +1,7 @@
 # Especificação Técnica: Evolução Arquitetural, Governança NetArchTest, Idempotência e Resiliência
 
 **Documento:** `.agents/specs/architectural-evolution-spec.md`  
-**Status:** 🟢 `Aprovada para Implementação`  
+**Status:** 🟢 `Concluída & Implementada`  
 **Data:** 19/08/2026  
 **Escopo:** Todo o ecossistema FinanceHub (.NET 10 Microservices & Shared Modules)
 

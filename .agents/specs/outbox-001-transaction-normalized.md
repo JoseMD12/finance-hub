@@ -1,7 +1,7 @@
 # Spec: OUTBOX-001 — Publicação de `TransactionNormalized` via MassTransit Outbox
 **Feature Branch**: `feature/aggregator-outbox`
 **Serviço**: `FinanceHub.TransactionAggregator`
-**Status**: 🔵 EM ANDAMENTO — Refactoring de hierarquia de eventos
+**Status**: 🟢 `Concluída & Implementada`
 
 ---
 

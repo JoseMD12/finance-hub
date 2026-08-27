@@ -23,6 +23,7 @@ export const API_ENDPOINTS = {
     CATEGORIZE: (id: string) => `/api/v1/gateway/transactions/${id}/category`,
     TOGGLE_NEUTRALITY: (id: string) => `/api/v1/gateway/transactions/${id}/neutrality`,
     TOGGLE_BILL_PAYMENT: (id: string) => `/api/v1/gateway/transactions/${id}/bill-payment`,
+    UPDATE_NOTES: (id: string) => `/api/v1/gateway/transactions/${id}/notes`,
   },
 } as const;
 

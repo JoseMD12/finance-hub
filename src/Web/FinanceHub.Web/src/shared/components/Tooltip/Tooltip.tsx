@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { cn } from '@/shared/utils/cn';
 
 export interface TooltipProps {
@@ -8,6 +9,8 @@ export interface TooltipProps {
   position?: 'top' | 'bottom' | 'left' | 'right';
 }
 
+const GAP = 6;
+
 export const Tooltip: React.FC<TooltipProps> = ({
   content,
   children,
@@ -15,18 +18,56 @@ export const Tooltip: React.FC<TooltipProps> = ({
   position = 'top',
 }) => {
   const [isVisible, setIsVisible] = useState(false);
+  const [coords, setCoords] = useState<{ top: number; left: number } | null>(null);
+  const triggerRef = useRef<HTMLDivElement>(null);
 
-  const getPositionClasses = () => {
+  const updatePosition = useCallback(() => {
+    const trigger = triggerRef.current;
+    if (!trigger) return;
+    const rect = trigger.getBoundingClientRect();
+
     switch (position) {
       case 'right':
-        return 'left-full ml-2 top-1/2 -translate-y-1/2 text-left';
+        setCoords({ top: rect.top + rect.height / 2, left: rect.right + GAP });
+        break;
       case 'left':
-        return 'right-full mr-2 top-1/2 -translate-y-1/2 text-right';
+        setCoords({ top: rect.top + rect.height / 2, left: rect.left - GAP });
+        break;
       case 'bottom':
-        return 'top-full mt-1.5 left-1/2 -translate-x-1/2 text-center';
+        setCoords({ top: rect.bottom + GAP, left: rect.left + rect.width / 2 });
+        break;
       case 'top':
       default:
-        return 'bottom-full mb-1.5 left-1/2 -translate-x-1/2 text-center';
+        setCoords({ top: rect.top - GAP, left: rect.left + rect.width / 2 });
+        break;
+    }
+  }, [position]);
+
+  const show = useCallback(() => {
+    updatePosition();
+    setIsVisible(true);
+  }, [updatePosition]);
+
+  const hide = useCallback(() => setIsVisible(false), []);
+
+  useEffect(() => {
+    if (!isVisible) return;
+    // Rola a página e some — evita um tooltip "fantasma" flutuando fora do trigger.
+    window.addEventListener('scroll', hide, { passive: true, capture: true });
+    return () => window.removeEventListener('scroll', hide, { capture: true } as EventListenerOptions);
+  }, [isVisible, hide]);
+
+  const getAnchorClasses = () => {
+    switch (position) {
+      case 'right':
+        return '-translate-y-1/2 text-left';
+      case 'left':
+        return '-translate-x-full -translate-y-1/2 text-right';
+      case 'bottom':
+        return '-translate-x-1/2 text-center';
+      case 'top':
+      default:
+        return '-translate-x-1/2 -translate-y-full text-center';
     }
   };
 
@@ -46,32 +87,37 @@ export const Tooltip: React.FC<TooltipProps> = ({
 
   return (
     <div
-      className={cn('relative inline-flex items-center', className)}
-      onMouseEnter={() => setIsVisible(true)}
-      onMouseLeave={() => setIsVisible(false)}
-      onFocus={() => setIsVisible(true)}
-      onBlur={() => setIsVisible(false)}
+      ref={triggerRef}
+      className={cn('inline-flex items-center', className)}
+      onMouseEnter={show}
+      onMouseLeave={hide}
+      onFocus={show}
+      onBlur={hide}
     >
       {children}
-      {isVisible && (
-        <div
-          role="tooltip"
-          className={cn(
-            'absolute z-50 px-2.5 py-1.5 text-[11px] font-medium leading-snug',
-            'bg-slate-900/95 text-slate-100 rounded-lg shadow-elevated border border-slate-700/80',
-            'whitespace-normal min-w-[190px] max-w-[240px] pointer-events-none transition-all duration-150 animate-in fade-in zoom-in-95',
-            getPositionClasses()
-          )}
-        >
-          {content}
+      {isVisible &&
+        coords &&
+        ReactDOM.createPortal(
           <div
+            role="tooltip"
+            style={{ position: 'fixed', top: `${coords.top}px`, left: `${coords.left}px` }}
             className={cn(
-              'absolute w-2 h-2 bg-slate-900 border-slate-700/80 rotate-45 pointer-events-none',
-              getArrowClasses()
+              'z-[9999] px-2.5 py-1.5 text-[11px] font-medium leading-snug',
+              'bg-slate-900/95 text-slate-100 rounded-lg shadow-elevated border border-slate-700/80',
+              'whitespace-normal min-w-[190px] max-w-[240px] pointer-events-none transition-all duration-150',
+              getAnchorClasses()
             )}
-          />
-        </div>
-      )}
+          >
+            {content}
+            <div
+              className={cn(
+                'absolute w-2 h-2 bg-slate-900 border-slate-700/80 rotate-45 pointer-events-none',
+                getArrowClasses()
+              )}
+            />
+          </div>,
+          document.body
+        )}
     </div>
   );
 };

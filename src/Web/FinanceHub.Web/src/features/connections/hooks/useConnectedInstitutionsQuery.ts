@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { connectionKeys } from '../api/connectionKeys';
 import { getPluggyItemsApi } from '../api/connectionsApi';
 import { CONNECTIONS_DEFAULTS } from '../constants/connectionsConstants';
@@ -13,5 +13,6 @@ export function useConnectedInstitutionsQuery(token: string) {
     queryFn: ({ signal }) => getPluggyItemsApi(cleanToken, signal),
     enabled: Boolean(cleanToken),
     staleTime: CONNECTIONS_DEFAULTS.STALE_TIME_MS,
+    placeholderData: keepPreviousData,
   });
 }

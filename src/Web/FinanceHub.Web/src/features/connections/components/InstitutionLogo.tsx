@@ -21,7 +21,9 @@ export function InstitutionLogo({ institutionName }: Readonly<InstitutionLogoPro
         src={logoUrl}
         alt={`Logo do ${institutionName}`}
         className="h-full w-full object-contain"
-        loading="lazy"
+        width={24}
+        height={24}
+        decoding="async"
         onError={() => setHasLoadError(true)}
       />
     </span>

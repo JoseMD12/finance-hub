@@ -1,6 +1,6 @@
 # FinanceHub Extension WXT Migration Specification
 
-**Status:** In Progress
+**Status:** 🟢 `Concluída & Implementada`
 **Owner:** FinanceHub
 **Scope:** `src/Web/FinanceHub.Web.Extension/` with legacy reference at `extensions/financehub-pluggy-extension/`
 **Related rules:** `.agents/rules/browser-extension-architecture.md`

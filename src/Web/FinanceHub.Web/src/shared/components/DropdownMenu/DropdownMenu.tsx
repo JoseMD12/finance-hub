@@ -1,6 +1,7 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import ReactDOM from 'react-dom';
 import { cn } from '@/shared/utils/cn';
+import { useFloatingPopover } from '@/shared/hooks/useFloatingPopover';
 
 export interface DropdownMenuItem {
   key: string;
@@ -32,59 +33,24 @@ export const DropdownMenu: React.FC<DropdownMenuProps> = ({
   className,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [position, setPosition] = useState<{ top: number; left: number } | null>(null);
-  const triggerRef = useRef<HTMLDivElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
+  const handleClose = useCallback(() => setIsOpen(false), []);
 
-  const updatePosition = useCallback(() => {
-    if (!triggerRef.current) return;
-    const rect = triggerRef.current.getBoundingClientRect();
-    const dropdownHeight = items.length * 40 + 16;
-    const dropdownWidth = 200;
+  const dropdownHeight = items.length * 40 + 16;
+  const dropdownWidth = 200;
 
-    let top = rect.bottom + 6;
-    if (top + dropdownHeight > window.innerHeight && rect.top > dropdownHeight) {
-      top = Math.max(10, rect.top - dropdownHeight - 6);
-    }
-
-    let left = align === 'right' ? rect.right - dropdownWidth : rect.left;
-    if (left + dropdownWidth > window.innerWidth - 16) {
-      left = Math.max(16, window.innerWidth - dropdownWidth - 16);
-    }
-    if (left < 16) left = 16;
-
-    setPosition({ top, left });
-  }, [align, items.length]);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Node;
-      if (
-        triggerRef.current &&
-        !triggerRef.current.contains(target) &&
-        menuRef.current &&
-        !menuRef.current.contains(target)
-      ) {
-        setIsOpen(false);
-      }
-    };
-
-    if (isOpen) {
-      updatePosition();
-      document.addEventListener('mousedown', handleClickOutside);
-      window.addEventListener('scroll', updatePosition, true);
-      window.addEventListener('resize', updatePosition);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      window.removeEventListener('scroll', updatePosition, true);
-      window.removeEventListener('resize', updatePosition);
-    };
-  }, [isOpen, updatePosition]);
+  const { triggerRef, popoverRef, position } = useFloatingPopover({
+    isOpen,
+    onClose: handleClose,
+    width: dropdownWidth,
+    height: dropdownHeight,
+    align,
+  });
 
   return (
-    <div className={cn('relative inline-block', className)} ref={triggerRef}>
+    <div
+      className={cn('relative inline-block', className)}
+      ref={triggerRef as React.RefObject<HTMLDivElement>}
+    >
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
@@ -97,7 +63,7 @@ export const DropdownMenu: React.FC<DropdownMenuProps> = ({
         position &&
         ReactDOM.createPortal(
           <div
-            ref={menuRef}
+            ref={popoverRef as React.RefObject<HTMLDivElement>}
             role="menu"
             aria-orientation="vertical"
             style={{
@@ -105,7 +71,7 @@ export const DropdownMenu: React.FC<DropdownMenuProps> = ({
               top: `${position.top}px`,
               left: `${position.left}px`,
             }}
-            className="z-[9999] w-52 p-1.5 bg-surface-card rounded-2xl shadow-elevated border border-border-subtle flex flex-col gap-0.5 animate-in fade-in zoom-in-95 duration-150 select-none"
+            className="z-[9999] w-52 p-1.5 bg-surface-card rounded-2xl shadow-elevated border border-border-subtle flex flex-col gap-0.5 select-none"
           >
             {items.map((item) => (
               <button

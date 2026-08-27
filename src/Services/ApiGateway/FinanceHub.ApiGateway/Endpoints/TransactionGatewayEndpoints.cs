@@ -40,7 +40,8 @@ public static class TransactionGatewayEndpoints
                 query.CategoryId,
                 query.Type,
                 query.Search,
-                query.IncludeIgnoredInTotals ?? false);
+                query.IncludeIgnoredInTotals ?? false,
+                query.ChannelGroup);
 
             var result = await transactionClient.GetTransactionsAsync(filter, ct);
             return Results.Ok(result);
@@ -129,10 +130,34 @@ public static class TransactionGatewayEndpoints
         .ProducesProblem(StatusCodes.Status401Unauthorized)
         .ProducesProblem(StatusCodes.Status404NotFound);
 
+        group.MapPatch("/{id:guid}/notes", async (
+            Guid id,
+            UpdateNotesRequest request,
+            ClaimsPrincipal user,
+            ITransactionAggregatorServiceClient transactionClient,
+            CancellationToken ct) =>
+        {
+            var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                      ?? user.FindFirst("sub")?.Value;
+
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                return Results.Unauthorized();
+            }
+
+            await transactionClient.UpdateTransactionNotesAsync(id, userId, request.Notes, ct);
+            return Results.NoContent();
+        })
+        .WithName("UpdateGatewayTransactionNotes")
+        .Produces(StatusCodes.Status204NoContent)
+        .ProducesProblem(StatusCodes.Status401Unauthorized)
+        .ProducesProblem(StatusCodes.Status404NotFound);
+
         return endpoints;
     }
 
     public record CategorizeRequest(Guid CategoryId, bool CreateCustomRule, bool ApplyToPastTransactions = false);
     public record ToggleNeutralityRequest(bool IsIgnoredInTotals, string? Reason = null);
     public record ToggleBillPaymentRequest(bool IsBillPayment);
+    public record UpdateNotesRequest(string? Notes);
 }

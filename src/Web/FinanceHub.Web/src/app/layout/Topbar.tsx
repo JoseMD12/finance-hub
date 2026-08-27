@@ -1,9 +1,7 @@
+import React from 'react';
 import { Search, Bell } from 'lucide-react';
-import { motion, useReducedMotion } from 'framer-motion';
 
 export const Topbar: React.FC = () => {
-  const prefersReduced = useReducedMotion();
-
   return (
     <header className="sticky top-0 z-20 h-16 shrink-0 bg-surface-card border-b border-border-subtle px-8 flex items-center justify-between shadow-sm select-none">
       {/* Search Input */}
@@ -19,16 +17,14 @@ export const Topbar: React.FC = () => {
 
       {/* Actions */}
       <div className="flex items-center gap-4">
-        <motion.button
+        <button
           type="button"
           aria-label="Central de notificações"
-          whileHover={prefersReduced ? undefined : { scale: 1.08 }}
-          whileTap={prefersReduced ? undefined : { scale: 0.92 }}
-          className="p-2 text-slate-500 hover:text-secondary hover:bg-surface-muted rounded-xl transition-colors duration-200 cursor-pointer"
           title="Notificações"
+          className="p-2 text-slate-500 hover:text-secondary hover:bg-surface-muted rounded-xl transition-transform duration-200 hover:scale-[1.08] active:scale-[0.92] cursor-pointer motion-reduce:hover:scale-100 motion-reduce:active:scale-100"
         >
           <Bell className="w-4.5 h-4.5" />
-        </motion.button>
+        </button>
       </div>
     </header>
   );

@@ -95,7 +95,7 @@ describe('TransactionsPage', () => {
     });
   });
 
-  it('deve abrir o modal de detalhes ao clicar no botão de visualização', async () => {
+  it('deve abrir o popover de observações ao clicar no botão de nota da transação', async () => {
     const user = userEvent.setup();
     const queryClient = createTestQueryClient();
     render(
@@ -108,15 +108,11 @@ describe('TransactionsPage', () => {
       expect(screen.getByText('Supermercado Silva')).toBeInTheDocument();
     });
 
-    const actionMenuButton = screen.getByLabelText('Ações da transação Supermercado Silva');
-    await user.click(actionMenuButton);
+    const noteButton = screen.getByLabelText('Observações da transação Supermercado Silva');
+    await user.click(noteButton);
 
-    const viewButton = screen.getByRole('menuitem', { name: /ver detalhes/i });
-    await user.click(viewButton);
-
-    expect(screen.getByText('Detalhes da Transação')).toBeInTheDocument();
-    expect(screen.getByText('Meio de Pagamento')).toBeInTheDocument();
-    expect(screen.getAllByText('Pix').length).toBeGreaterThan(0);
+    expect(screen.getByText('Observação / Nota')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Escreva uma anotação sobre esta transação...')).toBeInTheDocument();
   });
 
   it('deve abrir o dropdown hierárquico de categoria na barra de filtros', async () => {
@@ -158,7 +154,7 @@ describe('TransactionsPage', () => {
     expect(screen.getByLabelText('Alterar categoria da transação')).toBeInTheDocument();
   });
 
-  it('deve alternar a neutralidade da transação via toggle no modal de detalhes', async () => {
+  it('deve alternar a neutralidade da transação via menu de ações', async () => {
     const user = userEvent.setup();
     const queryClient = createTestQueryClient();
     vi.mocked(transactionsApi.toggleTransactionNeutralityApi).mockResolvedValue();
@@ -176,18 +172,43 @@ describe('TransactionsPage', () => {
     const actionMenuButton = screen.getByLabelText('Ações da transação Supermercado Silva');
     await user.click(actionMenuButton);
 
-    const viewButton = screen.getByRole('menuitem', { name: /ver detalhes/i });
-    await user.click(viewButton);
-
-    const toggleButton = screen.getByRole('button', { name: 'Alternar neutralidade nos totais' });
-    expect(toggleButton).toHaveAttribute('aria-pressed', 'false');
-
+    const toggleButton = screen.getByRole('menuitem', { name: /ignorar \/ neutro/i });
     await user.click(toggleButton);
 
     expect(transactionsApi.toggleTransactionNeutralityApi).toHaveBeenCalledWith({
       transactionId: 'tx-1',
       isIgnoredInTotals: true,
       reason: 'Marcado manualmente como neutro/trânsito',
+    });
+  });
+
+  it('deve disparar a busca com channelGroup ao selecionar Meio de Pagamento', async () => {
+    const user = userEvent.setup();
+    const queryClient = createTestQueryClient();
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <TransactionsPage />
+      </QueryClientProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Supermercado Silva')).toBeInTheDocument();
+    });
+
+    const channelSelectTrigger = screen.getByRole('button', { name: 'Meio de Pagamento' });
+    await user.click(channelSelectTrigger);
+
+    const creditOption = screen.getByRole('option', { name: 'Cartão de Crédito' });
+    await user.click(creditOption);
+
+    await waitFor(() => {
+      expect(transactionsApi.getTransactionsApi).toHaveBeenCalledWith(
+        expect.objectContaining({
+          channelGroup: 'credit',
+        }),
+        expect.anything()
+      );
     });
   });
 });

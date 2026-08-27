@@ -4,7 +4,7 @@ import { Skeleton } from '@/shared/components/Skeleton/Skeleton';
 import { formatCurrencyBRL } from '@/shared/utils/formatters';
 import { ArrowUpRight, ArrowDownRight, Wallet, Landmark, CreditCard, Info } from 'lucide-react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { GlowCard } from '@/shared/components/motion';
+import { GlowCard, NumberScramble } from '@/shared/components/motion';
 import { Tooltip } from '@/shared/components/Tooltip/Tooltip';
 import type { TransactionSummaryDto } from '../types/transactions.types';
 
@@ -13,13 +13,13 @@ export interface TransactionsSummaryCardsProps {
   isLoading?: boolean;
 }
 
-export const TransactionsSummaryCards: React.FC<TransactionsSummaryCardsProps> = ({
+const TransactionsSummaryCardsComponent: React.FC<TransactionsSummaryCardsProps> = ({
   summary,
   isLoading,
 }) => {
   const prefersReduced = useReducedMotion();
 
-  if (isLoading) {
+  if (isLoading && !summary) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" aria-busy="true" aria-label="Carregando resumo financeiro">
         {[1, 2, 3, 4].map((i) => (
@@ -42,22 +42,25 @@ export const TransactionsSummaryCards: React.FC<TransactionsSummaryCardsProps> =
   const expense = summary?.totalExpense ?? 0;
   const net = summary?.netBalance ?? 0;
 
-  const getMotionProps = (delay: number) => {
+  // Animação de entrada apenas — hover lift via CSS puro (sem Framer Motion no hover)
+  // para evitar que o Framer Motion detecte hover-state durante scroll e execute animações no main thread
+  const getEntryAnimation = (delay: number) => {
     if (prefersReduced) return {};
     return {
-      initial: { opacity: 0, y: 12 },
+      initial: { opacity: 0, y: 6 },
       animate: { opacity: 1, y: 0 },
-      transition: { duration: 0.3, delay, ease: [0.4, 0, 0.2, 1] as const },
+      transition: { duration: 0.2, delay, ease: [0.25, 0.1, 0.25, 1] as const },
     };
   };
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       {/* 1. Saldo Real Consolidado em Contas */}
-      <motion.div {...getMotionProps(0)}>
+      <motion.div {...getEntryAnimation(0)} className="h-full">
         <GlowCard
+          hoverable={false}
           glowRgb="59, 130, 246"
-          className="p-4 flex flex-col justify-between hover:border-slate-300 hover:shadow-elevated transition-all duration-200 h-full"
+          className="p-4 flex flex-col justify-between hover:border-slate-300 hover:shadow-elevated transition-shadow duration-200 h-full cursor-default"
         >
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5">
@@ -78,9 +81,11 @@ export const TransactionsSummaryCards: React.FC<TransactionsSummaryCardsProps> =
           </div>
 
           <div className="my-2">
-            <span className="text-xl font-black font-display text-slate-900 tabular-nums tracking-tight block">
-              {formatCurrencyBRL(realBalance)}
-            </span>
+            <NumberScramble
+              value={realBalance}
+              format={formatCurrencyBRL}
+              className="text-xl font-black text-slate-900 tracking-tight block"
+            />
           </div>
 
           <div className="flex items-center justify-between text-[11px] pt-1.5 border-t border-slate-100/80 text-slate-500">
@@ -96,10 +101,11 @@ export const TransactionsSummaryCards: React.FC<TransactionsSummaryCardsProps> =
       </motion.div>
 
       {/* 2. Entradas do Período */}
-      <motion.div {...getMotionProps(0.04)}>
+      <motion.div {...getEntryAnimation(0.02)} className="h-full">
         <GlowCard
+          hoverable={false}
           glowRgb="46, 204, 113"
-          className="p-4 flex flex-col justify-between hover:border-slate-300 hover:shadow-elevated transition-all duration-200 h-full"
+          className="p-4 flex flex-col justify-between hover:border-slate-300 hover:shadow-elevated transition-shadow duration-200 h-full cursor-default"
         >
           <div className="flex items-center justify-between gap-2">
             <span className="text-xs font-semibold text-slate-500">Entradas do Mês</span>
@@ -109,9 +115,11 @@ export const TransactionsSummaryCards: React.FC<TransactionsSummaryCardsProps> =
           </div>
 
           <div className="my-2">
-            <span className="text-xl font-black font-display text-status-success tabular-nums tracking-tight block">
-              + {formatCurrencyBRL(income)}
-            </span>
+            <NumberScramble
+              value={income}
+              format={(n) => `+ ${formatCurrencyBRL(n)}`}
+              className="text-xl font-black text-status-success tracking-tight block"
+            />
           </div>
 
           <div className="text-[11px] pt-1.5 border-t border-slate-100/80 text-slate-400 font-medium truncate">
@@ -121,10 +129,11 @@ export const TransactionsSummaryCards: React.FC<TransactionsSummaryCardsProps> =
       </motion.div>
 
       {/* 3. Saídas do Período */}
-      <motion.div {...getMotionProps(0.08)}>
+      <motion.div {...getEntryAnimation(0.04)} className="h-full">
         <GlowCard
+          hoverable={false}
           glowRgb="255, 89, 100"
-          className="p-4 flex flex-col justify-between hover:border-slate-300 hover:shadow-elevated transition-all duration-200 h-full"
+          className="p-4 flex flex-col justify-between hover:border-slate-300 hover:shadow-elevated transition-shadow duration-200 h-full cursor-default"
         >
           <div className="flex items-center justify-between gap-2">
             <span className="text-xs font-semibold text-slate-500">Saídas do Mês</span>
@@ -134,9 +143,11 @@ export const TransactionsSummaryCards: React.FC<TransactionsSummaryCardsProps> =
           </div>
 
           <div className="my-2">
-            <span className="text-xl font-black font-display text-status-danger tabular-nums tracking-tight block">
-              - {formatCurrencyBRL(expense)}
-            </span>
+            <NumberScramble
+              value={expense}
+              format={(n) => `- ${formatCurrencyBRL(n)}`}
+              className="text-xl font-black text-status-danger tracking-tight block"
+            />
           </div>
 
           <div className="text-[11px] pt-1.5 border-t border-slate-100/80 text-slate-400 font-medium truncate">
@@ -146,10 +157,11 @@ export const TransactionsSummaryCards: React.FC<TransactionsSummaryCardsProps> =
       </motion.div>
 
       {/* 4. Resultado / Economia Líquida */}
-      <motion.div {...getMotionProps(0.12)}>
+      <motion.div {...getEntryAnimation(0.06)} className="h-full">
         <GlowCard
+          hoverable={false}
           glowRgb={net >= 0 ? "46, 204, 113" : "224, 86, 151"}
-          className="p-4 flex flex-col justify-between hover:border-slate-300 hover:shadow-elevated transition-all duration-200 h-full"
+          className="p-4 flex flex-col justify-between hover:border-slate-300 hover:shadow-elevated transition-shadow duration-200 h-full cursor-default"
         >
           <div className="flex items-center justify-between gap-2">
             <span className="text-xs font-semibold text-slate-500">Resultado do Mês</span>
@@ -163,14 +175,13 @@ export const TransactionsSummaryCards: React.FC<TransactionsSummaryCardsProps> =
           </div>
 
           <div className="my-2">
-            <span
-              className={`text-xl font-black font-display tabular-nums tracking-tight block ${
+            <NumberScramble
+              value={net}
+              format={(n) => `${n >= 0 ? '+ ' : '- '}${formatCurrencyBRL(Math.abs(n))}`}
+              className={`text-xl font-black tracking-tight block ${
                 net >= 0 ? 'text-emerald-700' : 'text-brand-dark'
               }`}
-            >
-              {net >= 0 ? '+ ' : '- '}
-              {formatCurrencyBRL(Math.abs(net))}
-            </span>
+            />
           </div>
 
           <div className="text-[11px] pt-1.5 border-t border-slate-100/80 text-slate-500 font-medium truncate">
@@ -181,3 +192,5 @@ export const TransactionsSummaryCards: React.FC<TransactionsSummaryCardsProps> =
     </div>
   );
 };
+
+export const TransactionsSummaryCards = React.memo(TransactionsSummaryCardsComponent);

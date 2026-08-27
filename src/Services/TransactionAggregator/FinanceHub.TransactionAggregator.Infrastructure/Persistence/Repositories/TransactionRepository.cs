@@ -35,7 +35,8 @@ public class TransactionRepository : ITransactionRepository
         t.Nature.ToString(),
         t.IsBillPayment,
         t.IsIgnoredInTotals,
-        t.PairedTransactionId);
+        t.PairedTransactionId,
+        t.Notes);
 
     private readonly TransactionAggregatorDbContext _context;
 
@@ -103,47 +104,12 @@ public class TransactionRepository : ITransactionRepository
             .AsNoTracking()
             .Where(t => t.UserId == filter.UserId);
 
-        if (filter.StartDate.HasValue)
-        {
-            var startUtc = DateTime.SpecifyKind(filter.StartDate.Value.Date, DateTimeKind.Utc);
-            query = query.Where(t => t.TransactionDateUtc >= startUtc);
-        }
-
-        if (filter.EndDate.HasValue)
-        {
-            var endUtc = DateTime.SpecifyKind(filter.EndDate.Value.Date.AddDays(1).AddTicks(-1), DateTimeKind.Utc);
-            query = query.Where(t => t.TransactionDateUtc <= endUtc);
-        }
-
-        if (!string.IsNullOrWhiteSpace(filter.InstitutionId))
-        {
-            var keywords = BankAliases.GetKeywordsFor(filter.InstitutionId);
-            query = query.Where(BuildInstitutionFilterExpression(keywords));
-        }
-
-        if (filter.CategoryId.HasValue)
-        {
-            var selectedCategoryId = filter.CategoryId.Value;
-            var categoryIds = await _context.Categories
-                .AsNoTracking()
-                .Where(c => c.Id == selectedCategoryId || c.ParentCategoryId == selectedCategoryId)
-                .Select(c => c.Id)
-                .ToListAsync(cancellationToken);
-
-            query = query.Where(t => categoryIds.Contains(t.CategoryId));
-        }
-
-        if (!string.IsNullOrWhiteSpace(filter.Type) && Enum.TryParse<TransactionType>(filter.Type, true, out var parsedType))
-        {
-            query = query.Where(t => t.Type == parsedType);
-        }
-
-        if (!string.IsNullOrWhiteSpace(filter.Search))
-        {
-            var searchLower = filter.Search.Trim().ToLowerInvariant();
-            query = query.Where(t => t.Description.CleanText.ToLower().Contains(searchLower)
-                                  || t.BankDetails.MerchantName.ToLower().Contains(searchLower));
-        }
+        query = ApplyDateFilters(query, filter.StartDate, filter.EndDate);
+        query = ApplyInstitutionFilter(query, filter.InstitutionId);
+        query = await ApplyCategoryFilterAsync(query, filter.CategoryId, cancellationToken);
+        query = ApplyTypeFilter(query, filter.Type);
+        query = ApplySearchFilter(query, filter.Search);
+        query = ApplyChannelGroupFilter(query, filter.ChannelGroup);
 
         var totalItems = await query.CountAsync(cancellationToken);
 
@@ -212,6 +178,97 @@ public class TransactionRepository : ITransactionRepository
             lastSync);
 
         return new PagedTransactionsResponseDto(items, summary, page, pageSize, filteredItemsTotal, totalPages);
+    }
+
+    private static IQueryable<CanonicalTransaction> ApplyDateFilters(IQueryable<CanonicalTransaction> query, DateTime? startDate, DateTime? endDate)
+    {
+        if (startDate.HasValue)
+        {
+            var startUtc = DateTime.SpecifyKind(startDate.Value.Date, DateTimeKind.Utc);
+            query = query.Where(t => t.TransactionDateUtc >= startUtc);
+        }
+
+        if (endDate.HasValue)
+        {
+            var endUtc = DateTime.SpecifyKind(endDate.Value.Date.AddDays(1).AddTicks(-1), DateTimeKind.Utc);
+            query = query.Where(t => t.TransactionDateUtc <= endUtc);
+        }
+
+        return query;
+    }
+
+    private static IQueryable<CanonicalTransaction> ApplyInstitutionFilter(IQueryable<CanonicalTransaction> query, string? institutionId)
+    {
+        if (!string.IsNullOrWhiteSpace(institutionId))
+        {
+            var keywords = BankAliases.GetKeywordsFor(institutionId);
+            query = query.Where(BuildInstitutionFilterExpression(keywords));
+        }
+
+        return query;
+    }
+
+    private async Task<IQueryable<CanonicalTransaction>> ApplyCategoryFilterAsync(
+        IQueryable<CanonicalTransaction> query,
+        Guid? categoryId,
+        CancellationToken cancellationToken)
+    {
+        if (!categoryId.HasValue)
+        {
+            return query;
+        }
+
+        var selectedCategoryId = categoryId.Value;
+        var categoryIds = await _context.Categories
+            .AsNoTracking()
+            .Where(c => c.Id == selectedCategoryId || c.ParentCategoryId == selectedCategoryId)
+            .Select(c => c.Id)
+            .ToListAsync(cancellationToken);
+
+        return query.Where(t => categoryIds.Contains(t.CategoryId));
+    }
+
+    private static IQueryable<CanonicalTransaction> ApplyTypeFilter(IQueryable<CanonicalTransaction> query, string? type)
+    {
+        if (!string.IsNullOrWhiteSpace(type) && Enum.TryParse<TransactionType>(type, true, out var parsedType))
+        {
+            return query.Where(t => t.Type == parsedType);
+        }
+
+        return query;
+    }
+
+    private static IQueryable<CanonicalTransaction> ApplySearchFilter(IQueryable<CanonicalTransaction> query, string? search)
+    {
+        if (string.IsNullOrWhiteSpace(search))
+        {
+            return query;
+        }
+
+        var searchLower = search.Trim().ToLowerInvariant();
+        return query.Where(t => t.Description.CleanText.ToLower().Contains(searchLower)
+                             || t.BankDetails.MerchantName.ToLower().Contains(searchLower));
+    }
+
+    private static IQueryable<CanonicalTransaction> ApplyChannelGroupFilter(IQueryable<CanonicalTransaction> query, string? channelGroup)
+    {
+        if (string.IsNullOrWhiteSpace(channelGroup))
+        {
+            return query;
+        }
+
+        var channelGroupNormalized = channelGroup.Trim().ToLowerInvariant();
+        if (channelGroupNormalized is "credit" or "cartao")
+        {
+            return query.Where(t => t.BankDetails.Channel == TransactionChannel.CreditCard);
+        }
+
+        if (channelGroupNormalized is "account" or "saldo" or "conta")
+        {
+            return query.Where(t => t.BankDetails.Channel != TransactionChannel.CreditCard);
+        }
+
+        return query;
     }
 
     private static Expression<Func<CanonicalTransaction, bool>> BuildInstitutionFilterExpression(IReadOnlyList<string> keywords)
