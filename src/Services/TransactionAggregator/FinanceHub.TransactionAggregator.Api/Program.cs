@@ -33,23 +33,6 @@ using (var scope = app.Services.CreateScope())
         await dbContext.SaveChangesAsync();
     }
 
-    // Backfill de neutralidade para transações já ingeridas antes de a natureza passar a ser
-    // resolvida pela categoria. Usa exatamente a mesma regra do handler de ingestão — as
-    // naturezas declaradas no catálogo — em vez de repetir identificadores de categoria soltos.
-    var neutralCategoryIds = await dbContext.Categories
-        .AsNoTracking()
-        .Where(c => c.Nature != TransactionNature.Operating)
-        .Select(c => c.Id)
-        .ToListAsync();
-
-    if (neutralCategoryIds.Count > 0)
-    {
-        // ExecuteUpdate roda no banco: não materializa as transações nem carrega o change tracker,
-        // o que importa porque isto executa a cada boot sobre a tabela inteira.
-        await dbContext.Transactions
-            .Where(t => neutralCategoryIds.Contains(t.CategoryId) && !t.IsIgnoredInTotals)
-            .ExecuteUpdateAsync(setters => setters.SetProperty(t => t.IsIgnoredInTotals, true));
-    }
 }
 
 app.UseExceptionHandler();

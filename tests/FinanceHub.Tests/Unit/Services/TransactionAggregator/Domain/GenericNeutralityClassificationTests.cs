@@ -1,6 +1,7 @@
 using System;
 using FinanceHub.TransactionAggregator.Domain.Constants;
 using FinanceHub.TransactionAggregator.Domain.Entities;
+using FinanceHub.TransactionAggregator.Domain.Exceptions;
 using FinanceHub.TransactionAggregator.Domain.Services;
 using FinanceHub.TransactionAggregator.Domain.ValueObjects;
 using FluentAssertions;
@@ -113,6 +114,61 @@ public class GenericNeutralityClassificationTests
             nature: TransactionNature.Transfer);
 
         category.Nature.Should().Be(TransactionNature.Transfer);
+    }
+
+
+    // ─── Recategorização manual re-deriva a natureza ──────────────────────────
+
+    [Fact]
+    public void CategorizeManually_WhenMovedToNeutralCategory_ShouldStopCountingInTotals()
+    {
+        // Regressão: mover um lançamento para "Transferências" mantinha Nature = Operating e
+        // ele seguia contando como gasto, porque a natureza só era derivada na ingestão.
+        var transaction = BuildTransaction();
+        transaction.ApplyNature(TransactionNature.Operating);
+
+        transaction.CategorizeManually(SystemCategoryIds.Transferencias, TransactionNature.Transfer);
+
+        transaction.Nature.Should().Be(TransactionNature.Transfer);
+        transaction.IsIgnoredInTotals.Should().BeTrue();
+        transaction.IsManuallyCategorized.Should().BeTrue();
+    }
+
+    [Fact]
+    public void CategorizeManually_WhenMovedBackToOperating_ShouldCountInTotalsAgain()
+    {
+        // A outra direção era pior: uma transação tirada de "Transferências" ficava fora dos
+        // totais para sempre, porque nada revertia IsIgnoredInTotals.
+        var transaction = BuildTransaction();
+        transaction.ApplyNature(TransactionNature.Transfer);
+        transaction.IsIgnoredInTotals.Should().BeTrue();
+
+        transaction.CategorizeManually(Guid.NewGuid(), TransactionNature.Operating);
+
+        transaction.Nature.Should().Be(TransactionNature.Operating);
+        transaction.IsIgnoredInTotals.Should().BeFalse();
+    }
+
+    [Fact]
+    public void CategorizeManually_WhenCategoryIdIsEmpty_ShouldThrow()
+    {
+        var transaction = BuildTransaction();
+
+        var act = () => transaction.CategorizeManually(Guid.Empty, TransactionNature.Operating);
+
+        act.Should().Throw<InvalidCategoryIdDomainException>();
+    }
+
+    [Fact]
+    public void ToggleIgnoreInTotals_ShouldStillAllowOverridingTheDerivedValue()
+    {
+        // A derivação é o padrão, não uma prisão: o usuário continua podendo divergir dela.
+        var transaction = BuildTransaction();
+        transaction.CategorizeManually(SystemCategoryIds.Transferencias, TransactionNature.Transfer);
+
+        transaction.ToggleIgnoreInTotals(false);
+
+        transaction.IsIgnoredInTotals.Should().BeFalse();
     }
 
     private static CanonicalTransaction BuildTransaction(string description = "COMPRA QUALQUER")

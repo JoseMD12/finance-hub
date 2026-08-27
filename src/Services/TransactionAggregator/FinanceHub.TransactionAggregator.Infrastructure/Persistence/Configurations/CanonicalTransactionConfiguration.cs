@@ -147,6 +147,11 @@ public class CanonicalTransactionConfiguration : IEntityTypeConfiguration<Canoni
             .HasMaxLength(500)
             .IsRequired(false);
 
+        // A quebra por categoria do Dashboard e o backfill de natureza filtram por CategoryId,
+        // que até então não tinha índice — ambos caíam em varredura sequencial da tabela.
+        builder.HasIndex(x => x.CategoryId)
+            .HasDatabaseName("idx_canonical_transactions_category");
+
         builder.HasIndex(x => new { x.UserId, x.TransactionDateUtc, x.Type })
             .HasFilter("\"is_ignored_in_totals\" = false")
             .HasDatabaseName("idx_canonical_transactions_operating_totals");
