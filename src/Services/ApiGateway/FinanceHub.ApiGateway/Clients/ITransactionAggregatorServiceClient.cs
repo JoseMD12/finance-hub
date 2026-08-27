@@ -6,6 +6,7 @@ public interface ITransactionAggregatorServiceClient
 {
     Task<GatewayConsolidatedBalanceDto> GetConsolidatedBalanceAsync(string userId, CancellationToken ct = default);
     Task<PagedGatewayTransactionsDto> GetTransactionsAsync(GatewayTransactionFilterDto filter, CancellationToken ct = default);
+    Task<GatewayDashboardSummaryDto> GetDashboardSummaryAsync(GatewayDashboardFilterDto filter, CancellationToken ct = default);
     Task<IEnumerable<GatewayCategoryDto>> GetCategoriesAsync(CancellationToken ct = default);
     Task CategorizeTransactionAsync(Guid transactionId, string userId, Guid categoryId, bool createCustomRule = false, bool applyToPastTransactions = false, CancellationToken ct = default);
     Task ToggleTransactionNeutralityAsync(Guid transactionId, string userId, bool isIgnoredInTotals, string? reason = null, CancellationToken ct = default);
