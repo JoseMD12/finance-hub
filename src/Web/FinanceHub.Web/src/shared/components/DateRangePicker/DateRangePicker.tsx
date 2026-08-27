@@ -96,6 +96,107 @@ function parseYmdToDate(dateStr?: string): Date | null {
   return new Date(y, m - 1, d, 0, 0, 0, 0);
 }
 
+/** Calcula se a data está no intervalo selecionado ou hovered */
+function getDayRangeState(
+  dayTime: number,
+  startTime: number | null,
+  endTime: number | null,
+  hoverTime: number | null
+) {
+  const isStart = startTime !== null && dayTime === startTime;
+  const isEnd = endTime !== null && dayTime === endTime;
+  const isInRange = startTime !== null && endTime !== null && dayTime > startTime && dayTime < endTime;
+
+  const isHoverRange =
+    startTime !== null &&
+    endTime === null &&
+    hoverTime !== null &&
+    ((hoverTime >= startTime && dayTime > startTime && dayTime <= hoverTime) ||
+      (hoverTime < startTime && dayTime < startTime && dayTime >= hoverTime));
+
+  return { isStart, isEnd, isInRange, isHoverRange };
+}
+
+/** Helper para atualizar seleção de data por clique */
+function computeNextDateRange(
+  dayDate: Date,
+  tempStart?: string,
+  tempEnd?: string
+): { nextStart: string; nextEnd?: string; nextStartDisplay: string; nextEndDisplay: string } {
+  const clickedYmd = formatYmd(dayDate);
+  const clickedDisplay = formatDateDisplay(clickedYmd);
+
+  if (!tempStart || (tempStart && tempEnd)) {
+    return {
+      nextStart: clickedYmd,
+      nextEnd: undefined,
+      nextStartDisplay: clickedDisplay,
+      nextEndDisplay: '',
+    };
+  }
+
+  const startDateObj = parseYmdToDate(tempStart);
+  if (!startDateObj) {
+    return {
+      nextStart: clickedYmd,
+      nextEnd: undefined,
+      nextStartDisplay: clickedDisplay,
+      nextEndDisplay: '',
+    };
+  }
+
+  const startMidnight = getMidnightTimestamp(startDateObj);
+  const clickedMidnight = getMidnightTimestamp(dayDate);
+
+  if (clickedMidnight < startMidnight) {
+    return {
+      nextStart: clickedYmd,
+      nextEnd: tempStart,
+      nextStartDisplay: clickedDisplay,
+      nextEndDisplay: formatDateDisplay(tempStart),
+    };
+  }
+
+  return {
+    nextStart: tempStart,
+    nextEnd: clickedYmd,
+    nextStartDisplay: formatDateDisplay(tempStart),
+    nextEndDisplay: clickedDisplay,
+  };
+}
+
+/** Constrói o grid de semanas de um mês */
+function generateMonthDaysGrid(currentMonth: Date) {
+  const year = currentMonth.getFullYear();
+  const month = currentMonth.getMonth();
+  const firstDayOfMonth = new Date(year, month, 1);
+  const startingDayOfWeek = firstDayOfMonth.getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const today = new Date();
+  const todayMid = getMidnightTimestamp(today);
+
+  const grid: { date: Date; isCurrentMonth: boolean; key: string }[] = [];
+
+  const daysInPrevMonth = new Date(year, month, 0).getDate();
+  for (let i = startingDayOfWeek - 1; i >= 0; i--) {
+    const d = new Date(year, month - 1, daysInPrevMonth - i);
+    grid.push({ date: d, isCurrentMonth: false, key: formatYmd(d) });
+  }
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const d = new Date(year, month, day);
+    grid.push({ date: d, isCurrentMonth: true, key: formatYmd(d) });
+  }
+
+  const remainingCells = (7 - (grid.length % 7)) % 7;
+  for (let i = 1; i <= remainingCells; i++) {
+    const d = new Date(year, month + 1, i);
+    grid.push({ date: d, isCurrentMonth: false, key: formatYmd(d) });
+  }
+
+  return { daysGrid: grid, todayTimestamp: todayMid };
+}
+
 const CalendarDayCell = React.memo<CalendarDayCellProps>(({
   dayDate,
   isCurrentMonth,
@@ -112,18 +213,14 @@ const CalendarDayCell = React.memo<CalendarDayCellProps>(({
 
   const startTime = startD ? getMidnightTimestamp(startD) : null;
   const endTime = endD ? getMidnightTimestamp(endD) : null;
-
-  const isStart = startTime !== null && dayTime === startTime;
-  const isEnd = endTime !== null && dayTime === endTime;
-  const isInRange = startTime !== null && endTime !== null && dayTime > startTime && dayTime < endTime;
-
   const hoverTime = hoveredDate ? getMidnightTimestamp(hoveredDate) : null;
-  const isHoverRange =
-    startTime !== null &&
-    endTime === null &&
-    hoverTime !== null &&
-    ((hoverTime >= startTime && dayTime > startTime && dayTime <= hoverTime) ||
-      (hoverTime < startTime && dayTime < startTime && dayTime >= hoverTime));
+
+  const { isStart, isEnd, isInRange, isHoverRange } = getDayRangeState(
+    dayTime,
+    startTime,
+    endTime,
+    hoverTime
+  );
 
   const isToday = dayTime === todayTimestamp;
 
@@ -132,7 +229,7 @@ const CalendarDayCell = React.memo<CalendarDayCellProps>(({
       className={cn(
         'relative h-7 flex items-center justify-center',
         isInRange && 'bg-brand-light/60',
-        isStart && (endTime !== null || (hoverTime !== null && hoverTime > startTime)) && 'rounded-l-lg bg-gradient-to-r from-transparent via-brand-light/60 to-brand-light/60',
+        isStart && (endTime !== null || (hoverTime !== null && hoverTime > (startTime ?? 0))) && 'rounded-l-lg bg-gradient-to-r from-transparent via-brand-light/60 to-brand-light/60',
         isEnd && startTime !== null && 'rounded-r-lg bg-gradient-to-l from-transparent via-brand-light/60 to-brand-light/60',
         isHoverRange && 'bg-brand-light/40'
       )}
@@ -171,7 +268,6 @@ const DateRangePickerComponent: React.FC<DateRangePickerProps> = ({
   const [tempStart, setTempStart] = useState<string | undefined>(isCustomActive ? startDate : undefined);
   const [tempEnd, setTempEnd] = useState<string | undefined>(isCustomActive ? endDate : undefined);
 
-  // Inputs de texto manuais formatados em DD/MM/AAAA
   const [startInputText, setStartInputText] = useState<string>(
     isCustomActive && startDate ? formatDateDisplay(startDate) : ''
   );
@@ -232,38 +328,15 @@ const DateRangePickerComponent: React.FC<DateRangePickerProps> = ({
   };
 
   const handleDayClick = useCallback((dayDate: Date) => {
-    const clickedYmd = formatYmd(dayDate);
-    const clickedDisplay = formatDateDisplay(clickedYmd);
-
-    if (!tempStart || (tempStart && tempEnd)) {
-      setTempStart(clickedYmd);
-      setTempEnd(undefined);
-      setStartInputText(clickedDisplay);
-      setEndInputText('');
-      return;
-    }
-
-    const startDateObj = parseYmdToDate(tempStart);
-    if (!startDateObj) {
-      setTempStart(clickedYmd);
-      setTempEnd(undefined);
-      setStartInputText(clickedDisplay);
-      setEndInputText('');
-      return;
-    }
-
-    const startMidnight = getMidnightTimestamp(startDateObj);
-    const clickedMidnight = getMidnightTimestamp(dayDate);
-
-    if (clickedMidnight < startMidnight) {
-      setTempStart(clickedYmd);
-      setTempEnd(tempStart);
-      setStartInputText(clickedDisplay);
-      setEndInputText(formatDateDisplay(tempStart));
-    } else {
-      setTempEnd(clickedYmd);
-      setEndInputText(clickedDisplay);
-    }
+    const { nextStart, nextEnd, nextStartDisplay, nextEndDisplay } = computeNextDateRange(
+      dayDate,
+      tempStart,
+      tempEnd
+    );
+    setTempStart(nextStart);
+    setTempEnd(nextEnd);
+    setStartInputText(nextStartDisplay);
+    setEndInputText(nextEndDisplay);
   }, [tempStart, tempEnd]);
 
   const handleStartInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -313,51 +386,8 @@ const DateRangePickerComponent: React.FC<DateRangePickerProps> = ({
     return label.charAt(0).toUpperCase() + label.slice(1);
   }, [currentMonth]);
 
-  // Construção da grade de dias do mês
   const { daysGrid, todayTimestamp } = useMemo(() => {
-    const year = currentMonth.getFullYear();
-    const month = currentMonth.getMonth();
-    const firstDayOfMonth = new Date(year, month, 1);
-    const startingDayOfWeek = firstDayOfMonth.getDay();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const today = new Date();
-    const todayMid = getMidnightTimestamp(today);
-
-    const grid: { date: Date; isCurrentMonth: boolean; key: string }[] = [];
-
-    // Dias do mês anterior
-    const daysInPrevMonth = new Date(year, month, 0).getDate();
-    for (let i = startingDayOfWeek - 1; i >= 0; i--) {
-      const d = new Date(year, month - 1, daysInPrevMonth - i);
-      grid.push({
-        date: d,
-        isCurrentMonth: false,
-        key: formatYmd(d),
-      });
-    }
-
-    // Dias do mês atual
-    for (let day = 1; day <= daysInMonth; day++) {
-      const d = new Date(year, month, day);
-      grid.push({
-        date: d,
-        isCurrentMonth: true,
-        key: formatYmd(d),
-      });
-    }
-
-    // Completar última semana com o próximo mês
-    const remainingCells = (7 - (grid.length % 7)) % 7;
-    for (let i = 1; i <= remainingCells; i++) {
-      const d = new Date(year, month + 1, i);
-      grid.push({
-        date: d,
-        isCurrentMonth: false,
-        key: formatYmd(d),
-      });
-    }
-
-    return { daysGrid: grid, todayTimestamp: todayMid };
+    return generateMonthDaysGrid(currentMonth);
   }, [currentMonth]);
 
   const triggerLabel = isCustomActive && startDate && endDate
