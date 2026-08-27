@@ -4,6 +4,7 @@ using FinanceHub.Shared.Observability;
 using FinanceHub.TransactionAggregator.Api;
 using FinanceHub.TransactionAggregator.Api.Endpoints;
 using FinanceHub.TransactionAggregator.Infrastructure.Persistence;
+using FinanceHub.TransactionAggregator.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
 Env.TraversePath().Load();
@@ -32,39 +33,22 @@ using (var scope = app.Services.CreateScope())
         await dbContext.SaveChangesAsync();
     }
 
-    // Backfill de neutralidade e pareamento automático para transações existentes
-    var transferCategoryId = Guid.Parse("11111111-1111-1111-1111-111111111002");
-    var billPaymentCategoryId = Guid.Parse("11111111-1111-1111-1111-111111110801");
-    var investmentsCategoryId = Guid.Parse("11111111-1111-1111-1111-111111110805");
-
-    var candidateTransfers = await dbContext.Transactions
-        .Where(t => (t.CategoryId == transferCategoryId || t.CategoryId == investmentsCategoryId) && !t.IsIgnoredInTotals)
+    // Backfill de neutralidade para transações já ingeridas antes de a natureza passar a ser
+    // resolvida pela categoria. Usa exatamente a mesma regra do handler de ingestão — as
+    // naturezas declaradas no catálogo — em vez de repetir identificadores de categoria soltos.
+    var neutralCategoryIds = await dbContext.Categories
+        .AsNoTracking()
+        .Where(c => c.Nature != TransactionNature.Operating)
+        .Select(c => c.Id)
         .ToListAsync();
 
-    foreach (var tx in candidateTransfers)
+    if (neutralCategoryIds.Count > 0)
     {
-        tx.ToggleIgnoreInTotals(true);
-    }
-
-    var billPayments = await dbContext.Transactions
-        .Where(t => t.CategoryId == billPaymentCategoryId && t.Description.CleanText.ToLower().Contains("fatura") && !t.IsIgnoredInTotals)
-        .ToListAsync();
-
-    foreach (var bp in billPayments)
-    {
-        bp.MarkAsBillPayment();
-    }
-
-    if (candidateTransfers.Count > 0 || billPayments.Count > 0)
-    {
-        await dbContext.SaveChangesAsync();
-    }
-
-    var matchingEngine = scope.ServiceProvider.GetRequiredService<FinanceHub.TransactionAggregator.Application.Interfaces.ITransferPairMatchingEngine>();
-    var userIds = await dbContext.Transactions.Select(t => t.UserId).Distinct().ToListAsync();
-    foreach (var uid in userIds)
-    {
-        await matchingEngine.MatchAndPairAsync(uid);
+        // ExecuteUpdate roda no banco: não materializa as transações nem carrega o change tracker,
+        // o que importa porque isto executa a cada boot sobre a tabela inteira.
+        await dbContext.Transactions
+            .Where(t => neutralCategoryIds.Contains(t.CategoryId) && !t.IsIgnoredInTotals)
+            .ExecuteUpdateAsync(setters => setters.SetProperty(t => t.IsIgnoredInTotals, true));
     }
 }
 
