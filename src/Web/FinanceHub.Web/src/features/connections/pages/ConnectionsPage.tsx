@@ -3,7 +3,8 @@ import { motion, useReducedMotion } from 'framer-motion';
 import { usePluggyToken } from '../hooks/usePluggyToken';
 import { useSyncPluggyMutation } from '../hooks/useSyncPluggyMutation';
 import { useConnectedInstitutionsQuery } from '../hooks/useConnectedInstitutionsQuery';
-import { useDashboardQuery } from '@/features/dashboard/hooks/useDashboardQuery';
+import { useDashboardQuery } from '@/features/dashboard';
+import { getInstitutionInfo } from '@/shared/constants/institutions';
 import { PluggySyncPanel } from '../components/PluggySyncPanel';
 import { SyncSummaryBanner } from '../components/SyncSummaryBanner';
 import { ConnectionCard } from '../components/ConnectionCard';
@@ -53,23 +54,21 @@ export const ConnectionsPage: React.FC = () => {
 
   // Agrupa contas salvas no banco por instituição
   const groupedSavedInstitutions = React.useMemo(() => {
-    const savedBalances = (dashboard?.accountBalances as any[]) ?? [];
+    const savedBalances = dashboard?.institutionBalances ?? [];
     const map = new Map<string, { totalBalance: number; totalCredit: number; accountsCount: number }>();
 
     for (const acc of savedBalances) {
-      const instName = acc?.institutionName || acc?.institutionId || 'Outros';
-      let balance = 0;
-      if (typeof acc?.balanceBrl === 'number') {
-        balance = acc.balanceBrl;
-      } else if (typeof acc?.amount === 'number') {
-        balance = acc.amount;
-      }
+      const instName = getInstitutionInfo(acc.institutionId).name;
       const existing = map.get(instName) || { totalBalance: 0, totalCredit: 0, accountsCount: 0 };
-      if (balance >= 0) {
-        existing.totalBalance += balance;
+
+      // Cartão de crédito agora vem marcado pelo snapshot oficial, em vez de ser inferido
+      // pelo sinal do saldo.
+      if (acc.isCreditCard) {
+        existing.totalCredit += Math.abs(acc.balanceBrl);
       } else {
-        existing.totalCredit += Math.abs(balance);
+        existing.totalBalance += acc.balanceBrl;
       }
+
       existing.accountsCount += 1;
       map.set(instName, existing);
     }
@@ -80,7 +79,7 @@ export const ConnectionsPage: React.FC = () => {
       totalCredit: data.totalCredit,
       accountsCount: data.accountsCount,
     }));
-  }, [dashboard?.accountBalances]);
+  }, [dashboard?.institutionBalances]);
 
   const hasSavedInstitutions = groupedSavedInstitutions.length > 0;
   const hasAnyInstitutions = hasPluggyItems || hasSavedInstitutions;

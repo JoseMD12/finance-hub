@@ -9,7 +9,7 @@ import { Switch } from '@/shared/components/Switch/Switch';
 import { DateRangePicker } from '@/shared/components/DateRangePicker/DateRangePicker';
 import type { DateRangeValue } from '@/shared/components/DateRangePicker/DateRangePicker';
 import type { TransactionFilterParams, DatePresetKey, ChannelGroupFilter } from '../types/transactions.types';
-import { getPresetDateRange } from '../utils/datePresets';
+import { getPresetDateRange } from '@/shared/utils/datePresets';
 
 export interface TransactionsFilterBarProps {
   filters: TransactionFilterParams;
