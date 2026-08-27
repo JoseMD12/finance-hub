@@ -115,7 +115,7 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
           aria-expanded={isOpen}
           aria-label={label || placeholder}
           className={cn(
-            'flex items-center justify-between w-full text-xs font-medium bg-surface-ground border border-border-subtle rounded-xl cursor-pointer transition-all duration-200 outline-none select-none disabled:opacity-50 disabled:cursor-not-allowed form-input-focus',
+            'flex items-center justify-between w-full text-xs font-medium bg-surface-ground border border-border-subtle rounded-xl cursor-pointer transition-colors duration-150 outline-none select-none disabled:opacity-50 disabled:cursor-not-allowed form-input-focus',
             isSmall ? 'h-9 px-3 py-1.5' : 'h-10 px-4 py-2',
             isOpen
               ? 'border-brand bg-surface-card ring-2 ring-brand/20 shadow-sm'
@@ -188,7 +188,7 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
                   }}
                   onMouseEnter={() => setFocusedIndex(idx)}
                   className={cn(
-                    'flex items-center justify-between w-full px-3 py-2 text-xs font-medium rounded-xl cursor-pointer transition-all duration-150 outline-none text-left border border-transparent',
+                    'flex items-center justify-between w-full px-3 py-2 text-xs font-medium rounded-xl cursor-pointer transition-colors duration-150 outline-none text-left border border-transparent',
                     getOptionStateClass(isSelected, isFocused)
                   )}
                 >

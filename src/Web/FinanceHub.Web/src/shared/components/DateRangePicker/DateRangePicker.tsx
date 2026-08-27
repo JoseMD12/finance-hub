@@ -335,7 +335,7 @@ const DateRangePickerComponent: React.FC<DateRangePickerProps> = ({
         onClick={() => setIsOpen((prev) => !prev)}
         aria-pressed={isOpen || isCustomActive}
         className={cn(
-          'px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150 cursor-pointer select-none inline-flex items-center gap-1.5',
+          'px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors duration-150 cursor-pointer select-none inline-flex items-center gap-1.5',
           isCustomActive
             ? 'bg-brand-light text-brand-dark border-brand font-bold shadow-2xs ring-1 ring-brand/20'
             : 'bg-surface-ground text-slate-600 border-border-subtle hover:bg-slate-200/60 hover:text-slate-800'
@@ -388,7 +388,7 @@ const DateRangePickerComponent: React.FC<DateRangePickerProps> = ({
                   maxLength={10}
                   value={startInputText}
                   onChange={handleStartInputChange}
-                  className="w-full h-7 px-2 text-[11px] font-medium rounded-lg border border-border-subtle bg-surface-ground text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 transition-all text-center"
+                  className="w-full h-7 px-2 text-[11px] font-medium rounded-lg border border-border-subtle bg-surface-ground text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 transition-colors text-center"
                 />
               </div>
               <div className="flex flex-col gap-0.5">
@@ -404,7 +404,7 @@ const DateRangePickerComponent: React.FC<DateRangePickerProps> = ({
                   maxLength={10}
                   value={endInputText}
                   onChange={handleEndInputChange}
-                  className="w-full h-7 px-2 text-[11px] font-medium rounded-lg border border-border-subtle bg-surface-ground text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 transition-all text-center"
+                  className="w-full h-7 px-2 text-[11px] font-medium rounded-lg border border-border-subtle bg-surface-ground text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 transition-colors text-center"
                 />
               </div>
             </div>
@@ -482,7 +482,7 @@ const DateRangePickerComponent: React.FC<DateRangePickerProps> = ({
                       onMouseEnter={() => setHoveredDate(dayDate)}
                       onMouseLeave={() => setHoveredDate(null)}
                       className={cn(
-                        'w-7 h-7 text-xs font-semibold rounded-lg transition-all duration-100 flex items-center justify-center cursor-pointer relative z-10',
+                        'w-7 h-7 text-xs font-semibold rounded-lg transition-colors duration-100 flex items-center justify-center cursor-pointer relative z-10',
                         !isCurrentMonth && 'text-slate-300 hover:text-slate-500',
                         isCurrentMonth && !isStart && !isEnd && 'text-slate-700 hover:bg-slate-200/70 hover:text-slate-900',
                         (isStart || isEnd) && 'bg-brand text-white font-bold hover:bg-brand-dark shadow-2xs',
@@ -518,7 +518,7 @@ const DateRangePickerComponent: React.FC<DateRangePickerProps> = ({
                 <button
                   type="button"
                   onClick={handleApplyClick}
-                  className="px-3 py-1 rounded-lg font-bold bg-brand text-white hover:bg-brand-dark active:scale-[0.98] transition-all cursor-pointer shadow-2xs inline-flex items-center gap-1 text-[11px]"
+                  className="px-3 py-1 rounded-lg font-bold bg-brand text-white hover:bg-brand-dark active:scale-[0.98] transition-colors cursor-pointer shadow-2xs inline-flex items-center gap-1 text-[11px]"
                 >
                   <Check className="w-3 h-3" />
                   Aplicar

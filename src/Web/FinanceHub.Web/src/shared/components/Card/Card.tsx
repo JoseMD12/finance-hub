@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useRef, useEffect } from 'react';
 import { useReducedMotion } from 'framer-motion';
 import { cn } from '@/shared/utils/cn';
 
@@ -15,23 +15,53 @@ export const Card: React.FC<CardProps> = ({
   glowRgb,
   style,
   onMouseMove,
+  onMouseLeave,
   children,
   ...props
 }) => {
   const prefersReduced = useReducedMotion();
   const hasGlow = Boolean(glowRgb && !prefersReduced);
+  const rafRef = useRef<number | null>(null);
 
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (hasGlow) {
-      // Usa offsetX/offsetY nativos do evento sem chamar getBoundingClientRect() (zero layout reflow)
       const target = e.currentTarget;
-      const x = (e.nativeEvent as MouseEvent).offsetX;
-      const y = (e.nativeEvent as MouseEvent).offsetY;
-      target.style.setProperty('--mouse-x', `${x}px`);
-      target.style.setProperty('--mouse-y', `${y}px`);
+      const clientX = e.clientX;
+      const clientY = e.clientY;
+
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+      }
+
+      rafRef.current = requestAnimationFrame(() => {
+        const rect = target.getBoundingClientRect();
+        target.style.setProperty('--mouse-x', `${clientX - rect.left}px`);
+        target.style.setProperty('--mouse-y', `${clientY - rect.top}px`);
+        rafRef.current = null;
+      });
     }
     onMouseMove?.(e);
   }, [hasGlow, onMouseMove]);
+
+  const handleMouseLeave = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (hasGlow) {
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+      e.currentTarget.style.setProperty('--mouse-x', '-999px');
+      e.currentTarget.style.setProperty('--mouse-y', '-999px');
+    }
+    onMouseLeave?.(e);
+  }, [hasGlow, onMouseLeave]);
+
+  useEffect(() => {
+    return () => {
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+      }
+    };
+  }, []);
 
   const variantStyles = {
     default: 'bg-surface-card border border-border-subtle shadow-card',
@@ -42,6 +72,7 @@ export const Card: React.FC<CardProps> = ({
   return (
     <div
       onMouseMove={hasGlow ? handleMouseMove : onMouseMove}
+      onMouseLeave={hasGlow ? handleMouseLeave : onMouseLeave}
       style={{
         ...style,
         ...(glowRgb ? { ['--glow-rgb' as string]: glowRgb } : {}),

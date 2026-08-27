@@ -55,7 +55,7 @@
   --shadow-dropdown: 0 12px 30px -4px rgba(29, 85, 90, 0.15), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   --shadow-brand: 0 8px 20px -4px rgba(224, 86, 151, 0.25);
 
-  --transition-default: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-default: color 0.2s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 :root {
@@ -63,6 +63,7 @@
   background-color: var(--color-surface-ground);
   color: #1E293B;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 body {
@@ -156,4 +157,12 @@ body {
 
 .glow-card:hover::after {
   opacity: 1;
+}
+
+/* Trava de ponteiro durante o scroll — ver useScrollPointerLock.
+   Impede que o browser reavalie :hover a cada frame de scroll, o que causa
+   repaint por linha em listas longas. Elementos de rolagem seguem funcionando:
+   pointer-events só afeta hit-testing de hover/clique, não a roda do mouse. */
+body.is-scrolling * {
+  pointer-events: none !important;
 }
