@@ -104,6 +104,37 @@ public class CanonicalTransaction
         AuditInfo = new TransactionAuditInfo(AuditInfo.CreatedAtUtc, DateTime.UtcNow);
     }
 
+    /// <summary>
+    /// Aplica a natureza econômica herdada da categoria resolvida e deriva dela a neutralidade
+    /// nos totais.
+    ///
+    /// Substitui a antiga classificação por casamento de texto no handler de ingestão, que
+    /// dependia de valores específicos de um usuário. Aqui não há conhecimento de quem é o
+    /// titular: dinheiro que apenas muda de lugar — transferência, investimento ou ajuste — não
+    /// é gasto de vida e não entra nos totais.
+    /// </summary>
+    public void ApplyNature(TransactionNature nature)
+    {
+        Nature = nature;
+
+        if (IsNeutralByNature(nature))
+        {
+            IsIgnoredInTotals = true;
+        }
+
+        AuditInfo = new TransactionAuditInfo(AuditInfo.CreatedAtUtc, DateTime.UtcNow);
+    }
+
+    /// <summary>
+    /// Naturezas que representam dinheiro em trânsito, conforme
+    /// `.agents/specs/transit-transfers-and-neutrality-engine-spec.md` §2.1.
+    /// </summary>
+    public static bool IsNeutralByNature(TransactionNature nature) =>
+        nature is TransactionNature.Transfer
+                or TransactionNature.BillPayment
+                or TransactionNature.Investment
+                or TransactionNature.Adjustment;
+
     public void MarkAsBillPayment()
     {
         Nature = TransactionNature.BillPayment;

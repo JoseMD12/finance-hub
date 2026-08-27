@@ -22,6 +22,7 @@ public class IngestTransactionCreditDataTests
 
     private readonly ITransactionRepository _txRepo = Substitute.For<ITransactionRepository>();
     private readonly IAccountBalanceRepository _balanceRepo = Substitute.For<IAccountBalanceRepository>();
+    private readonly ICategoryRepository _categoryRepo = Substitute.For<ICategoryRepository>();
     private readonly ICategoryResolverPipeline _pipeline = Substitute.For<ICategoryResolverPipeline>();
     private readonly IEventPublisher _eventPublisher = Substitute.For<IEventPublisher>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
@@ -37,7 +38,7 @@ public class IngestTransactionCreditDataTests
             .Returns((Guid?)null);
 
         _handler = new IngestTransactionCommandHandler(
-            _txRepo, _balanceRepo, _pipeline, _eventPublisher, _unitOfWork);
+            _txRepo, _balanceRepo, _categoryRepo, _pipeline, _eventPublisher, _unitOfWork);
     }
 
     [Fact]

@@ -18,7 +18,17 @@ public static class CategorySeedData
         string? Color,
         bool IsSystemDefault,
         Guid? ParentCategoryId,
-        List<CategoryJsonModel>? Subcategories);
+        List<CategoryJsonModel>? Subcategories,
+        string? Nature = null);
+
+    /// <summary>
+    /// Converte a natureza declarada no dataset. Ausência significa <c>Operating</c>: a esmagadora
+    /// maioria das categorias é gasto ou receita de vida, e só as exceções se declaram.
+    /// </summary>
+    private static TransactionNature ParseNature(string? raw) =>
+        Enum.TryParse<TransactionNature>(raw, ignoreCase: true, out var parsed)
+            ? parsed
+            : TransactionNature.Operating;
 
     public static List<Category> GetDefaultCategories()
     {
@@ -59,7 +69,8 @@ public static class CategorySeedData
                 parent.Color ?? "gray",
                 parent.IsSystemDefault,
                 null,
-                parent.Id);
+                parent.Id,
+                ParseNature(parent.Nature));
 
             result.Add(parentEntity);
 
@@ -74,7 +85,9 @@ public static class CategorySeedData
                         sub.Color ?? parent.Color ?? "gray",
                         sub.IsSystemDefault || parent.IsSystemDefault,
                         parent.Id,
-                        sub.Id);
+                        sub.Id,
+                        // Subcategoria sem natureza declarada herda a do pai.
+                        ParseNature(sub.Nature ?? parent.Nature));
 
                     result.Add(subEntity);
                 }
