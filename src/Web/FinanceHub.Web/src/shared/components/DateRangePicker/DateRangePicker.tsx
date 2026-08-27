@@ -1,7 +1,8 @@
-import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import ReactDOM from 'react-dom';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, X, Check, RotateCcw } from 'lucide-react';
 import { cn } from '@/shared/utils/cn';
+import { useFloatingPopover } from '@/shared/hooks/useFloatingPopover';
 
 export interface DateRangeValue {
   startDate?: string;
@@ -14,6 +15,17 @@ export interface DateRangePickerProps {
   isActive?: boolean;
   onApply: (range: DateRangeValue) => void;
   className?: string;
+}
+
+interface CalendarDayCellProps {
+  dayDate: Date;
+  isCurrentMonth: boolean;
+  tempStart?: string;
+  tempEnd?: string;
+  hoveredDate: Date | null;
+  todayTimestamp: number;
+  onDayClick: (d: Date) => void;
+  onDayHover: (d: Date | null) => void;
 }
 
 /** Converte Date para string YYYY-MM-DD segura e imune a timezones */
@@ -35,7 +47,7 @@ function formatDateDisplay(dateStr?: string): string {
     }
   }
   const date = new Date(dateStr);
-  if (isNaN(date.getTime())) return '';
+  if (Number.isNaN(date.getTime())) return '';
   const day = String(date.getDate()).padStart(2, '0');
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const year = date.getFullYear();
@@ -56,10 +68,10 @@ function parseDisplayDateToYmd(displayVal: string): string | null {
   if (parts.length !== 3) return null;
   const [dayStr, monthStr, yearStr] = parts;
   if (dayStr.length !== 2 || monthStr.length !== 2 || yearStr.length !== 4) return null;
-  const d = parseInt(dayStr, 10);
-  const m = parseInt(monthStr, 10);
-  const y = parseInt(yearStr, 10);
-  if (isNaN(d) || isNaN(m) || isNaN(y)) return null;
+  const d = Number.parseInt(dayStr, 10);
+  const m = Number.parseInt(monthStr, 10);
+  const y = Number.parseInt(yearStr, 10);
+  if (Number.isNaN(d) || Number.isNaN(m) || Number.isNaN(y)) return null;
   if (m < 1 || m > 12 || d < 1 || d > 31 || y < 1900 || y > 2100) return null;
 
   const daysInM = new Date(y, m, 0).getDate();
@@ -79,10 +91,72 @@ function parseYmdToDate(dateStr?: string): Date | null {
   const cleanStr = dateStr.slice(0, 10);
   const parts = cleanStr.split('-');
   if (parts.length !== 3) return null;
-  const [y, m, d] = parts.map((p) => parseInt(p, 10));
-  if (isNaN(y) || isNaN(m) || isNaN(d)) return null;
+  const [y, m, d] = parts.map((p) => Number.parseInt(p, 10));
+  if (Number.isNaN(y) || Number.isNaN(m) || Number.isNaN(d)) return null;
   return new Date(y, m - 1, d, 0, 0, 0, 0);
 }
+
+const CalendarDayCell = React.memo<CalendarDayCellProps>(({
+  dayDate,
+  isCurrentMonth,
+  tempStart,
+  tempEnd,
+  hoveredDate,
+  todayTimestamp,
+  onDayClick,
+  onDayHover,
+}) => {
+  const dayTime = getMidnightTimestamp(dayDate);
+  const startD = parseYmdToDate(tempStart);
+  const endD = parseYmdToDate(tempEnd);
+
+  const startTime = startD ? getMidnightTimestamp(startD) : null;
+  const endTime = endD ? getMidnightTimestamp(endD) : null;
+
+  const isStart = startTime !== null && dayTime === startTime;
+  const isEnd = endTime !== null && dayTime === endTime;
+  const isInRange = startTime !== null && endTime !== null && dayTime > startTime && dayTime < endTime;
+
+  const hoverTime = hoveredDate ? getMidnightTimestamp(hoveredDate) : null;
+  const isHoverRange =
+    startTime !== null &&
+    endTime === null &&
+    hoverTime !== null &&
+    ((hoverTime >= startTime && dayTime > startTime && dayTime <= hoverTime) ||
+      (hoverTime < startTime && dayTime < startTime && dayTime >= hoverTime));
+
+  const isToday = dayTime === todayTimestamp;
+
+  return (
+    <div
+      className={cn(
+        'relative h-7 flex items-center justify-center',
+        isInRange && 'bg-brand-light/60',
+        isStart && (endTime !== null || (hoverTime !== null && hoverTime > startTime)) && 'rounded-l-lg bg-gradient-to-r from-transparent via-brand-light/60 to-brand-light/60',
+        isEnd && startTime !== null && 'rounded-r-lg bg-gradient-to-l from-transparent via-brand-light/60 to-brand-light/60',
+        isHoverRange && 'bg-brand-light/40'
+      )}
+    >
+      <button
+        type="button"
+        onClick={() => onDayClick(dayDate)}
+        onMouseEnter={() => onDayHover(dayDate)}
+        onMouseLeave={() => onDayHover(null)}
+        className={cn(
+          'w-7 h-7 text-xs font-semibold rounded-lg transition-colors duration-100 flex items-center justify-center cursor-pointer relative z-10',
+          !isCurrentMonth && 'text-slate-300 hover:text-slate-500',
+          isCurrentMonth && !isStart && !isEnd && 'text-slate-700 hover:bg-slate-200/70 hover:text-slate-900',
+          (isStart || isEnd) && 'bg-brand text-white font-bold hover:bg-brand-dark shadow-2xs',
+          isToday && !isStart && !isEnd && 'ring-1 ring-brand/40 font-bold text-brand-dark'
+        )}
+      >
+        {dayDate.getDate()}
+      </button>
+    </div>
+  );
+});
+
+CalendarDayCell.displayName = 'CalendarDayCell';
 
 const DateRangePickerComponent: React.FC<DateRangePickerProps> = ({
   startDate,
@@ -96,8 +170,8 @@ const DateRangePickerComponent: React.FC<DateRangePickerProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [tempStart, setTempStart] = useState<string | undefined>(isCustomActive ? startDate : undefined);
   const [tempEnd, setTempEnd] = useState<string | undefined>(isCustomActive ? endDate : undefined);
-  
-  // Inputs de texto manuais formatados em DD/MM/AAAA (tipo text para não abrir popup nativo)
+
+  // Inputs de texto manuais formatados em DD/MM/AAAA
   const [startInputText, setStartInputText] = useState<string>(
     isCustomActive && startDate ? formatDateDisplay(startDate) : ''
   );
@@ -113,83 +187,41 @@ const DateRangePickerComponent: React.FC<DateRangePickerProps> = ({
     return new Date();
   });
   const [hoveredDate, setHoveredDate] = useState<Date | null>(null);
-  const [position, setPosition] = useState<{ top: number; left: number } | null>(null);
 
-  const triggerRef = useRef<HTMLDivElement>(null);
-  const popoverRef = useRef<HTMLDivElement>(null);
+  const handleClose = useCallback(() => setIsOpen(false), []);
 
-  const updatePosition = useCallback(() => {
-    if (!triggerRef.current) return;
-    const rect = triggerRef.current.getBoundingClientRect();
-    const popoverWidth = 284;
-    const popoverHeight = 390;
+  const { triggerRef, popoverRef, position } = useFloatingPopover({
+    isOpen,
+    onClose: handleClose,
+    width: 284,
+    height: 390,
+    align: 'left',
+  });
 
-    let top = rect.bottom + 6;
-    if (top + popoverHeight > window.innerHeight && rect.top > popoverHeight) {
-      top = Math.max(10, rect.top - popoverHeight - 6);
-    }
-
-    let left = rect.left;
-    if (left + popoverWidth > window.innerWidth - 16) {
-      left = Math.max(16, window.innerWidth - popoverWidth - 16);
-    }
-    if (left < 16) left = 16;
-
-    setPosition((prev) => {
-      if (prev && Math.abs(prev.top - top) < 1 && Math.abs(prev.left - left) < 1) {
-        return prev;
+  const syncStateFromProps = useCallback(() => {
+    if (isCustomActive) {
+      setTempStart(startDate);
+      setTempEnd(endDate);
+      setStartInputText(startDate ? formatDateDisplay(startDate) : '');
+      setEndInputText(endDate ? formatDateDisplay(endDate) : '');
+      if (startDate) {
+        const d = parseYmdToDate(startDate);
+        if (d) setCurrentMonth(d);
       }
-      return { top, left };
-    });
-  }, []);
+    } else {
+      setTempStart(undefined);
+      setTempEnd(undefined);
+      setStartInputText('');
+      setEndInputText('');
+      setCurrentMonth(new Date());
+    }
+  }, [isCustomActive, startDate, endDate]);
 
   useEffect(() => {
     if (isOpen) {
-      if (isCustomActive) {
-        setTempStart(startDate);
-        setTempEnd(endDate);
-        setStartInputText(startDate ? formatDateDisplay(startDate) : '');
-        setEndInputText(endDate ? formatDateDisplay(endDate) : '');
-        if (startDate) {
-          const d = parseYmdToDate(startDate);
-          if (d) setCurrentMonth(d);
-        }
-      } else {
-        setTempStart(undefined);
-        setTempEnd(undefined);
-        setStartInputText('');
-        setEndInputText('');
-        setCurrentMonth(new Date());
-      }
+      syncStateFromProps();
     }
-  }, [isOpen, startDate, endDate, isCustomActive]);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Node;
-      if (
-        triggerRef.current &&
-        !triggerRef.current.contains(target) &&
-        popoverRef.current &&
-        !popoverRef.current.contains(target)
-      ) {
-        setIsOpen(false);
-      }
-    };
-
-    if (isOpen) {
-      updatePosition();
-      document.addEventListener('mousedown', handleClickOutside);
-      window.addEventListener('scroll', updatePosition, { passive: true, capture: true });
-      window.addEventListener('resize', updatePosition);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      window.removeEventListener('scroll', updatePosition, { capture: true } as EventListenerOptions);
-      window.removeEventListener('resize', updatePosition);
-    };
-  }, [isOpen, updatePosition]);
+  }, [isOpen, syncStateFromProps]);
 
   const handlePrevMonth = () => {
     setCurrentMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
@@ -199,41 +231,40 @@ const DateRangePickerComponent: React.FC<DateRangePickerProps> = ({
     setCurrentMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
   };
 
-  const handleDayClick = (dayDate: Date) => {
+  const handleDayClick = useCallback((dayDate: Date) => {
     const clickedYmd = formatYmd(dayDate);
     const clickedDisplay = formatDateDisplay(clickedYmd);
 
     if (!tempStart || (tempStart && tempEnd)) {
-      // Primeiro clique: define data inicial e reseta data final
       setTempStart(clickedYmd);
       setTempEnd(undefined);
       setStartInputText(clickedDisplay);
       setEndInputText('');
-    } else {
-      // Segundo clique: define data final (ou inverte se anterior)
-      const startDateObj = parseYmdToDate(tempStart);
-      if (!startDateObj) {
-        setTempStart(clickedYmd);
-        setTempEnd(undefined);
-        setStartInputText(clickedDisplay);
-        setEndInputText('');
-        return;
-      }
-
-      const startMidnight = getMidnightTimestamp(startDateObj);
-      const clickedMidnight = getMidnightTimestamp(dayDate);
-
-      if (clickedMidnight < startMidnight) {
-        setTempStart(clickedYmd);
-        setTempEnd(tempStart);
-        setStartInputText(clickedDisplay);
-        setEndInputText(formatDateDisplay(tempStart));
-      } else {
-        setTempEnd(clickedYmd);
-        setEndInputText(clickedDisplay);
-      }
+      return;
     }
-  };
+
+    const startDateObj = parseYmdToDate(tempStart);
+    if (!startDateObj) {
+      setTempStart(clickedYmd);
+      setTempEnd(undefined);
+      setStartInputText(clickedDisplay);
+      setEndInputText('');
+      return;
+    }
+
+    const startMidnight = getMidnightTimestamp(startDateObj);
+    const clickedMidnight = getMidnightTimestamp(dayDate);
+
+    if (clickedMidnight < startMidnight) {
+      setTempStart(clickedYmd);
+      setTempEnd(tempStart);
+      setStartInputText(clickedDisplay);
+      setEndInputText(formatDateDisplay(tempStart));
+    } else {
+      setTempEnd(clickedYmd);
+      setEndInputText(clickedDisplay);
+    }
+  }, [tempStart, tempEnd]);
 
   const handleStartInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = formatDisplayDateInput(e.target.value);
@@ -287,36 +318,42 @@ const DateRangePickerComponent: React.FC<DateRangePickerProps> = ({
     const year = currentMonth.getFullYear();
     const month = currentMonth.getMonth();
     const firstDayOfMonth = new Date(year, month, 1);
-    const startingDayOfWeek = firstDayOfMonth.getDay(); // 0 (Dom) a 6 (Sáb)
+    const startingDayOfWeek = firstDayOfMonth.getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const today = new Date();
     const todayMid = getMidnightTimestamp(today);
 
-    const grid: { date: Date; isCurrentMonth: boolean }[] = [];
+    const grid: { date: Date; isCurrentMonth: boolean; key: string }[] = [];
 
     // Dias do mês anterior
     const daysInPrevMonth = new Date(year, month, 0).getDate();
     for (let i = startingDayOfWeek - 1; i >= 0; i--) {
+      const d = new Date(year, month - 1, daysInPrevMonth - i);
       grid.push({
-        date: new Date(year, month - 1, daysInPrevMonth - i),
+        date: d,
         isCurrentMonth: false,
+        key: formatYmd(d),
       });
     }
 
     // Dias do mês atual
     for (let day = 1; day <= daysInMonth; day++) {
+      const d = new Date(year, month, day);
       grid.push({
-        date: new Date(year, month, day),
+        date: d,
         isCurrentMonth: true,
+        key: formatYmd(d),
       });
     }
 
     // Completar última semana com o próximo mês
     const remainingCells = (7 - (grid.length % 7)) % 7;
     for (let i = 1; i <= remainingCells; i++) {
+      const d = new Date(year, month + 1, i);
       grid.push({
-        date: new Date(year, month + 1, i),
+        date: d,
         isCurrentMonth: false,
+        key: formatYmd(d),
       });
     }
 
@@ -328,7 +365,10 @@ const DateRangePickerComponent: React.FC<DateRangePickerProps> = ({
     : 'Personalizado';
 
   return (
-    <div className={cn('relative inline-block', className)} ref={triggerRef}>
+    <div
+      className={cn('relative inline-block', className)}
+      ref={triggerRef as React.RefObject<HTMLDivElement>}
+    >
       {/* Botão Trigger */}
       <button
         type="button"
@@ -349,7 +389,7 @@ const DateRangePickerComponent: React.FC<DateRangePickerProps> = ({
         position &&
         ReactDOM.createPortal(
           <div
-            ref={popoverRef}
+            ref={popoverRef as React.RefObject<HTMLDivElement>}
             style={{
               position: 'fixed',
               top: `${position.top}px`,
@@ -365,7 +405,7 @@ const DateRangePickerComponent: React.FC<DateRangePickerProps> = ({
               </div>
               <button
                 type="button"
-                onClick={() => setIsOpen(false)}
+                onClick={handleClose}
                 className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
                 aria-label="Fechar calendário"
               >
@@ -373,7 +413,7 @@ const DateRangePickerComponent: React.FC<DateRangePickerProps> = ({
               </button>
             </div>
 
-            {/* Inputs de Texto DD/MM/AAAA para digitação direta sem abrir popup nativo */}
+            {/* Inputs de Texto DD/MM/AAAA */}
             <div className="grid grid-cols-2 gap-2 pb-1">
               <div className="flex flex-col gap-0.5">
                 <label htmlFor="custom-date-start-input" className="text-[10px] font-bold text-slate-500 uppercase tracking-wider pl-0.5">
@@ -443,57 +483,19 @@ const DateRangePickerComponent: React.FC<DateRangePickerProps> = ({
 
             {/* Grade de Dias Compacta */}
             <div className="grid grid-cols-7 gap-y-0.5">
-              {daysGrid.map(({ date: dayDate, isCurrentMonth }, idx) => {
-                const dayTime = getMidnightTimestamp(dayDate);
-                const startD = parseYmdToDate(tempStart);
-                const endD = parseYmdToDate(tempEnd);
-
-                const startTime = startD ? getMidnightTimestamp(startD) : null;
-                const endTime = endD ? getMidnightTimestamp(endD) : null;
-
-                const isStart = startTime !== null && dayTime === startTime;
-                const isEnd = endTime !== null && dayTime === endTime;
-                const isInRange = startTime !== null && endTime !== null && dayTime > startTime && dayTime < endTime;
-
-                const hoverTime = hoveredDate ? getMidnightTimestamp(hoveredDate) : null;
-                const isHoverRange =
-                  startTime !== null &&
-                  endTime === null &&
-                  hoverTime !== null &&
-                  ((hoverTime >= startTime && dayTime > startTime && dayTime <= hoverTime) ||
-                   (hoverTime < startTime && dayTime < startTime && dayTime >= hoverTime));
-
-                const isToday = dayTime === todayTimestamp;
-
-                return (
-                  <div
-                    key={idx}
-                    className={cn(
-                      'relative h-7 flex items-center justify-center',
-                      isInRange && 'bg-brand-light/60',
-                      isStart && (endTime !== null || (hoverTime !== null && hoverTime > startTime)) && 'rounded-l-lg bg-gradient-to-r from-transparent via-brand-light/60 to-brand-light/60',
-                      isEnd && startTime !== null && 'rounded-r-lg bg-gradient-to-l from-transparent via-brand-light/60 to-brand-light/60',
-                      isHoverRange && 'bg-brand-light/40'
-                    )}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => handleDayClick(dayDate)}
-                      onMouseEnter={() => setHoveredDate(dayDate)}
-                      onMouseLeave={() => setHoveredDate(null)}
-                      className={cn(
-                        'w-7 h-7 text-xs font-semibold rounded-lg transition-colors duration-100 flex items-center justify-center cursor-pointer relative z-10',
-                        !isCurrentMonth && 'text-slate-300 hover:text-slate-500',
-                        isCurrentMonth && !isStart && !isEnd && 'text-slate-700 hover:bg-slate-200/70 hover:text-slate-900',
-                        (isStart || isEnd) && 'bg-brand text-white font-bold hover:bg-brand-dark shadow-2xs',
-                        isToday && !isStart && !isEnd && 'ring-1 ring-brand/40 font-bold text-brand-dark'
-                      )}
-                    >
-                      {dayDate.getDate()}
-                    </button>
-                  </div>
-                );
-              })}
+              {daysGrid.map(({ date: dayDate, isCurrentMonth, key }) => (
+                <CalendarDayCell
+                  key={key}
+                  dayDate={dayDate}
+                  isCurrentMonth={isCurrentMonth}
+                  tempStart={tempStart}
+                  tempEnd={tempEnd}
+                  hoveredDate={hoveredDate}
+                  todayTimestamp={todayTimestamp}
+                  onDayClick={handleDayClick}
+                  onDayHover={setHoveredDate}
+                />
+              ))}
             </div>
 
             {/* Rodapé de Ações Compacto */}
@@ -510,7 +512,7 @@ const DateRangePickerComponent: React.FC<DateRangePickerProps> = ({
               <div className="flex items-center gap-1.5">
                 <button
                   type="button"
-                  onClick={() => setIsOpen(false)}
+                  onClick={handleClose}
                   className="px-2.5 py-1 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer font-medium text-[11px]"
                 >
                   Cancelar

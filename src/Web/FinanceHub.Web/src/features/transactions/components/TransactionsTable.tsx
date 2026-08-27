@@ -13,7 +13,6 @@ import type { TransactionDto } from '../types/transactions.types';
 export interface TransactionsTableProps {
   transactions: TransactionDto[];
   isLoading: boolean;
-  onSelectTransaction?: (transaction: TransactionDto) => void;
   onToggleNeutrality: (transaction: TransactionDto) => void;
   onToggleBillPayment: (transaction: TransactionDto) => void;
 }
