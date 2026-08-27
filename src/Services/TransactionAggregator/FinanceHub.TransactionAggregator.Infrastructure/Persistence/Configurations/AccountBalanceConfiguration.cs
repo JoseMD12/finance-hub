@@ -45,6 +45,36 @@ public class AccountBalanceConfiguration : IEntityTypeConfiguration<AccountBalan
         builder.Property(x => x.LastUpdatedAtUtc)
             .IsRequired();
 
+        builder.OwnsOne(x => x.CreditInfo, credit =>
+        {
+            credit.Property(c => c.IsCreditCard)
+                .HasColumnName("is_credit_card")
+                .IsRequired()
+                .HasDefaultValue(false);
+
+            credit.Property(c => c.CreditLimit)
+                .HasColumnName("credit_limit")
+                .HasPrecision(18, 2)
+                .IsRequired(false);
+
+            credit.Property(c => c.AvailableCreditLimit)
+                .HasColumnName("available_credit_limit")
+                .HasPrecision(18, 2)
+                .IsRequired(false);
+
+            credit.Property(c => c.InvoiceDueDateUtc)
+                .HasColumnName("invoice_due_date_utc")
+                .IsRequired(false);
+
+            credit.Property(c => c.InvoiceClosingDateUtc)
+                .HasColumnName("invoice_closing_date_utc")
+                .IsRequired(false);
+
+            credit.Ignore(c => c.UsedCreditLimit);
+        });
+
+        builder.Navigation(x => x.CreditInfo).IsRequired();
+
         // Optimistic Concurrency Token via xmin system column in PostgreSQL
         builder.Property<uint>("xmin")
             .HasColumnName("xmin")

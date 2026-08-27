@@ -71,6 +71,14 @@ public class InvalidCategoryIdDomainException : TransactionAggregatorDomainExcep
     }
 }
 
+public class InvalidInstallmentDomainException : TransactionAggregatorDomainException
+{
+    public InvalidInstallmentDomainException()
+        : base("Numeracao de parcelas invalida: parcela atual e total devem ser positivos e a parcela atual nao pode exceder o total.", "INVALID_INSTALLMENT", 400)
+    {
+    }
+}
+
 public class MethodReflectionFailedDomainException : TransactionAggregatorDomainException
 {
     public MethodReflectionFailedDomainException(string methodName)

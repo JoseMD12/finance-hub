@@ -33,14 +33,19 @@ public sealed class PluggySyncSessionAggregate
         string name,
         decimal balance,
         string? currencyCode,
-        string? rawBalanceDueDate)
+        string? rawBalanceDueDate,
+        string? rawBalanceCloseDate = null,
+        decimal? creditLimit = null,
+        decimal? availableCreditLimit = null)
     {
         if (_accounts.TryGetValue(accountId, out var existing))
         {
             return existing;
         }
 
-        var account = new PluggyAccount(accountId, type, subtype, name, balance, currencyCode, rawBalanceDueDate);
+        var account = new PluggyAccount(
+            accountId, type, subtype, name, balance, currencyCode,
+            rawBalanceDueDate, rawBalanceCloseDate, creditLimit, availableCreditLimit);
         _accounts[accountId] = account;
         return account;
     }
@@ -51,9 +56,13 @@ public sealed class PluggySyncSessionAggregate
         decimal amount,
         string rawDate,
         string? category,
-        string accountId)
+        string accountId,
+        int? currentInstallment = null,
+        int? totalInstallments = null)
     {
-        var tx = new PluggyTransaction(txId, description, amount, rawDate, category, accountId);
+        var tx = new PluggyTransaction(
+            txId, description, amount, rawDate, category, accountId,
+            currentInstallment, totalInstallments);
         _transactions.Add(tx);
         return tx;
     }

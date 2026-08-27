@@ -23,7 +23,10 @@ public sealed class PluggyTransactionMapper : IPluggyTransactionMapper
             account.Name,
             account.Balance,
             account.CurrencyCode,
-            account.CreditData?.BalanceDueDate
+            account.CreditData?.BalanceDueDate,
+            account.CreditData?.BalanceCloseDate,
+            account.CreditData?.CreditLimit,
+            account.CreditData?.AvailableCreditLimit
         );
 
         var domainTx = session.RecordTransaction(
@@ -32,7 +35,9 @@ public sealed class PluggyTransactionMapper : IPluggyTransactionMapper
             tx.Amount,
             tx.Date,
             tx.Category,
-            tx.AccountId ?? string.Empty
+            tx.AccountId ?? string.Empty,
+            tx.CreditCardMetadata?.InstallmentNumber,
+            tx.CreditCardMetadata?.TotalInstallments
         );
 
         if (domainAccount.TypeInfo.IsCreditCard)
@@ -48,8 +53,8 @@ public sealed class PluggyTransactionMapper : IPluggyTransactionMapper
                 TransactionDate: domainTx.ParseTransactionDate(),
                 Description: domainTx.Description,
                 Category: domainTx.GetCanonicalCategory(),
-                CurrentInstallment: null,
-                TotalInstallments: null,
+                CurrentInstallment: domainTx.CurrentInstallment,
+                TotalInstallments: domainTx.TotalInstallments,
                 InvoiceDueDate: domainAccount.ParseDueDate(),
                 Currency: domainAccount.CurrencyCode,
                 RawPayloadJson: null,
