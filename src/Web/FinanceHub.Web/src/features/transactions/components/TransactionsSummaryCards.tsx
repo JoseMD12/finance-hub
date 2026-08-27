@@ -4,7 +4,7 @@ import { Skeleton } from '@/shared/components/Skeleton/Skeleton';
 import { formatCurrencyBRL } from '@/shared/utils/formatters';
 import { ArrowUpRight, ArrowDownRight, Wallet, Landmark, CreditCard, Info } from 'lucide-react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { GlowCard } from '@/shared/components/motion';
+import { GlowCard, NumberScramble } from '@/shared/components/motion';
 import { Tooltip } from '@/shared/components/Tooltip/Tooltip';
 import type { TransactionSummaryDto } from '../types/transactions.types';
 
@@ -81,9 +81,11 @@ const TransactionsSummaryCardsComponent: React.FC<TransactionsSummaryCardsProps>
           </div>
 
           <div className="my-2">
-            <span className="text-xl font-black font-display text-slate-900 tabular-nums tracking-tight block">
-              {formatCurrencyBRL(realBalance)}
-            </span>
+            <NumberScramble
+              value={realBalance}
+              format={formatCurrencyBRL}
+              className="text-xl font-black text-slate-900 tracking-tight block"
+            />
           </div>
 
           <div className="flex items-center justify-between text-[11px] pt-1.5 border-t border-slate-100/80 text-slate-500">
@@ -113,9 +115,11 @@ const TransactionsSummaryCardsComponent: React.FC<TransactionsSummaryCardsProps>
           </div>
 
           <div className="my-2">
-            <span className="text-xl font-black font-display text-status-success tabular-nums tracking-tight block">
-              + {formatCurrencyBRL(income)}
-            </span>
+            <NumberScramble
+              value={income}
+              format={(n) => `+ ${formatCurrencyBRL(n)}`}
+              className="text-xl font-black text-status-success tracking-tight block"
+            />
           </div>
 
           <div className="text-[11px] pt-1.5 border-t border-slate-100/80 text-slate-400 font-medium truncate">
@@ -139,9 +143,11 @@ const TransactionsSummaryCardsComponent: React.FC<TransactionsSummaryCardsProps>
           </div>
 
           <div className="my-2">
-            <span className="text-xl font-black font-display text-status-danger tabular-nums tracking-tight block">
-              - {formatCurrencyBRL(expense)}
-            </span>
+            <NumberScramble
+              value={expense}
+              format={(n) => `- ${formatCurrencyBRL(n)}`}
+              className="text-xl font-black text-status-danger tracking-tight block"
+            />
           </div>
 
           <div className="text-[11px] pt-1.5 border-t border-slate-100/80 text-slate-400 font-medium truncate">
@@ -169,14 +175,13 @@ const TransactionsSummaryCardsComponent: React.FC<TransactionsSummaryCardsProps>
           </div>
 
           <div className="my-2">
-            <span
-              className={`text-xl font-black font-display tabular-nums tracking-tight block ${
+            <NumberScramble
+              value={net}
+              format={(n) => `${n >= 0 ? '+ ' : '- '}${formatCurrencyBRL(Math.abs(n))}`}
+              className={`text-xl font-black tracking-tight block ${
                 net >= 0 ? 'text-emerald-700' : 'text-brand-dark'
               }`}
-            >
-              {net >= 0 ? '+ ' : '- '}
-              {formatCurrencyBRL(Math.abs(net))}
-            </span>
+            />
           </div>
 
           <div className="text-[11px] pt-1.5 border-t border-slate-100/80 text-slate-500 font-medium truncate">
