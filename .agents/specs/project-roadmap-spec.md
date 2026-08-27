@@ -89,5 +89,12 @@ Phase 8: Módulo IRPF & Tax Analytics (Relatórios & Snapshots de Imposto de Ren
 - [x] Scaffolding React 19 + Vite + TypeScript + TailwindCSS + TanStack Query + Recharts + Sonner.
 - [x] Correção de 100% das 15 issues do SonarCloud no PR #11 e renomeação da pasta para `FinanceHub.Web`.
 - [ ] Integração E2E das páginas do frontend (`Dashboard`, `Transações`, `Conexões`, `Login`) com `FinanceHub.ApiGateway`.
+- [x] Telas de `Transações` e `Conexões` integradas ao Gateway (filtros de canal/período, categorização, neutralidade e notas).
+- [ ] **Dashboard de Expectativa do Ciclo** — especificação em [`.agents/specs/dashboard-cycle-expectation-spec.md`](./dashboard-cycle-expectation-spec.md). Diagnóstico: o Dashboard atual é interface morta, pois o Gateway não envia `monthlyIncomeBrl`, `monthlyExpenseBrl`, `categoryExpenses[]` nem `institutionName`. Fatiado em A (fundação de dados de faturas) → E (contrato real) → B (faturas por competência) → C (ciclo financeiro e Fôlego) → D (linha do tempo).
+  - [x] **Fatia A** — persistir `InvoiceDueDate`, limite e fechamento no sync. Os **dois** consumers (`InvoiceItemIngestedConsumer` e `TransactionsBatchIngestedConsumer`, este último o caminho quente) descartavam a data de vencimento que o evento já carregava. Inclui `CreditAccountInfo` em `AccountBalance`, parcelas reais no mapper e migration aditiva. Descoberta empírica da API concluída em 27/08/2026.
+  - [x] **Fatia P0** — remoção de dado pessoal do código: neutralidade passa a derivar de `Category.Nature` (declarada no dataset) em vez de casar texto contra o nome do titular. Corrige dois bugs: tarifa bancária marcada como pagamento de fatura, e resgate de cofrinho catalogado como receita.
+  - [ ] **Fatia E** — slice `GetDashboardSummary` reaproveitando `QueryPagedByFilterAsync`, filtro de período e substituição do donut por barras ranqueadas.
+  - [ ] **Fatia P** — motor genérico de detecção de padrões (recorrência, cadência circular por dia do mês, descontinuidade) e detecção de titularidade própria. Pré-requisito da Fatia C.
+  - [ ] **Fatias B, C e D** — fatura como entidade de primeira classe, ciclo ancorado nos salários e projeção diária de saldo.
 
 
