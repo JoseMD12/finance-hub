@@ -23,6 +23,7 @@ public class CanonicalTransaction
     public bool IsBillPayment { get; private set; }
     public bool IsIgnoredInTotals { get; private set; }
     public Guid? PairedTransactionId { get; private set; }
+    public string? Notes { get; private set; }
 
     private CanonicalTransaction()
     {
@@ -128,6 +129,17 @@ public class CanonicalTransaction
     public void ToggleIgnoreInTotals(bool ignore)
     {
         IsIgnoredInTotals = ignore;
+        AuditInfo = new TransactionAuditInfo(AuditInfo.CreatedAtUtc, DateTime.UtcNow);
+    }
+
+    public void UpdateNotes(string? notes)
+    {
+        if (!string.IsNullOrWhiteSpace(notes) && notes.Length > 500)
+        {
+            throw new TransactionAggregatorDomainException("Observacoes/notas nao podem exceder 500 caracteres.");
+        }
+
+        Notes = string.IsNullOrWhiteSpace(notes) ? null : notes.Trim();
         AuditInfo = new TransactionAuditInfo(AuditInfo.CreatedAtUtc, DateTime.UtcNow);
     }
 }

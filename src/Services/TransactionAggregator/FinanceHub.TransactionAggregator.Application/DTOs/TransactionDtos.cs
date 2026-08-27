@@ -21,7 +21,8 @@ public record TransactionDto(
     string Nature = "Operating",
     bool IsBillPayment = false,
     bool IsIgnoredInTotals = false,
-    Guid? PairedTransactionId = null);
+    Guid? PairedTransactionId = null,
+    string? Notes = null);
 
 public record AccountBalanceDto(
     string InstitutionId,

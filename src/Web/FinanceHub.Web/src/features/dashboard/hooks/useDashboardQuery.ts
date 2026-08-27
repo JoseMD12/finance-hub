@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { dashboardKeys } from '../api/dashboardKeys';
 import { getDashboardSummaryApi } from '../api/dashboardApi';
 import type { DashboardSummaryDto } from '../types/dashboard.types';
@@ -9,5 +9,6 @@ export function useDashboardQuery() {
     queryKey: dashboardKeys.summary(),
     queryFn: ({ signal }) => getDashboardSummaryApi(signal),
     staleTime: 1000 * 60, // 1 minuto
+    placeholderData: keepPreviousData,
   });
 }

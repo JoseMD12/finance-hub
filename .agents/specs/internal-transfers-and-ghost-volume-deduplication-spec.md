@@ -1,6 +1,6 @@
 # Spec — Deduplicação de Volume Fantasma, Transferências Internas e Métricas Financeiras Reais
 
-- **Status**: Aprovada para Implementação (Ready for Implementation)
+- **Status**: 🟢 `Concluída & Implementada`
 - **Data**: 2026-08-21
 - **Branch**: `feature/transfer-matching-and-ghost-volume-dedup`
 - **Serviços Envolvidos**: `FinanceHub.TransactionAggregator`, `FinanceHub.ApiGateway`, `FinanceHub.Web`

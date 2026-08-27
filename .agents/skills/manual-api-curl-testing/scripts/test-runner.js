@@ -5,9 +5,9 @@
  * Executes all health checks, domain validation, and Open Finance sync tests in a single command.
  */
 
-const http = require('node:http');
-const https = require('node:https');
-const { URL } = require('node:url');
+import http from 'node:http';
+import https from 'node:https';
+import { URL } from 'node:url';
 
 // Parse input configuration object from CLI argument or environment variables
 function parseConfig() {

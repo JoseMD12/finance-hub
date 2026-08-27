@@ -18,7 +18,8 @@ public record GatewayTransactionDto(
     string Nature = "Operating",
     bool IsBillPayment = false,
     bool IsIgnoredInTotals = false,
-    Guid? PairedTransactionId = null);
+    Guid? PairedTransactionId = null,
+    string? Notes = null);
 
 public record GatewayConsolidatedBalanceDto(
     string UserId,
@@ -60,4 +61,5 @@ public record GatewayTransactionFilterDto(
     Guid? CategoryId = null,
     string? Type = null,
     string? Search = null,
-    bool IncludeIgnoredInTotals = false);
+    bool IncludeIgnoredInTotals = false,
+    string? ChannelGroup = null);

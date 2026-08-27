@@ -1,6 +1,6 @@
 # 📐 Especificação de Refatoração do Harness & Slash Commands
 
-**Status**: Approved / Draft  
+**Status**: 🟢 `Concluída & Implementada`  
 **Branch Target**: `feat/harness-slash-commands-refactoring`  
 **Escopo**: `FinanceHub` & `AutoReparos` (.NET 10 Microservices)  
 **Localização**: `.agents/specs/harness-slash-commands-refactoring-spec.md`

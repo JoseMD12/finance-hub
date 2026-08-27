@@ -60,6 +60,10 @@ export function cn(...inputs: ClassValue[]) {
    - É **estritamente proibido** utilizar branco puro (`#FFFFFF`) em superfícies de cartões, modais, campos de formulário e containers de fundo. Toda superfície que seria branca DEVE utilizar obrigatoriamente um tom **off-white** suave (ex: `#FAFCFB` / `bg-surface-card`).
 5. **Proibição do Caractere '&' em Títulos e Menus**:
    - É **estritamente proibido** utilizar o caractere '&' em títulos de seção, cabeçalhos, modais ou itens de menu da aplicação. Utilize sempre apenas nomes diretos (ex: 'Conexões' em vez de 'Conexões & Ingestão').
+6. **Proibição de Framer Motion `whileHover`/`whileTap` em Componentes Globais / Sticky / Scroll**:
+   - `whileHover` e `whileTap` do Framer Motion são **estritamente proibidos** em componentes montados globalmente (`Sidebar`, `Topbar`, `AppLayout`) ou em qualquer componente que permaneça visível durante o scroll de uma tela com listas longas (ex: KPI cards acima de tabelas).
+   - Nesses componentes, utilizar estritamente classes de utilitário Tailwind (`hover:scale-*`, `active:scale-*`, `transition-transform duration-200` com suporte acessível `motion-reduce:hover:scale-100 motion-reduce:active:scale-100`).
+   - Gestos do Framer Motion (`whileHover`/`whileTap`) só são permitidos em componentes de tela pontuais/isolados e fora do fluxo de scroll de listas longas (ex: Login).
 
 ---
 
@@ -159,3 +163,38 @@ export function maskSensitivePixKey(key: string | null | undefined): string {
 }
 ```
 
+
+---
+
+## ⚡ 6. Performance de Scroll (regras nascidas de bug real)
+
+Estas regras existem porque a tela de Transações travou no scroll por três rodadas
+seguidas de correções pontuais. O padrão sempre reaparecia em outro componente
+porque nada o proibia explicitamente.
+
+1. **Assets de imagem nunca vêm de domínios de terceiros em runtime**:
+   - Logos e ícones DEVEM residir em `public/` (ex.: `public/images/institutions/`) ou ser inlined.
+   - Hotlink de Wikimedia Commons, `cdn.simpleicons.org` ou qualquer CDN público sujeita a tela a
+     latência de rede, rate limiting (429) e indisponibilidade — dentro do gesto de scroll do usuário.
+
+2. **`loading="lazy"` é PROIBIDO em imagens pequenas e repetidas dentro de listas e tabelas**:
+   - O atributo adia download e decode até o elemento entrar na viewport, ou seja, move o custo para
+     dentro do gesto de scroll — exatamente onde não há orçamento de frame.
+   - Em imagens repetidas (um logo por linha), o browser já reusa o cache: lazy não economiza nada.
+   - Sempre declare `width` e `height` explícitos para evitar reflow quando a imagem resolve.
+   - Reserve `loading="lazy"` para imagens grandes, únicas e abaixo da dobra.
+
+3. **Em hover de elementos que se repetem por linha, use SOMENTE `color` e `background-color`**:
+   - PROIBIDOS: `filter` (`hover:brightness-*`, `hover:saturate-*`), `box-shadow` (`hover:shadow-*`)
+     e `transform` (`hover:scale-*`). Cada um cria e destrói contexto de empilhamento ou camada de
+     composição a cada linha que passa sob o cursor durante o scroll.
+   - Evite também `transition-*` no hover de `<tr>`: rolando, o browser agenda duas transições por
+     frame (a linha que entra e a que sai).
+   - Para variação de tom por cor, declare a classe literal completa no mapa de estilos
+     (ex.: `hoverBg: 'hover:bg-emerald-100'`) — o scanner do Tailwind v4 não resolve classes montadas
+     dinamicamente por concatenação.
+
+4. **O hook `useScrollPointerLock` é a rede de segurança e não deve ser removido**:
+   - Chamado uma vez em `AppLayout`, ele suspende `pointer-events` enquanto a página rola, impedindo
+     que o browser reavalie `:hover` a cada frame.
+   - É o guarda-chuva que protege componentes futuros — mas não substitui as regras acima.

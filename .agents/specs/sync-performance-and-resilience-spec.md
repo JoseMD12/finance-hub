@@ -1,7 +1,7 @@
 # Especificação Técnica: Otimização de Performance, Sincronização Assíncrona, Resiliência DLQ e Concorrência Otimista
 
 **Documento:** `.agents/specs/sync-performance-and-resilience-spec.md`  
-**Status:** 🟢 `Aprovada para Implementação`  
+**Status:** 🟢 `Concluída & Implementada`  
 **Data:** 19/08/2026 (Atualizado em 20/08/2026)  
 **Escopo:** `FinanceHub.PluggyIntegration`, `FinanceHub.TransactionAggregator`, `FinanceHub.Shared.Messaging`, `FinanceHub.ApiGateway`, `FinanceHub.Web`
 

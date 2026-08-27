@@ -52,8 +52,8 @@ export const ConnectionsPage: React.FC = () => {
   const hasPluggyItems = connectedItems.length > 0;
 
   // Agrupa contas salvas no banco por instituição
-  const savedBalances = (dashboard?.accountBalances as any[]) ?? [];
   const groupedSavedInstitutions = React.useMemo(() => {
+    const savedBalances = (dashboard?.accountBalances as any[]) ?? [];
     const map = new Map<string, { totalBalance: number; totalCredit: number; accountsCount: number }>();
 
     for (const acc of savedBalances) {
@@ -80,7 +80,7 @@ export const ConnectionsPage: React.FC = () => {
       totalCredit: data.totalCredit,
       accountsCount: data.accountsCount,
     }));
-  }, [savedBalances]);
+  }, [dashboard?.accountBalances]);
 
   const hasSavedInstitutions = groupedSavedInstitutions.length > 0;
   const hasAnyInstitutions = hasPluggyItems || hasSavedInstitutions;

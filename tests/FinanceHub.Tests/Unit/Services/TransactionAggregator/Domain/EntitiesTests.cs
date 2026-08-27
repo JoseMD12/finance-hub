@@ -151,6 +151,35 @@ public class EntitiesTests
         balance.CurrentBalance.Amount.Should().Be(350m);
     }
 
+    [Fact]
+    public void CanonicalTransaction_UpdateNotes_WithValidString_ShouldSetNotes()
+    {
+        // Arrange
+        var transaction = CreateSampleTransaction();
+        var validNotes = "Compra parcelada referente ao jantar de aniversário.";
+
+        // Act
+        transaction.UpdateNotes(validNotes);
+
+        // Assert
+        transaction.Notes.Should().Be(validNotes);
+    }
+
+    [Fact]
+    public void CanonicalTransaction_UpdateNotes_Exceeding500Characters_ShouldThrowException()
+    {
+        // Arrange
+        var transaction = CreateSampleTransaction();
+        var longNotes = new string('A', 501);
+
+        // Act
+        var act = () => transaction.UpdateNotes(longNotes);
+
+        // Assert
+        act.Should().Throw<TransactionAggregatorDomainException>()
+            .WithMessage("*500*");
+    }
+
     private static CanonicalTransaction CreateSampleTransaction()
     {
         var creationParams = new CanonicalTransactionCreationParams(

@@ -41,7 +41,6 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
       className={cn(
         'w-full max-w-lg bg-white rounded-3xl p-6 shadow-elevated border border-border-subtle',
         'backdrop:bg-slate-900/40 backdrop:backdrop-blur-sm',
-        'open:animate-in open:fade-in open:zoom-in-95 open:duration-200',
         className
       )}
     >

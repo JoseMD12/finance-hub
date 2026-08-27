@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import { Card } from '@/shared/components/Card/Card';
 import { Skeleton } from '@/shared/components/Skeleton/Skeleton';
 import { formatCurrencyBRL, formatDateBR, formatTimeBR, formatPaymentMethod, maskSensitiveAccount } from '@/shared/utils/formatters';
@@ -7,17 +7,17 @@ import { cn } from '@/shared/utils/cn';
 import { Landmark, ArrowUpRight, ArrowDownRight, ArrowLeftRight, Receipt, SearchX } from 'lucide-react';
 import { CategoryTagPopover } from './CategoryTagPopover';
 import { TransactionActionDropdown } from './TransactionActionDropdown';
+import { TransactionNotePopover } from './TransactionNotePopover';
 import type { TransactionDto } from '../types/transactions.types';
 
 export interface TransactionsTableProps {
   transactions: TransactionDto[];
   isLoading: boolean;
-  onSelectTransaction: (transaction: TransactionDto) => void;
   onToggleNeutrality: (transaction: TransactionDto) => void;
   onToggleBillPayment: (transaction: TransactionDto) => void;
 }
 
-const BankLogoTag: React.FC<{ institutionId: string }> = ({ institutionId }) => {
+const BankLogoTag = memo<{ institutionId: string }>(({ institutionId }) => {
   const info = getInstitutionInfo(institutionId);
   const [hasError, setHasError] = useState(false);
 
@@ -33,7 +33,9 @@ const BankLogoTag: React.FC<{ institutionId: string }> = ({ institutionId }) => 
           src={info.logoUrl}
           alt={`Logo ${info.name}`}
           className="w-3.5 h-3.5 object-contain shrink-0"
-          loading="lazy"
+          width={14}
+          height={14}
+          decoding="async"
           onError={() => setHasError(true)}
         />
       ) : (
@@ -42,17 +44,161 @@ const BankLogoTag: React.FC<{ institutionId: string }> = ({ institutionId }) => 
       <span className="whitespace-nowrap">{info.code}</span>
     </span>
   );
-};
+});
 
-export const TransactionsTable: React.FC<TransactionsTableProps> = ({
+BankLogoTag.displayName = 'BankLogoTag';
+
+interface TransactionTableRowProps {
+  transaction: TransactionDto;
+  onToggleNeutrality: (transaction: TransactionDto) => void;
+  onToggleBillPayment: (transaction: TransactionDto) => void;
+}
+
+const TransactionTableRow = memo<TransactionTableRowProps>(({
+  transaction: t,
+  onToggleNeutrality,
+  onToggleBillPayment,
+}) => {
+  return (
+    <tr
+      key={t.id}
+      className="hover:bg-slate-100/70"
+    >
+      {/* Data e Hora - Alinhadas à esquerda */}
+      <td className="px-6 py-4 text-left whitespace-nowrap">
+        <div className="flex flex-col">
+          <span className="text-slate-700 font-semibold tabular-nums">
+            {formatDateBR(t.transactionDateUtc)}
+          </span>
+          <span className="text-[10px] text-slate-400 font-mono tabular-nums">
+            {formatTimeBR(t.transactionDateUtc)}
+          </span>
+        </div>
+      </td>
+
+      {/* Descrição e Estabelecimento */}
+      <td className="px-6 py-4 text-left">
+        <div className="flex flex-col gap-0.5">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="font-bold text-slate-800 text-xs">
+              {t.description}
+            </span>
+            {t.nature === 'Transfer' && (
+              <span
+                title="Transferência interna pareada entre contas próprias ou repasse (não computada nos totais)"
+                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200"
+              >
+                <ArrowLeftRight className="w-2.5 h-2.5 text-slate-500" aria-hidden="true" />
+                Transferência
+              </span>
+            )}
+            {t.isBillPayment && (
+              <span
+                title="Pagamento de fatura de cartão de crédito"
+                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200"
+              >
+                <Receipt className="w-2.5 h-2.5 text-blue-600" aria-hidden="true" />
+                Fatura
+              </span>
+            )}
+            {t.isIgnoredInTotals && t.nature !== 'Transfer' && (
+              <span
+                title="Movimentação patrimonial / dinheiro de trânsito (não computada nos totais operacionais)"
+                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-500 border border-slate-200"
+              >
+                Neutro
+              </span>
+            )}
+          </div>
+          {t.merchantName &&
+            t.merchantName.trim().toLowerCase() !== t.description.trim().toLowerCase() && (
+              <span className="text-[11px] text-slate-400 font-mono font-medium truncate max-w-md">
+                {t.merchantName}
+              </span>
+            )}
+        </div>
+      </td>
+
+      {/* Instituição e Conta - Alinhada à esquerda */}
+      <td className="px-6 py-4 text-left whitespace-nowrap">
+        <div className="flex flex-col items-start gap-1">
+          <BankLogoTag institutionId={t.institutionId} />
+          <span className="text-[10px] text-slate-400 font-mono whitespace-nowrap pl-0.5">
+            Conta {maskSensitiveAccount(t.accountNumber)}
+          </span>
+        </div>
+      </td>
+
+      {/* Categoria - Alinhada à esquerda */}
+      <td className="px-6 py-4 text-left whitespace-nowrap">
+        <CategoryTagPopover
+          transactionId={t.id}
+          currentCategoryId={t.categoryId}
+        />
+      </td>
+
+      {/* Meio de Pagamento - Centralizado na célula */}
+      <td className="px-6 py-4 text-center whitespace-nowrap">
+        <div className="flex items-center justify-center">
+          <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-surface-ground border border-border-subtle text-[11px] font-mono text-slate-600 whitespace-nowrap">
+            {formatPaymentMethod(t.channel)}
+          </span>
+        </div>
+      </td>
+
+      {/* Valor - Centralizado na célula com largura protegida e sem quebra */}
+      <td className="px-6 py-4 text-center whitespace-nowrap min-w-[150px]">
+        <div className="flex items-center justify-center">
+          <span
+            className={cn(
+              'tabular-nums tracking-tight font-mono inline-flex items-center justify-center gap-1 font-bold text-sm whitespace-nowrap',
+              t.type === 'Credit'
+                ? 'text-status-success'
+                : 'text-status-danger'
+            )}
+          >
+            {t.type === 'Credit' ? (
+              <ArrowUpRight className="w-4 h-4 shrink-0" aria-hidden="true" />
+            ) : (
+              <ArrowDownRight className="w-4 h-4 shrink-0" aria-hidden="true" />
+            )}
+            <span className="whitespace-nowrap">
+              {t.type === 'Credit' ? '+ ' : '- '}
+              {formatCurrencyBRL(t.amount)}
+            </span>
+          </span>
+        </div>
+      </td>
+
+      {/* Ações - Centralizado com Popover de Nota e DropdownMenu */}
+      <td className="px-6 py-4 text-center whitespace-nowrap min-w-[100px]">
+        <div className="flex items-center justify-center gap-1">
+          <TransactionNotePopover
+            transactionId={t.id}
+            currentNotes={t.notes}
+            description={t.description}
+          />
+          <TransactionActionDropdown
+            transaction={t}
+            onToggleNeutrality={onToggleNeutrality}
+            onToggleBillPayment={onToggleBillPayment}
+          />
+        </div>
+      </td>
+    </tr>
+  );
+});
+
+TransactionTableRow.displayName = 'TransactionTableRow';
+
+const TransactionsTableComponent: React.FC<TransactionsTableProps> = ({
   transactions,
   isLoading,
-  onSelectTransaction,
   onToggleNeutrality,
   onToggleBillPayment,
 }) => {
   const renderTableContent = () => {
-    if (isLoading) {
+    if (isLoading && transactions.length === 0) {
       // Structured Skeleton Loading (8 rows)
       return (
         <tbody className="divide-y divide-border-subtle bg-surface-card">
@@ -126,126 +272,12 @@ export const TransactionsTable: React.FC<TransactionsTableProps> = ({
     return (
       <tbody className="divide-y divide-border-subtle bg-surface-card">
         {transactions.map((t) => (
-          <tr
+          <TransactionTableRow
             key={t.id}
-            className="hover:bg-brand-light/35 transition-all duration-150 group"
-          >
-            {/* Data e Hora - Alinhadas à esquerda */}
-            <td className="px-6 py-4 text-left whitespace-nowrap">
-              <div className="flex flex-col">
-                <span className="text-slate-700 font-semibold tabular-nums">
-                  {formatDateBR(t.transactionDateUtc)}
-                </span>
-                <span className="text-[10px] text-slate-400 font-mono tabular-nums">
-                  {formatTimeBR(t.transactionDateUtc)}
-                </span>
-              </div>
-            </td>
-
-            {/* Descrição e Estabelecimento - Sanitizado no topo em negrito, nome bruto embaixo */}
-            <td className="px-6 py-4 text-left">
-              <div className="flex flex-col gap-0.5">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-bold text-slate-800 group-hover:text-secondary transition-colors text-xs">
-                    {t.description}
-                  </span>
-                  {t.nature === 'Transfer' && (
-                    <span
-                      title="Transferência interna pareada entre contas próprias ou repasse (não computada nos totais)"
-                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200"
-                    >
-                      <ArrowLeftRight className="w-2.5 h-2.5 text-slate-500" aria-hidden="true" />
-                      Transferência
-                    </span>
-                  )}
-                  {t.isBillPayment && (
-                    <span
-                      title="Pagamento de fatura de cartão de crédito"
-                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200"
-                    >
-                      <Receipt className="w-2.5 h-2.5 text-blue-600" aria-hidden="true" />
-                      Fatura
-                    </span>
-                  )}
-                  {t.isIgnoredInTotals && t.nature !== 'Transfer' && (
-                    <span
-                      title="Movimentação patrimonial / dinheiro de trânsito (não computada nos totais operacionais)"
-                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-500 border border-slate-200"
-                    >
-                      Neutro
-                    </span>
-                  )}
-                </div>
-                {t.merchantName &&
-                  t.merchantName.trim().toLowerCase() !== t.description.trim().toLowerCase() && (
-                    <span className="text-[11px] text-slate-400 font-mono font-medium truncate max-w-md">
-                      {t.merchantName}
-                    </span>
-                  )}
-              </div>
-            </td>
-
-            {/* Instituição e Conta - Alinhada à esquerda */}
-            <td className="px-6 py-4 text-left whitespace-nowrap">
-              <div className="flex flex-col items-start gap-1">
-                <BankLogoTag institutionId={t.institutionId} />
-                <span className="text-[10px] text-slate-400 font-mono whitespace-nowrap pl-0.5">
-                  Conta {maskSensitiveAccount(t.accountNumber)}
-                </span>
-              </div>
-            </td>
-
-            {/* Categoria - Alinhada à esquerda */}
-            <td className="px-6 py-4 text-left whitespace-nowrap">
-              <CategoryTagPopover
-                transactionId={t.id}
-                currentCategoryId={t.categoryId}
-              />
-            </td>
-
-            {/* Meio de Pagamento - Alinhado à esquerda */}
-            <td className="px-6 py-4 text-left whitespace-nowrap">
-              <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-surface-ground border border-border-subtle text-[11px] font-mono text-slate-600 whitespace-nowrap">
-                {formatPaymentMethod(t.channel)}
-              </span>
-            </td>
-
-            {/* Valor - Centralizado na célula com largura protegida e sem quebra */}
-            <td className="px-6 py-4 text-center whitespace-nowrap min-w-[150px]">
-              <div className="flex items-center justify-center">
-                <span
-                  className={cn(
-                    'tabular-nums tracking-tight font-mono inline-flex items-center justify-center gap-1 font-bold text-sm whitespace-nowrap',
-                    t.type === 'Credit'
-                      ? 'text-status-success'
-                      : 'text-status-danger'
-                  )}
-                >
-                  {t.type === 'Credit' ? (
-                    <ArrowUpRight className="w-4 h-4 shrink-0" aria-hidden="true" />
-                  ) : (
-                    <ArrowDownRight className="w-4 h-4 shrink-0" aria-hidden="true" />
-                  )}
-                  <span className="whitespace-nowrap">
-                    {t.type === 'Credit' ? '+ ' : '- '}
-                    {formatCurrencyBRL(t.amount)}
-                  </span>
-                </span>
-              </div>
-            </td>
-
-            {/* Ações - Centralizado com DropdownMenu padronizado */}
-            <td className="px-6 py-4 text-center whitespace-nowrap min-w-[80px]">
-              <div className="flex items-center justify-center">
-                <TransactionActionDropdown
-                  transaction={t}
-                  onSelectTransaction={onSelectTransaction}
-                  onToggleNeutrality={onToggleNeutrality}
-                  onToggleBillPayment={onToggleBillPayment}
-                />
-              </div>
-            </td>
-          </tr>
+            transaction={t}
+            onToggleNeutrality={onToggleNeutrality}
+            onToggleBillPayment={onToggleBillPayment}
+          />
         ))}
       </tbody>
     );
@@ -261,9 +293,9 @@ export const TransactionsTable: React.FC<TransactionsTableProps> = ({
               <th className="px-6 py-4 text-left">Descrição / Estabelecimento</th>
               <th className="px-6 py-4 text-left whitespace-nowrap">Instituição e Conta</th>
               <th className="px-6 py-4 text-left whitespace-nowrap">Categoria</th>
-              <th className="px-6 py-4 text-left whitespace-nowrap">Meio</th>
-              <th className="px-6 py-4 text-left whitespace-nowrap">Valor</th>
-              <th className="px-6 py-4 text-left whitespace-nowrap">Ações</th>
+              <th className="px-6 py-4 text-center whitespace-nowrap">Meio</th>
+              <th className="px-6 py-4 text-center whitespace-nowrap">Valor</th>
+              <th className="px-6 py-4 text-center whitespace-nowrap">Ações</th>
             </tr>
           </thead>
           {renderTableContent()}
@@ -273,3 +305,4 @@ export const TransactionsTable: React.FC<TransactionsTableProps> = ({
   );
 };
 
+export const TransactionsTable = memo(TransactionsTableComponent);

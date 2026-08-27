@@ -35,15 +35,15 @@ export const DashboardPage: React.FC = () => {
       title="Visão Geral e Saldos Consolidados"
       description="Monitoramento unificado de patrimônio via Open Finance e ingestão de extratos"
     >
-      {isLoading && <DashboardSkeleton />}
+      {isLoading && !dashboard && <DashboardSkeleton />}
 
-      {error && (
+      {error && !dashboard && (
         <Card className="p-4 border-status-danger/30 bg-status-danger-bg text-status-danger text-xs font-semibold">
           Não foi possível carregar as informações do dashboard no momento.
         </Card>
       )}
 
-      {!isLoading && (
+      {dashboard && (
         <>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Saldo Total com GlowCard e NumberScramble */}

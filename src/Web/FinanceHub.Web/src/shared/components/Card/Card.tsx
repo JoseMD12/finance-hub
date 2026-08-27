@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useRef, useEffect } from 'react';
 import { useReducedMotion } from 'framer-motion';
 import { cn } from '@/shared/utils/cn';
 
@@ -15,19 +15,53 @@ export const Card: React.FC<CardProps> = ({
   glowRgb,
   style,
   onMouseMove,
+  onMouseLeave,
   children,
   ...props
 }) => {
   const prefersReduced = useReducedMotion();
+  const hasGlow = Boolean(glowRgb && !prefersReduced);
+  const rafRef = useRef<number | null>(null);
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!prefersReduced && glowRgb) {
-      const rect = e.currentTarget.getBoundingClientRect();
-      e.currentTarget.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
-      e.currentTarget.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (hasGlow) {
+      const target = e.currentTarget;
+      const clientX = e.clientX;
+      const clientY = e.clientY;
+
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+      }
+
+      rafRef.current = requestAnimationFrame(() => {
+        const rect = target.getBoundingClientRect();
+        target.style.setProperty('--mouse-x', `${clientX - rect.left}px`);
+        target.style.setProperty('--mouse-y', `${clientY - rect.top}px`);
+        rafRef.current = null;
+      });
     }
     onMouseMove?.(e);
-  };
+  }, [hasGlow, onMouseMove]);
+
+  const handleMouseLeave = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (hasGlow) {
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+      e.currentTarget.style.setProperty('--mouse-x', '-999px');
+      e.currentTarget.style.setProperty('--mouse-y', '-999px');
+    }
+    onMouseLeave?.(e);
+  }, [hasGlow, onMouseLeave]);
+
+  useEffect(() => {
+    return () => {
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+      }
+    };
+  }, []);
 
   const variantStyles = {
     default: 'bg-surface-card border border-border-subtle shadow-card',
@@ -35,17 +69,16 @@ export const Card: React.FC<CardProps> = ({
     muted: 'bg-surface-muted border border-border-subtle',
   };
 
-  const hasGlow = Boolean(glowRgb && !prefersReduced);
-
   return (
     <div
-      onMouseMove={handleMouseMove}
+      onMouseMove={hasGlow ? handleMouseMove : onMouseMove}
+      onMouseLeave={hasGlow ? handleMouseLeave : onMouseLeave}
       style={{
         ...style,
         ...(glowRgb ? { ['--glow-rgb' as string]: glowRgb } : {}),
       }}
       className={cn(
-        'relative rounded-2xl p-6 transition-[box-shadow,transform] duration-200 block',
+        'relative rounded-2xl p-6 transition-[box-shadow] duration-200 block',
         variantStyles[variant],
         hoverable && 'hover:shadow-elevated hover:-translate-y-0.5',
         hasGlow && 'glow-card',
@@ -57,5 +90,3 @@ export const Card: React.FC<CardProps> = ({
     </div>
   );
 };
-
-

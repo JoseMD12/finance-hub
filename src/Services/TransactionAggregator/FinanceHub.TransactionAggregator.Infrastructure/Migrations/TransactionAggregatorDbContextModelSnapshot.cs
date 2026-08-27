@@ -89,6 +89,11 @@ namespace FinanceHub.TransactionAggregator.Infrastructure.Migrations
                         .HasDefaultValue(0)
                         .HasColumnName("nature");
 
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("notes");
+
                     b.Property<Guid?>("PairedTransactionId")
                         .HasColumnType("uuid")
                         .HasColumnName("paired_transaction_id");

@@ -1,6 +1,6 @@
 # Spec — Tela de Transações & Sistema de Categorias (Tags)
 
-- **Status**: Em Elaboração (Draft)
+- **Status**: 🟢 `Concluída & Implementada`
 - **Data**: 2026-08-20
 - **Branch**: `feature/transactions-screen`
 - **Serviços Envolvidos**: `FinanceHub.TransactionAggregator`, `FinanceHub.ApiGateway`, `FinanceHub.Web`

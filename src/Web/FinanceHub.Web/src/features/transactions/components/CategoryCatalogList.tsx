@@ -117,7 +117,7 @@ export const CategoryCatalogList: React.FC<CategoryCatalogListProps> = ({
             </div>
 
             {hasSub && isExpanded && (
-              <div className="flex flex-col gap-0.5 pl-3 border-l-2 border-slate-200 ml-3.5 my-0.5 animate-in fade-in slide-in-from-top-1 duration-150">
+              <div className="flex flex-col gap-0.5 pl-3 border-l-2 border-slate-200 ml-3.5 my-0.5">
                 {parent.subcategories!.map((sub) => {
                   const isSubSelected = sub.id === selectedCategoryId;
                   const SubIcon = getCategoryIcon(sub.iconKey);

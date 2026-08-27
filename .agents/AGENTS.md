@@ -149,6 +149,16 @@ When generating code or configuring integrations, subagents **must** adhere to:
     - Subagents and AI assistants MUST NEVER execute `git commit` or `git push` autonomously.
     - Git commits and pushes are STRICTLY PROHIBITED unless the user explicitly requests them in the current prompt (e.g., via `/git-commit`, `/git-commit-many-by`, or explicit directive like "faça o commit"). Never commit fixes automatically after fixing lints or SonarCloud code smells.
 
+25. **Smooth UI Rendering, Debounce & `keepPreviousData` Anti-Thrashing Protocol**:
+    - TanStack Query queries with dynamic filters or pagination MUST configure `placeholderData: keepPreviousData` to keep existing data mounted and prevent layout thrashing or re-triggering Framer Motion animations on filter changes.
+    - Skeletons MUST only render on initial cache-less load (`isLoading && !data`).
+    - Free-text search filter inputs MUST use local state with a minimum 300ms debounce before propagating changes to queries.
+    - Heavy UI components (filter bars, tables, charts, summary cards) MUST be memoized via `React.memo`, with handler callbacks wrapped in `useCallback` and option arrays in `useMemo`.
+
+26. **Prohibition of Framer Motion Gesture Handlers on Global/Sticky Elements & Stable Selects**:
+    - `whileHover` and `whileTap` in Framer Motion are strictly forbidden on global/persistent or sticky elements (`Topbar`, `Sidebar`, `AppLayout`, KPI cards above scrollable lists). Use pure CSS Tailwind utilities (`hover:scale-*`, `active:scale-*`, `transition-transform duration-200`, `motion-reduce:hover:scale-100`) to prevent gesture listeners on the main thread during viewport scrolling.
+    - TanStack Query `select` transformations MUST be declared as stable named functions outside hooks when used in per-row or frequent components.
+
 ---
 
 

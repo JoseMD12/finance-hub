@@ -128,6 +128,11 @@ public class CanonicalTransactionConfiguration : IEntityTypeConfiguration<Canoni
             .HasColumnName("paired_transaction_id")
             .IsRequired(false);
 
+        builder.Property(x => x.Notes)
+            .HasColumnName("notes")
+            .HasMaxLength(500)
+            .IsRequired(false);
+
         builder.HasIndex(x => new { x.UserId, x.TransactionDateUtc, x.Type })
             .HasFilter("\"is_ignored_in_totals\" = false")
             .HasDatabaseName("idx_canonical_transactions_operating_totals");

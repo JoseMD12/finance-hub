@@ -1,6 +1,6 @@
 # FinanceHub — Brazilian Categorization & Merchant Dataset Specification
 
-**Status**: 📋 SPECIFICATION READY (Planejamento Completo)  
+**Status**: 🟢 `Concluída & Implementada`  
 **Target Microservice**: `FinanceHub.TransactionAggregator` & `FinanceHub.Web`  
 **Created**: 2026-08-21  
 

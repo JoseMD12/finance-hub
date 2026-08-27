@@ -76,6 +76,11 @@ public class TransactionAggregatorServiceClient : ITransactionAggregatorServiceC
             queryParams.Add("includeIgnoredInTotals=true");
         }
 
+        if (!string.IsNullOrWhiteSpace(filter.ChannelGroup))
+        {
+            queryParams.Add($"channelGroup={Uri.EscapeDataString(filter.ChannelGroup)}");
+        }
+
         var queryString = string.Join("&", queryParams);
         using var request = new HttpRequestMessage(HttpMethod.Get, $"/api/v1/transactions?{queryString}");
         var response = await _httpClient.SendAndDeserializeAsync<PagedGatewayTransactionsDto>(request, ServiceName, _logger, ct);
@@ -120,6 +125,16 @@ public class TransactionAggregatorServiceClient : ITransactionAggregatorServiceC
     {
         var payload = new { UserId = userId, IsBillPayment = isBillPayment };
         using var request = new HttpRequestMessage(HttpMethod.Patch, $"/api/v1/transactions/{transactionId}/bill-payment")
+        {
+            Content = JsonContent.Create(payload)
+        };
+        await _httpClient.SendOrThrowAsync(request, ServiceName, _logger, null, ct);
+    }
+
+    public async Task UpdateTransactionNotesAsync(Guid transactionId, string userId, string? notes, CancellationToken ct = default)
+    {
+        var payload = new { UserId = userId, Notes = notes };
+        using var request = new HttpRequestMessage(HttpMethod.Patch, $"/api/v1/transactions/{transactionId}/notes")
         {
             Content = JsonContent.Create(payload)
         };

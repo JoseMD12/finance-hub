@@ -1,7 +1,7 @@
 # Especificação Técnica: Prazos de Liquidação Open Finance e Resolução do Catálogo de Categorias
 
 **Documento:** `open-finance-timing-and-category-catalog-spec.md`  
-**Status:** PROPOSAL / REVIEW  
+**Status:** 🟢 `Concluída & Implementada`  
 **Autor:** Antigravity AI & Jose Henrique  
 **Data:** 2026-08-23  
 

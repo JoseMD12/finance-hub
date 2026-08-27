@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { transactionsKeys } from '../api/transactionsKeys';
 import { getTransactionsApi } from '../api/transactionsApi';
 import type { PaginatedTransactionsDto, TransactionFilterParams } from '../types/transactions.types';
@@ -8,6 +8,7 @@ export function useTransactionsQuery(filters: TransactionFilterParams = {}) {
   return useQuery<PaginatedTransactionsDto, ApiError>({
     queryKey: transactionsKeys.list(filters),
     queryFn: ({ signal }) => getTransactionsApi(filters, signal),
+    placeholderData: keepPreviousData,
     staleTime: 1000 * 60 * 2, // 2 minutos
   });
 }

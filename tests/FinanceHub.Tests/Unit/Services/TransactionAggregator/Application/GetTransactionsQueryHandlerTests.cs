@@ -87,4 +87,31 @@ public class GetTransactionsQueryHandlerTests
         result.Items.Should().BeEmpty();
         result.TotalItems.Should().Be(0);
     }
+
+    [Fact]
+    public async Task Handle_WithChannelGroup_ShouldPassFilterToRepository()
+    {
+        // Arrange
+        var userId = "user-filter";
+        var filter = new TransactionFilterDto(userId, 1, 20, ChannelGroup: "account");
+        var query = new GetTransactionsQuery(filter);
+
+        var emptyResponse = new PagedTransactionsResponseDto(
+            Enumerable.Empty<TransactionDto>(),
+            new TransactionSummaryDto(0m, 0m, 0m, 0),
+            1,
+            20,
+            0,
+            0);
+
+        _repository.QueryPagedByFilterAsync(Arg.Is<TransactionFilterDto>(f => f.ChannelGroup == "account"), Arg.Any<CancellationToken>())
+            .Returns(emptyResponse);
+
+        // Act
+        var result = await _handler.Handle(query, CancellationToken.None);
+
+        // Assert
+        result.Should().NotBeNull();
+        await _repository.Received(1).QueryPagedByFilterAsync(Arg.Is<TransactionFilterDto>(f => f.ChannelGroup == "account"), Arg.Any<CancellationToken>());
+    }
 }

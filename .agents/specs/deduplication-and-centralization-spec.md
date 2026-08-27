@@ -1,7 +1,7 @@
 # Spec: Deduplication & Centralization of Gateway & Shared Utilities
 
 ## 1. Status & Context
-- **Status**: DRAFT (In Review)
+- **Status**: 🟢 `Concluída & Implementada`
 - **Target Microservices/Projects**: `FinanceHub.ApiGateway`, `FinanceHub.Shared.Observability`, `FinanceHub.UnitTests`
 - **Objective**: Identify, specify and centralize duplicated patterns flagged by SonarCloud across PR #8 (`feature/api-gateway-bff`).
 

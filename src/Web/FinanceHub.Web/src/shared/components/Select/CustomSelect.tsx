@@ -115,7 +115,7 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
           aria-expanded={isOpen}
           aria-label={label || placeholder}
           className={cn(
-            'flex items-center justify-between w-full text-xs font-medium bg-surface-ground border border-border-subtle rounded-xl cursor-pointer transition-all duration-200 outline-none select-none disabled:opacity-50 disabled:cursor-not-allowed form-input-focus',
+            'flex items-center justify-between w-full text-xs font-medium bg-surface-ground border border-border-subtle rounded-xl cursor-pointer transition-colors duration-150 outline-none select-none disabled:opacity-50 disabled:cursor-not-allowed form-input-focus',
             isSmall ? 'h-9 px-3 py-1.5' : 'h-10 px-4 py-2',
             isOpen
               ? 'border-brand bg-surface-card ring-2 ring-brand/20 shadow-sm'
@@ -161,7 +161,7 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
             role="listbox"
             tabIndex={-1}
             className={cn(
-              'absolute left-0 right-0 z-50 p-2 bg-surface-card border border-border-subtle rounded-2xl shadow-elevated flex flex-col gap-1 min-w-[140px] max-h-60 overflow-y-auto animate-in fade-in zoom-in-95 duration-150',
+              'absolute left-0 right-0 z-50 p-2 bg-surface-card border border-border-subtle rounded-2xl shadow-elevated flex flex-col gap-1 min-w-[140px] max-h-60 overflow-y-auto',
               direction === 'up' ? 'bottom-[calc(100%+6px)]' : 'top-[calc(100%+6px)]'
             )}
           >
@@ -188,7 +188,7 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
                   }}
                   onMouseEnter={() => setFocusedIndex(idx)}
                   className={cn(
-                    'flex items-center justify-between w-full px-3 py-2 text-xs font-medium rounded-xl cursor-pointer transition-all duration-150 outline-none text-left border border-transparent',
+                    'flex items-center justify-between w-full px-3 py-2 text-xs font-medium rounded-xl cursor-pointer transition-colors duration-150 outline-none text-left border border-transparent',
                     getOptionStateClass(isSelected, isFocused)
                   )}
                 >

@@ -3,17 +3,16 @@ import ReactDOM from 'react-dom';
 import { Search, Tag, Loader2 } from 'lucide-react';
 import { CategoryTag } from './CategoryTag';
 import { CategoryCatalogList } from './CategoryCatalogList';
-import { useCategoriesQuery } from '../hooks/useCategoriesQuery';
+import { useFlattenedCategoriesQuery } from '../hooks/useCategoriesQuery';
 import { useCategorizeTransactionMutation } from '../hooks/useCategorizeTransactionMutation';
 import { Checkbox } from '@/shared/components/Checkbox/Checkbox';
-import type { CategoryDto } from '../types/transactions.types';
 
 export interface CategoryTagPopoverProps {
   transactionId: string;
   currentCategoryId: string;
 }
 
-export const CategoryTagPopover: React.FC<CategoryTagPopoverProps> = ({
+const CategoryTagPopoverComponent: React.FC<CategoryTagPopoverProps> = ({
   transactionId,
   currentCategoryId,
 }) => {
@@ -28,8 +27,11 @@ export const CategoryTagPopover: React.FC<CategoryTagPopoverProps> = ({
   const dropdownContentRef = useRef<HTMLDialogElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  const { data: categories = [], isLoading } = useCategoriesQuery();
+  const { data: categoryData, isLoading } = useFlattenedCategoriesQuery();
   const categorizeMutation = useCategorizeTransactionMutation();
+
+  const categories = categoryData?.categories ?? [];
+  const currentCategory = categoryData?.categoryMap.get(currentCategoryId);
 
   // Calcular posição flutuante precisa para o portal
   const updatePosition = useCallback(() => {
@@ -39,18 +41,19 @@ export const CategoryTagPopover: React.FC<CategoryTagPopoverProps> = ({
     const dropdownWidth = 288; // w-72 (18rem = 288px)
 
     let top = rect.bottom + 6;
-    // Se estourar a parte inferior da janela, abre para cima
     if (top + dropdownHeight > window.innerHeight && rect.top > dropdownHeight) {
       top = Math.max(10, rect.top - dropdownHeight - 6);
     }
 
     let left = rect.left;
-    // Se estourar a borda direita da janela, ajusta para a esquerda
     if (left + dropdownWidth > window.innerWidth - 16) {
       left = Math.max(16, window.innerWidth - dropdownWidth - 16);
     }
 
-    setPosition({ top, left });
+    setPosition((prev) => {
+      if (prev && Math.abs(prev.top - top) < 1 && Math.abs(prev.left - left) < 1) return prev;
+      return { top, left };
+    });
   }, []);
 
   // Fechar ao clicar fora (verificando tanto o gatilho quanto o conteúdo do portal)
@@ -68,7 +71,7 @@ export const CategoryTagPopover: React.FC<CategoryTagPopoverProps> = ({
     if (isOpen) {
       updatePosition();
       document.addEventListener('mousedown', handleClickOutside);
-      window.addEventListener('scroll', updatePosition, true);
+      window.addEventListener('scroll', updatePosition, { passive: true, capture: true });
       window.addEventListener('resize', updatePosition);
 
       // Foco automático no input de busca ao abrir
@@ -79,24 +82,10 @@ export const CategoryTagPopover: React.FC<CategoryTagPopoverProps> = ({
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
-      window.removeEventListener('scroll', updatePosition, true);
+      window.removeEventListener('scroll', updatePosition, { capture: true } as EventListenerOptions);
       window.removeEventListener('resize', updatePosition);
     };
   }, [isOpen, updatePosition]);
-
-  // Aplanar categorias e subcategorias para pesquisa rápida
-  const allFlattenedCategories: CategoryDto[] = useMemo(() => {
-    const list: CategoryDto[] = [];
-    categories.forEach((cat) => {
-      list.push(cat);
-      if (cat.subcategories) {
-        cat.subcategories.forEach((sub) => list.push(sub));
-      }
-    });
-    return list;
-  }, [categories]);
-
-  const currentCategory = allFlattenedCategories.find((c) => c.id === currentCategoryId);
 
   // Inicializar o pai da categoria atual expandido quando o popover abrir
   useEffect(() => {
@@ -105,7 +94,7 @@ export const CategoryTagPopover: React.FC<CategoryTagPopoverProps> = ({
     }
   }, [isOpen, currentCategory]);
 
-  const toggleExpand = (parentId: string, e: React.MouseEvent) => {
+  const toggleExpand = useCallback((parentId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     setExpandedParentIds((prev) => {
       const next = new Set(prev);
@@ -116,7 +105,7 @@ export const CategoryTagPopover: React.FC<CategoryTagPopoverProps> = ({
       }
       return next;
     });
-  };
+  }, []);
 
   const handleSelectCategory = async (categoryId: string) => {
     if (categoryId === currentCategoryId) {
@@ -135,9 +124,14 @@ export const CategoryTagPopover: React.FC<CategoryTagPopoverProps> = ({
   };
 
   const isSearching = searchTerm.trim().length > 0;
-  const filteredSearchCategories = allFlattenedCategories.filter((c) =>
-    c.name.toLowerCase().includes(searchTerm.trim().toLowerCase())
-  );
+  const filteredSearchCategories = useMemo(() => {
+    const list = categoryData?.flatCategories ?? [];
+    if (!isSearching) return list;
+    const term = searchTerm.trim().toLowerCase();
+    return list.filter((c) =>
+      c.name.toLowerCase().includes(term)
+    );
+  }, [categoryData?.flatCategories, isSearching, searchTerm]);
 
   return (
     <div className="relative inline-block" ref={popoverTriggerRef}>
@@ -161,7 +155,7 @@ export const CategoryTagPopover: React.FC<CategoryTagPopoverProps> = ({
               top: `${position.top}px`,
               left: `${position.left}px`,
             }}
-            className="z-[9999] w-72 p-3.5 bg-surface-card rounded-2xl shadow-elevated border border-border-subtle flex flex-col gap-3 animate-in fade-in zoom-in-95 duration-150 m-0"
+            className="z-[9999] w-72 p-3.5 bg-surface-card rounded-2xl shadow-elevated border border-border-subtle flex flex-col gap-3 m-0"
           >
             <div className="flex items-center justify-between border-b border-border-subtle pb-2.5">
               <span className="text-xs font-bold text-secondary flex items-center gap-1.5">
@@ -183,7 +177,7 @@ export const CategoryTagPopover: React.FC<CategoryTagPopoverProps> = ({
                 value={searchTerm}
                 aria-label="Filtrar categorias"
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-border-subtle bg-surface-ground text-slate-800 focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 transition-all"
+                className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-border-subtle bg-surface-ground text-slate-800 focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 transition-colors"
               />
             </div>
 
@@ -221,3 +215,6 @@ export const CategoryTagPopover: React.FC<CategoryTagPopoverProps> = ({
     </div>
   );
 };
+
+export const CategoryTagPopover = React.memo(CategoryTagPopoverComponent);
+

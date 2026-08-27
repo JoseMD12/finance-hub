@@ -3,8 +3,11 @@ import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
 import { Skeleton } from '@/shared/components/Skeleton/Skeleton';
+import { useScrollPointerLock } from '@/shared/hooks/useScrollPointerLock';
 
 export const AppLayout: React.FC = () => {
+  useScrollPointerLock();
+
   return (
     <div className="flex min-h-screen bg-surface-ground">
       <Sidebar />

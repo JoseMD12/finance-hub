@@ -1,8 +1,8 @@
 export const INSTITUTION_LOGO_URLS = {
-  itau: 'https://upload.wikimedia.org/wikipedia/commons/1/19/Ita%C3%BA_Unibanco_logo_2023.svg',
-  inter: 'https://upload.wikimedia.org/wikipedia/commons/8/8f/Logo_do_banco_Inter_%282023%29.svg',
-  mercadoPago: 'https://cdn.simpleicons.org/mercadopago/00AEEF',
-  nubank: 'https://cdn.simpleicons.org/nubank/820AD1',
+  itau: '/images/institutions/itau.svg',
+  inter: '/images/institutions/inter.svg',
+  mercadoPago: '/images/institutions/mercadopago.svg',
+  nubank: '/images/institutions/nubank.svg',
 } as const;
 
 export interface InstitutionInfo {

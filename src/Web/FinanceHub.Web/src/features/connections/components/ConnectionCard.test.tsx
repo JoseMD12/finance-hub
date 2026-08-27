@@ -33,10 +33,11 @@ describe('ConnectionCard Component', () => {
     render(<ConnectionCard item={mockPositiveItem} />);
 
     expect(screen.getByText('Itaú Unibanco')).toBeInTheDocument();
-    expect(screen.getByAltText('Logo do Itaú Unibanco')).toHaveAttribute(
-      'src',
-      'https://upload.wikimedia.org/wikipedia/commons/1/19/Ita%C3%BA_Unibanco_logo_2023.svg'
-    );
+    const logoEl = screen.getByAltText('Logo do Itaú Unibanco');
+    expect(logoEl).toHaveAttribute('src', '/images/institutions/itau.svg');
+    // Logos DEVEM ser servidos localmente: hotlink de CDN de terceiros reintroduz
+    // latência e rate limiting dentro do gesto de scroll. Ver rule 6.1.
+    expect(logoEl.getAttribute('src')).not.toMatch(/^https?:/);
     expect(screen.queryByText('Conectado')).not.toBeInTheDocument();
     const balanceEl = screen.getByText('R$ 12.500,75');
     expect(balanceEl).toBeInTheDocument();
