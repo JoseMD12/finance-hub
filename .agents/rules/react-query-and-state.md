@@ -166,4 +166,7 @@ export function useUpdateTransactionCategoryMutation(filters: any) {
 3. **Debounce Obrigatório em Inputs de Busca Textual**:
    - Campos de busca textual livre em barras de filtro DEVEM utilizar estado local imediato e debounce de no mínimo 300ms antes de repassar a alteração para a query (`filters.search`), impedindo uma avalanche de requisições e re-renderizações a cada caractere digitado.
 
+4. **Estabilidade de Referência da Opção `select`**:
+   - A opção `select` de `useQuery` NUNCA deve ser uma função inline anônima quando o hook é instanciado em múltiplos componentes simultâneos (ex: dentro de cada linha de tabela ou popovers por item). Mova a função `select` para fora do hook como função pura nomeada e com referência estável, permitindo a memoização correta do TanStack Query e evitando recomputações a cada render.
+
 

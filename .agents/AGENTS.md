@@ -155,6 +155,10 @@ When generating code or configuring integrations, subagents **must** adhere to:
     - Free-text search filter inputs MUST use local state with a minimum 300ms debounce before propagating changes to queries.
     - Heavy UI components (filter bars, tables, charts, summary cards) MUST be memoized via `React.memo`, with handler callbacks wrapped in `useCallback` and option arrays in `useMemo`.
 
+26. **Prohibition of Framer Motion Gesture Handlers on Global/Sticky Elements & Stable Selects**:
+    - `whileHover` and `whileTap` in Framer Motion are strictly forbidden on global/persistent or sticky elements (`Topbar`, `Sidebar`, `AppLayout`, KPI cards above scrollable lists). Use pure CSS Tailwind utilities (`hover:scale-*`, `active:scale-*`, `transition-transform duration-200`, `motion-reduce:hover:scale-100`) to prevent gesture listeners on the main thread during viewport scrolling.
+    - TanStack Query `select` transformations MUST be declared as stable named functions outside hooks when used in per-row or frequent components.
+
 ---
 
 
