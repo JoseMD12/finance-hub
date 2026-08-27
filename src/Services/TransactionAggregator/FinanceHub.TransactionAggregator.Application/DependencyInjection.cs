@@ -4,6 +4,7 @@ using FinanceHub.TransactionAggregator.Application.Commands.ToggleBillPayment;
 using FinanceHub.TransactionAggregator.Application.Interfaces;
 using FinanceHub.TransactionAggregator.Application.Queries.GetCategories;
 using FinanceHub.TransactionAggregator.Application.Queries.GetConsolidatedBalance;
+using FinanceHub.TransactionAggregator.Application.Queries.GetDashboardSummary;
 using FinanceHub.TransactionAggregator.Application.Queries.GetTransactions;
 using FinanceHub.TransactionAggregator.Application.Services;
 using FinanceHub.TransactionAggregator.Application.Services.Categorization;
@@ -33,6 +34,7 @@ public static class DependencyInjection
         services.AddScoped<IGetTransactionsQueryHandler, GetTransactionsQueryHandler>();
         services.AddScoped<IGetCategoriesQueryHandler, GetCategoriesQueryHandler>();
         services.AddScoped<IGetConsolidatedBalanceQueryHandler, GetConsolidatedBalanceQueryHandler>();
+        services.AddScoped<IGetDashboardSummaryQueryHandler, GetDashboardSummaryQueryHandler>();
 
         return services;
     }

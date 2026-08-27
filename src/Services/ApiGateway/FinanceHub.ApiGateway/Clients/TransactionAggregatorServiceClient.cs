@@ -32,6 +32,50 @@ public class TransactionAggregatorServiceClient : ITransactionAggregatorServiceC
         return balance ?? new GatewayConsolidatedBalanceDto(userId, 0m, Enumerable.Empty<GatewayAccountBalanceDto>());
     }
 
+    public async Task<GatewayDashboardSummaryDto> GetDashboardSummaryAsync(GatewayDashboardFilterDto filter, CancellationToken ct = default)
+    {
+        var queryParams = new List<string>
+        {
+            $"userId={Uri.EscapeDataString(filter.UserId)}"
+        };
+
+        if (filter.StartDate.HasValue)
+        {
+            queryParams.Add($"startDate={filter.StartDate.Value:O}");
+        }
+
+        if (filter.EndDate.HasValue)
+        {
+            queryParams.Add($"endDate={filter.EndDate.Value:O}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(filter.InstitutionId))
+        {
+            queryParams.Add($"institutionId={Uri.EscapeDataString(filter.InstitutionId)}");
+        }
+
+        if (filter.IncludeIgnoredInTotals)
+        {
+            queryParams.Add("includeIgnoredInTotals=true");
+        }
+
+        var url = $"/api/v1/dashboard/summary?{string.Join("&", queryParams)}";
+        using var request = new HttpRequestMessage(HttpMethod.Get, url);
+
+        var summary = await _httpClient.SendAndDeserializeAsync<GatewayDashboardSummaryDto>(request, ServiceName, _logger, ct);
+
+        // Downstream indisponível não pode derrubar o Dashboard inteiro: devolve estrutura vazia
+        // para a interface renderizar o estado sem dados em vez de estourar.
+        return summary ?? new GatewayDashboardSummaryDto(
+            filter.UserId,
+            new GatewayTransactionSummaryDto(0m, 0m, 0m, 0),
+            [],
+            [],
+            [],
+            [],
+            DateTime.UtcNow);
+    }
+
     public async Task<PagedGatewayTransactionsDto> GetTransactionsAsync(GatewayTransactionFilterDto filter, CancellationToken ct = default)
     {
         var queryParams = new List<string>

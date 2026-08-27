@@ -82,6 +82,7 @@ app.MapGet("/health", () => Results.Ok(new
 
 app.MapTransactionEndpoints();
 app.MapCategoryEndpoints();
+app.MapDashboardEndpoints();
 
 await app.RunAsync();
 
