@@ -197,7 +197,7 @@ public class TransferPairMatchingEngineTests
             "acc-1",
             4243.00m,
             TransactionType.Credit,
-            "PIX RECEBIDO ELMO DOTTA",
+            "PIX RECEBIDO FULANO DE TAL",
             now);
 
         var debitTx = CreateTransaction(

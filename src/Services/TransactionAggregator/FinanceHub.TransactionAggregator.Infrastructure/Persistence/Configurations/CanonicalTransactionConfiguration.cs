@@ -95,6 +95,20 @@ public class CanonicalTransactionConfiguration : IEntityTypeConfiguration<Canoni
             bd.Property(b => b.MerchantName)
                 .HasColumnName("merchant_name")
                 .HasMaxLength(128);
+
+            bd.Property(b => b.InvoiceDueDateUtc)
+                .HasColumnName("invoice_due_date_utc")
+                .IsRequired(false);
+
+            bd.Property(b => b.CurrentInstallment)
+                .HasColumnName("current_installment")
+                .IsRequired(false);
+
+            bd.Property(b => b.TotalInstallments)
+                .HasColumnName("total_installments")
+                .IsRequired(false);
+
+            bd.Ignore(b => b.IsInstallment);
         });
 
         builder.OwnsOne(x => x.AuditInfo, ai =>
@@ -132,6 +146,11 @@ public class CanonicalTransactionConfiguration : IEntityTypeConfiguration<Canoni
             .HasColumnName("notes")
             .HasMaxLength(500)
             .IsRequired(false);
+
+        // A quebra por categoria do Dashboard e o backfill de natureza filtram por CategoryId,
+        // que até então não tinha índice — ambos caíam em varredura sequencial da tabela.
+        builder.HasIndex(x => x.CategoryId)
+            .HasDatabaseName("idx_canonical_transactions_category");
 
         builder.HasIndex(x => new { x.UserId, x.TransactionDateUtc, x.Type })
             .HasFilter("\"is_ignored_in_totals\" = false")

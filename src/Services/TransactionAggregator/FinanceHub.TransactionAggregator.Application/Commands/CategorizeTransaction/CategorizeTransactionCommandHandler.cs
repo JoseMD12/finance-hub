@@ -18,13 +18,16 @@ public class CategorizeTransactionCommandHandler : ICategorizeTransactionCommand
 {
     private readonly ITransactionRepository _transactionRepository;
     private readonly IUserCategoryRuleRepository _userCategoryRuleRepository;
+    private readonly ICategoryRepository _categoryRepository;
 
     public CategorizeTransactionCommandHandler(
         ITransactionRepository transactionRepository,
-        IUserCategoryRuleRepository userCategoryRuleRepository)
+        IUserCategoryRuleRepository userCategoryRuleRepository,
+        ICategoryRepository categoryRepository)
     {
         _transactionRepository = transactionRepository;
         _userCategoryRuleRepository = userCategoryRuleRepository;
+        _categoryRepository = categoryRepository;
     }
 
     public async Task Handle(CategorizeTransactionCommand command, CancellationToken cancellationToken)
@@ -35,7 +38,12 @@ public class CategorizeTransactionCommandHandler : ICategorizeTransactionCommand
             throw new CanonicalTransactionNotFoundDomainException();
         }
 
-        transaction.CategorizeManually(command.NewCategoryId);
+        // A natureza acompanha a nova categoria: sem isso, categoria e neutralidade se
+        // descolavam permanentemente após a ingestão.
+        var nature = await _categoryRepository.GetNatureByCategoryIdAsync(
+            command.NewCategoryId, cancellationToken);
+
+        transaction.CategorizeManually(command.NewCategoryId, nature);
         await _transactionRepository.UpdateAsync(transaction, cancellationToken);
 
         if (command.CreateCustomRule && !string.IsNullOrWhiteSpace(transaction.Description.CleanText))

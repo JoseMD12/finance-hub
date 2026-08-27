@@ -48,7 +48,11 @@ public class MerchantDatasetProviderTests
     [InlineData("TED RECEBIDA INSTITUTO FUNDATEC", "Fundatec", "11111111-1111-1111-1111-111111110901")] // Prioridade de Salário Fundatec
     [InlineData("PAGAMENTO PIX MINI KALZONE", "Mini Kalzone", "11111111-1111-1111-1111-111111110102")] // Prioridade do Mini Kalzone
     [InlineData("DINHEIRO RESERVADO NO COFRINHO", "Dinheiro Reservado (Cofrinho)", "11111111-1111-1111-1111-111111110805")] // Investimentos
-    [InlineData("DINHEIRO RETIRADO COFRINHO", "Dinheiro Retirado (Cofrinho)", "11111111-1111-1111-1111-111111110902")] // Rendimentos / Resgate
+    // Resgate de cofrinho aponta para Finanças > Investimentos, e não para Receitas > Rendimentos.
+    // Dinheiro voltando de aplicação não é receita nova: catalogado como Rendimentos, ele era
+    // somado à renda do período e inflava tanto as "entradas" quanto o disponível para gastar.
+    // Investimentos tem natureza Investment, logo é neutro nos totais.
+    [InlineData("DINHEIRO RETIRADO COFRINHO", "Dinheiro Retirado (Cofrinho)", "11111111-1111-1111-1111-111111110805")] // Investimentos / Resgate
     [InlineData("PAGAMENTO DE FATURA CARTAO DE CREDITO", "Fatura de Cartão", "11111111-1111-1111-1111-111111110801")] // Fatura
     [InlineData("PAGAMENTO RECEBIDO DE CLIENTE", "Pagamento Recebido", "11111111-1111-1111-1111-111111110905")] // Recebimentos
     [InlineData("PIX ENVIADO - FERNANDA DE OLIVEIRA CLIMUS", "Fernanda de Oliveira (Terapeuta)", "11111111-1111-1111-1111-111111110402")] // Consultas / Terapia

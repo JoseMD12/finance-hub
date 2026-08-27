@@ -1,6 +1,7 @@
-import React, { lazy } from 'react';
+import React, { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppLayout } from '@/app/layout/AppLayout';
+import { Skeleton } from '@/shared/components/Skeleton/Skeleton';
 
 const LoginPage = lazy(() => import('@/features/auth/pages/LoginPage'));
 const DashboardPage = lazy(() => import('@/features/dashboard/pages/DashboardPage'));
@@ -11,7 +12,17 @@ export const AppRoutes: React.FC = () => {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/login" element={<LoginPage />} />
+        {/* LoginPage é lazy e fica fora do AppLayout, que é quem provê o Suspense das
+            demais rotas. Sem esta fronteira, a navegação a frio para /login suspende sem
+            fallback e o React 19 lança. */}
+        <Route
+          path="/login"
+          element={
+            <Suspense fallback={<Skeleton className="w-full h-screen" />}>
+              <LoginPage />
+            </Suspense>
+          }
+        />
 
         <Route path="/" element={<AppLayout />}>
           <Route index element={<DashboardPage />} />

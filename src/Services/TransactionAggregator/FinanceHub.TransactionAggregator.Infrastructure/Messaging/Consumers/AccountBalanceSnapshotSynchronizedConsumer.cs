@@ -58,20 +58,55 @@ public class AccountBalanceSnapshotSynchronizedConsumer : IConsumer<AccountBalan
             var money = new Money(accountItem.CurrentBalance, accountItem.Currency ?? "BRL");
             var accountInfo = new AccountIdentifier(accountItem.InstitutionId, accountItem.AccountId);
 
+            var creditInfo = BuildCreditInfo(accountItem);
+
             if (existing == null)
             {
                 var newBalance = AccountBalance.Create(msg.UserId, accountInfo, money);
                 newBalance.SynchronizeWithBankSnapshot(money, accountItem.SnapshotAtUtc);
+                newBalance.SynchronizeCreditData(creditInfo ?? CreditAccountInfo.None);
                 await _dbContext.AccountBalances.AddAsync(newBalance, context.CancellationToken);
             }
             else
             {
                 existing.SynchronizeWithBankSnapshot(money, accountItem.SnapshotAtUtc);
+
+                // Mensagem sem informação de crédito preserva o que já está gravado, em vez de
+                // zerar limites e vencimentos de contas já sincronizadas.
+                if (creditInfo is not null)
+                {
+                    existing.SynchronizeCreditData(creditInfo);
+                }
+
                 _dbContext.AccountBalances.Update(existing);
             }
         }
 
         await _dbContext.SaveChangesAsync(context.CancellationToken);
         _logger.LogInformation("Snapshot oficial de saldos atualizado com sucesso para UserId: {UserId}", msg.UserId);
+    }
+
+    /// <summary>
+    /// Devolve <c>null</c> quando o publisher não informou nada sobre crédito, sinalizando ao
+    /// chamador que o estado atual deve ser preservado.
+    /// </summary>
+    private static CreditAccountInfo? BuildCreditInfo(AccountBalanceSnapshotItem accountItem)
+    {
+        if (accountItem.IsCreditCard is null)
+        {
+            return null;
+        }
+
+        if (accountItem.IsCreditCard == false)
+        {
+            return CreditAccountInfo.None;
+        }
+
+        return new CreditAccountInfo(
+            isCreditCard: true,
+            creditLimit: accountItem.CreditLimit,
+            availableCreditLimit: accountItem.AvailableCreditLimit,
+            invoiceDueDateUtc: accountItem.InvoiceDueDateUtc,
+            invoiceClosingDateUtc: accountItem.InvoiceClosingDateUtc);
     }
 }

@@ -78,7 +78,18 @@ public class CanonicalTransaction
             new TransactionAuditInfo(now, now));
     }
 
-    public void CategorizeManually(Guid newCategoryId)
+    /// <summary>
+    /// Recategoriza manualmente e <b>re-deriva</b> a natureza econômica e a neutralidade a partir
+    /// da nova categoria.
+    ///
+    /// Sem re-derivar, categoria e natureza se descolavam de forma permanente após a ingestão:
+    /// mover um lançamento para "Transferências" o mantinha contando como gasto, e movê-lo de
+    /// "Transferências" para uma categoria operacional o mantinha fora dos totais para sempre.
+    /// A neutralidade deriva da categoria em toda mutação, não apenas na ingestão.
+    ///
+    /// Quem quiser divergir dessa derivação usa <see cref="ToggleIgnoreInTotals"/> depois.
+    /// </summary>
+    public void CategorizeManually(Guid newCategoryId, TransactionNature nature = TransactionNature.Operating)
     {
         if (newCategoryId == Guid.Empty)
         {
@@ -88,6 +99,8 @@ public class CanonicalTransaction
         CategoryId = newCategoryId;
         CategorizationSource = CategorizationSource.UserManual;
         IsManuallyCategorized = true;
+        Nature = nature;
+        IsIgnoredInTotals = IsNeutralByNature(nature);
         AuditInfo = new TransactionAuditInfo(AuditInfo.CreatedAtUtc, DateTime.UtcNow);
     }
 
@@ -103,6 +116,37 @@ public class CanonicalTransaction
         PairedTransactionId = pairedTransactionId;
         AuditInfo = new TransactionAuditInfo(AuditInfo.CreatedAtUtc, DateTime.UtcNow);
     }
+
+    /// <summary>
+    /// Aplica a natureza econômica herdada da categoria resolvida e deriva dela a neutralidade
+    /// nos totais.
+    ///
+    /// Substitui a antiga classificação por casamento de texto no handler de ingestão, que
+    /// dependia de valores específicos de um usuário. Aqui não há conhecimento de quem é o
+    /// titular: dinheiro que apenas muda de lugar — transferência, investimento ou ajuste — não
+    /// é gasto de vida e não entra nos totais.
+    /// </summary>
+    public void ApplyNature(TransactionNature nature)
+    {
+        Nature = nature;
+
+        if (IsNeutralByNature(nature))
+        {
+            IsIgnoredInTotals = true;
+        }
+
+        AuditInfo = new TransactionAuditInfo(AuditInfo.CreatedAtUtc, DateTime.UtcNow);
+    }
+
+    /// <summary>
+    /// Naturezas que representam dinheiro em trânsito, conforme
+    /// `.agents/specs/transit-transfers-and-neutrality-engine-spec.md` §2.1.
+    /// </summary>
+    public static bool IsNeutralByNature(TransactionNature nature) =>
+        nature is TransactionNature.Transfer
+                or TransactionNature.BillPayment
+                or TransactionNature.Investment
+                or TransactionNature.Adjustment;
 
     public void MarkAsBillPayment()
     {

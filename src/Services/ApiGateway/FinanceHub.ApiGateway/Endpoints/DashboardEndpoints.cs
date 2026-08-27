@@ -19,6 +19,10 @@ public static class DashboardEndpoints
 
         group.MapGet("/dashboard", async (
             ClaimsPrincipal user,
+            DateTime? startDate,
+            DateTime? endDate,
+            string? institutionId,
+            bool? includeIgnoredInTotals,
             ITransactionAggregatorServiceClient transactionClient,
             CancellationToken ct) =>
         {
@@ -30,24 +34,21 @@ public static class DashboardEndpoints
                 return Results.Unauthorized();
             }
 
-            var balance = await transactionClient.GetConsolidatedBalanceAsync(userId, ct);
-
-            var response = new DashboardResponseDto(
+            // userId vem da claim, jamais da query string: aceitar do cliente permitiria a um
+            // usuário autenticado ler o Dashboard de outro.
+            var filter = new GatewayDashboardFilterDto(
                 UserId: userId,
-                TotalBalanceBrl: balance.TotalBalanceBrl,
-                AccountBalances: balance.AccountBalances.Select(b => new AccountBalanceSummaryDto(
-                    b.InstitutionId,
-                    b.AccountNumber,
-                    b.Amount,
-                    b.Currency,
-                    b.LastUpdatedAtUtc)),
-                GeneratedAtUtc: DateTime.UtcNow
-            );
+                StartDate: startDate,
+                EndDate: endDate,
+                InstitutionId: institutionId,
+                IncludeIgnoredInTotals: includeIgnoredInTotals ?? false);
 
-            return Results.Ok(response);
+            var summary = await transactionClient.GetDashboardSummaryAsync(filter, ct);
+
+            return Results.Ok(summary);
         })
         .WithName("GetDashboard")
-        .Produces<DashboardResponseDto>(StatusCodes.Status200OK)
+        .Produces<GatewayDashboardSummaryDto>(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status401Unauthorized)
         .ProducesProblem(StatusCodes.Status502BadGateway);
 

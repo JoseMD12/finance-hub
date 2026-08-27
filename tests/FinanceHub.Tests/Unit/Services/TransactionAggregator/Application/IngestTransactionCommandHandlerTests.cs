@@ -18,6 +18,7 @@ public class IngestTransactionCommandHandlerTests
 {
     private readonly ITransactionRepository _txRepo = Substitute.For<ITransactionRepository>();
     private readonly IAccountBalanceRepository _balanceRepo = Substitute.For<IAccountBalanceRepository>();
+    private readonly ICategoryRepository _categoryRepo = Substitute.For<ICategoryRepository>();
     private readonly ICategoryResolverPipeline _pipeline = Substitute.For<ICategoryResolverPipeline>();
     private readonly IEventPublisher _eventPublisher = Substitute.For<IEventPublisher>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
@@ -31,7 +32,7 @@ public class IngestTransactionCommandHandlerTests
             .ResolveCategoryAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns(new CategorizationResult(_categoryId, CategorizationSource.GlobalRule));
 
-        _handler = new IngestTransactionCommandHandler(_txRepo, _balanceRepo, _pipeline, _eventPublisher, _unitOfWork);
+        _handler = new IngestTransactionCommandHandler(_txRepo, _balanceRepo, _categoryRepo, _pipeline, _eventPublisher, _unitOfWork);
     }
 
     private static IngestTransactionCommand BuildCommand(

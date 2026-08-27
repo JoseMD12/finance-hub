@@ -27,6 +27,14 @@
   --color-status-warning: #F59E0B;
   --color-status-warning-bg: #FFFBEB;
 
+  /* Rampa de gráficos — separada dos tokens de status.
+     Verde e vermelho semânticos (#2ECC71 / #FF5964) funcionam nos cards, onde a cor vem
+     acompanhada de ícone, sinal e rótulo. Como séries de um gráfico, porém, reprovam na
+     separação por daltonismo: ΔE 4.5 sob deuteranopia, bem abaixo do piso de 8. Estes passos
+     preservam a leitura (frio = entrada, quente = saída) com ΔE 10.2 e contraste >= 3:1. */
+  --color-chart-income: #0D9488;
+  --color-chart-expense: #E11D48;
+
   --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-display: 'Syne', sans-serif;
 

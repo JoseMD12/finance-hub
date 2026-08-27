@@ -117,6 +117,9 @@ namespace FinanceHub.TransactionAggregator.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CategoryId")
+                        .HasDatabaseName("idx_canonical_transactions_category");
+
                     b.HasIndex("Hash")
                         .IsUnique()
                         .HasDatabaseName("idx_canonical_transactions_hash");
@@ -157,6 +160,12 @@ namespace FinanceHub.TransactionAggregator.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
+
+                    b.Property<int>("Nature")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("nature");
 
                     b.Property<Guid?>("ParentCategoryId")
                         .HasColumnType("uuid");
@@ -492,7 +501,47 @@ namespace FinanceHub.TransactionAggregator.Infrastructure.Migrations
                                 .HasForeignKey("AccountBalanceId");
                         });
 
+                    b.OwnsOne("FinanceHub.TransactionAggregator.Domain.Entities.CreditAccountInfo", "CreditInfo", b1 =>
+                        {
+                            b1.Property<Guid>("AccountBalanceId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<decimal?>("AvailableCreditLimit")
+                                .HasPrecision(18, 2)
+                                .HasColumnType("numeric(18,2)")
+                                .HasColumnName("available_credit_limit");
+
+                            b1.Property<decimal?>("CreditLimit")
+                                .HasPrecision(18, 2)
+                                .HasColumnType("numeric(18,2)")
+                                .HasColumnName("credit_limit");
+
+                            b1.Property<DateTime?>("InvoiceClosingDateUtc")
+                                .HasColumnType("timestamp with time zone")
+                                .HasColumnName("invoice_closing_date_utc");
+
+                            b1.Property<DateTime?>("InvoiceDueDateUtc")
+                                .HasColumnType("timestamp with time zone")
+                                .HasColumnName("invoice_due_date_utc");
+
+                            b1.Property<bool>("IsCreditCard")
+                                .ValueGeneratedOnAdd()
+                                .HasColumnType("boolean")
+                                .HasDefaultValue(false)
+                                .HasColumnName("is_credit_card");
+
+                            b1.HasKey("AccountBalanceId");
+
+                            b1.ToTable("account_balances");
+
+                            b1.WithOwner()
+                                .HasForeignKey("AccountBalanceId");
+                        });
+
                     b.Navigation("AccountInfo")
+                        .IsRequired();
+
+                    b.Navigation("CreditInfo")
                         .IsRequired();
 
                     b.Navigation("CurrentBalance")
@@ -516,11 +565,23 @@ namespace FinanceHub.TransactionAggregator.Infrastructure.Migrations
                                 .HasColumnType("integer")
                                 .HasColumnName("channel");
 
+                            b1.Property<int?>("CurrentInstallment")
+                                .HasColumnType("integer")
+                                .HasColumnName("current_installment");
+
+                            b1.Property<DateTime?>("InvoiceDueDateUtc")
+                                .HasColumnType("timestamp with time zone")
+                                .HasColumnName("invoice_due_date_utc");
+
                             b1.Property<string>("MerchantName")
                                 .IsRequired()
                                 .HasMaxLength(128)
                                 .HasColumnType("character varying(128)")
                                 .HasColumnName("merchant_name");
+
+                            b1.Property<int?>("TotalInstallments")
+                                .HasColumnType("integer")
+                                .HasColumnName("total_installments");
 
                             b1.HasKey("CanonicalTransactionId");
 

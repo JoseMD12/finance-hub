@@ -1,6 +1,8 @@
 using FinanceHub.PluggyIntegration.Application.DTOs;
 using FinanceHub.PluggyIntegration.Application.Interfaces;
 using FinanceHub.PluggyIntegration.Application.Services;
+using FinanceHub.PluggyIntegration.Domain.Constants;
+using FinanceHub.PluggyIntegration.Domain.Entities;
 using FinanceHub.PluggyIntegration.Domain.Exceptions;
 using FinanceHub.Shared.Messaging.Events;
 using MassTransit;
@@ -70,7 +72,8 @@ public sealed class SyncAllPluggyAccountsCommandHandler(
         {
             var item = itemMap.GetValueOrDefault(acc.ItemId);
             var institutionName = item?.Connector.Name ?? acc.Name;
-            var isCard = string.Equals(acc.Type, "CREDIT", StringComparison.OrdinalIgnoreCase);
+            var isCard = string.Equals(acc.Type, PluggyConstants.AccountTypes.Credit, StringComparison.OrdinalIgnoreCase)
+                      || string.Equals(acc.Subtype, PluggyConstants.AccountSubtypes.CreditCard, StringComparison.OrdinalIgnoreCase);
             var signedBalance = isCard ? -Math.Abs(acc.Balance) : acc.Balance;
 
             return new AccountBalanceSnapshotItem(
@@ -79,8 +82,18 @@ public sealed class SyncAllPluggyAccountsCommandHandler(
                 AccountType: acc.Type,
                 CurrentBalance: signedBalance,
                 Currency: "BRL",
-                SnapshotAtUtc: DateTime.UtcNow);
+                SnapshotAtUtc: DateTime.UtcNow,
+                IsCreditCard: isCard,
+                CreditLimit: acc.CreditData?.CreditLimit,
+                AvailableCreditLimit: acc.CreditData?.AvailableCreditLimit,
+                // Gravado como a Meu.Pluggy devolve. Atenção: é o vencimento da ÚLTIMA fatura
+                // fechada, frequentemente no passado — rolar para frente é responsabilidade do
+                // ciclo, não da ingestão (ver seção 2.2 da spec do Dashboard).
+                InvoiceDueDateUtc: PluggyAccount.ParseUtcDate(acc.CreditData?.BalanceDueDate),
+                InvoiceClosingDateUtc: PluggyAccount.ParseUtcDate(acc.CreditData?.BalanceCloseDate));
         }).ToList();
+
+        LogCreditDataDiscovery(accounts);
 
         await publishEndpoint.Publish(new AccountBalanceSnapshotSynchronized(
             command.UserId,
@@ -102,6 +115,40 @@ public sealed class SyncAllPluggyAccountsCommandHandler(
             TotalCardTransactionsIngested: totalCardTxs,
             SyncedAtUtc: DateTime.UtcNow
         );
+    }
+
+    /// <summary>
+    /// Registra o que <c>creditData</c> realmente traz por connector no plano gratuito da
+    /// Meu.Pluggy: quais campos vieram preenchidos e quais chegaram sem mapeamento nosso.
+    /// Existe porque o contrato do plano gratuito varia por instituição e não deve ser
+    /// presumido — a origem do dia de fechamento depende dessa observação.
+    ///
+    /// Loga apenas nomes de campo e valores de limite/data. Nada de nome de titular, número de
+    /// conta ou qualquer PII, conforme a política de redação de logs (LGPD).
+    /// </summary>
+    private void LogCreditDataDiscovery(IReadOnlyList<PluggyAccountDto> accounts)
+    {
+        foreach (var account in accounts)
+        {
+            if (account.CreditData is null)
+            {
+                continue;
+            }
+
+            var unmappedFields = account.CreditData.AdditionalFields is { Count: > 0 }
+                ? string.Join(", ", account.CreditData.AdditionalFields.Keys)
+                : "(nenhum)";
+
+            logger.LogInformation(
+                "Descoberta creditData [Type: {Type}/{Subtype}] HasDueDate={HasDueDate} HasCloseDate={HasCloseDate} HasCreditLimit={HasCreditLimit} HasAvailableLimit={HasAvailableLimit} CamposNaoMapeados=[{UnmappedFields}]",
+                account.Type,
+                account.Subtype,
+                !string.IsNullOrWhiteSpace(account.CreditData.BalanceDueDate),
+                !string.IsNullOrWhiteSpace(account.CreditData.BalanceCloseDate),
+                account.CreditData.CreditLimit.HasValue,
+                account.CreditData.AvailableCreditLimit.HasValue,
+                unmappedFields);
+        }
     }
 
     private async Task PublishBatchEventsAsync(

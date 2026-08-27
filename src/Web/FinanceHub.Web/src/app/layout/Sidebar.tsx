@@ -1,3 +1,4 @@
+import { getSessionUser } from '@/shared/utils/sessionUser';
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { LayoutGroup } from 'framer-motion';
@@ -19,6 +20,8 @@ export interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ initialCollapsed = false }) => {
+  const sessionUser = React.useMemo(() => getSessionUser(), []);
+
   const [isCollapsed, setIsCollapsed] = useState(initialCollapsed);
 
   const navItems = [
@@ -64,10 +67,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ initialCollapsed = false }) =>
             {/* User Info (Visible in Expanded mode) */}
             {!isCollapsed && (
               <div className="flex flex-col min-w-0 overflow-hidden">
-                <h2 className="font-bold text-sm text-slate-800 truncate leading-tight">José Dotta</h2>
-                <span className="text-[11px] text-slate-400 truncate font-medium">
-                  josehenriquedotta61@gmail.com
-                </span>
+                <h2 className="font-bold text-sm text-slate-800 truncate leading-tight">
+                  {sessionUser.name}
+                </h2>
+                {sessionUser.email && (
+                  <span className="text-[11px] text-slate-400 truncate font-medium">
+                    {sessionUser.email}
+                  </span>
+                )}
               </div>
             )}
           </div>

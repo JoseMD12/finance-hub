@@ -21,12 +21,16 @@ public record IngestTransactionCommand(
     string RawDescription,
     DateTime TransactionDateUtc,
     TransactionChannel Channel,
-    string MerchantName);
+    string MerchantName,
+    DateTime? InvoiceDueDateUtc = null,
+    int? CurrentInstallment = null,
+    int? TotalInstallments = null);
 
 public class IngestTransactionCommandHandler : IIngestTransactionCommandHandler
 {
     private readonly ITransactionRepository _transactionRepository;
     private readonly IAccountBalanceRepository _accountBalanceRepository;
+    private readonly ICategoryRepository _categoryRepository;
     private readonly ICategoryResolverPipeline _categoryResolverPipeline;
     private readonly IEventPublisher _eventPublisher;
     private readonly IUnitOfWork _unitOfWork;
@@ -34,12 +38,14 @@ public class IngestTransactionCommandHandler : IIngestTransactionCommandHandler
     public IngestTransactionCommandHandler(
         ITransactionRepository transactionRepository,
         IAccountBalanceRepository accountBalanceRepository,
+        ICategoryRepository categoryRepository,
         ICategoryResolverPipeline categoryResolverPipeline,
         IEventPublisher eventPublisher,
         IUnitOfWork unitOfWork)
     {
         _transactionRepository = transactionRepository;
         _accountBalanceRepository = accountBalanceRepository;
+        _categoryRepository = categoryRepository;
         _categoryResolverPipeline = categoryResolverPipeline;
         _eventPublisher = eventPublisher;
         _unitOfWork = unitOfWork;
@@ -74,7 +80,10 @@ public class IngestTransactionCommandHandler : IIngestTransactionCommandHandler
         var bankDetails = new BankTransactionDetails(
             command.BankTransactionId,
             channel,
-            command.MerchantName);
+            command.MerchantName,
+            command.InvoiceDueDateUtc,
+            command.CurrentInstallment,
+            command.TotalInstallments);
 
         var creationParams = new CanonicalTransactionCreationParams(
             command.UserId,
@@ -90,26 +99,17 @@ public class IngestTransactionCommandHandler : IIngestTransactionCommandHandler
 
         var transaction = CanonicalTransaction.Create(creationParams);
 
-        // Classificação automática de neutralidade para categorias e padrões conhecidos
-        var transferCategoryId = Guid.Parse("11111111-1111-1111-1111-111111111002");
-        var billPaymentCategoryId = Guid.Parse("11111111-1111-1111-1111-111111110801");
-        var investmentsCategoryId = Guid.Parse("11111111-1111-1111-1111-111111110805");
-        var descUpper = sanitizedDescription.CleanText.ToUpperInvariant();
+        // A natureza econômica vem da categoria resolvida pelo pipeline, e dela deriva a
+        // neutralidade nos totais. Nenhum casamento de texto com dado de usuário específico:
+        // o conhecimento de mercado vive nos datasets de categorias e merchants.
+        var nature = await _categoryRepository.GetNatureByCategoryIdAsync(
+            categorization.CategoryId, cancellationToken);
 
-        if (categorization.CategoryId == billPaymentCategoryId || descUpper.Contains("FATURA"))
+        transaction.ApplyNature(nature);
+
+        if (TransactionBillPaymentDetector.IsBillPayment(sanitizedDescription.CleanText))
         {
             transaction.MarkAsBillPayment();
-        }
-
-        if (categorization.CategoryId == transferCategoryId || 
-            categorization.CategoryId == investmentsCategoryId || 
-            ((descUpper.Contains("JOSE HENRIQUE MARTINS DOTTA") || descUpper.Contains("JOSÉ HENRIQUE MARTINS DOTTA")) && !descUpper.Contains("WELLHUB")) ||
-            descUpper.Contains("NOSSA GRANA") || 
-            descUpper.Contains("DINHEIRO RETIRADO") || 
-            descUpper.Contains("DINHEIRO GUARDADO") ||
-            descUpper.Contains("COFRINHO"))
-        {
-            transaction.ToggleIgnoreInTotals(true);
         }
 
         await _transactionRepository.AddAsync(transaction, cancellationToken);
