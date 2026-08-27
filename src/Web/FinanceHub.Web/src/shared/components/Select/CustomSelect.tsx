@@ -161,7 +161,7 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
             role="listbox"
             tabIndex={-1}
             className={cn(
-              'absolute left-0 right-0 z-50 p-2 bg-surface-card border border-border-subtle rounded-2xl shadow-elevated flex flex-col gap-1 min-w-[140px] max-h-60 overflow-y-auto animate-in fade-in zoom-in-95 duration-150',
+              'absolute left-0 right-0 z-50 p-2 bg-surface-card border border-border-subtle rounded-2xl shadow-elevated flex flex-col gap-1 min-w-[140px] max-h-60 overflow-y-auto',
               direction === 'up' ? 'bottom-[calc(100%+6px)]' : 'top-[calc(100%+6px)]'
             )}
           >

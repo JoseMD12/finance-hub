@@ -155,7 +155,7 @@ const CategoryTagPopoverComponent: React.FC<CategoryTagPopoverProps> = ({
               top: `${position.top}px`,
               left: `${position.left}px`,
             }}
-            className="z-[9999] w-72 p-3.5 bg-surface-card rounded-2xl shadow-elevated border border-border-subtle flex flex-col gap-3 animate-in fade-in zoom-in-95 duration-150 m-0"
+            className="z-[9999] w-72 p-3.5 bg-surface-card rounded-2xl shadow-elevated border border-border-subtle flex flex-col gap-3 m-0"
           >
             <div className="flex items-center justify-between border-b border-border-subtle pb-2.5">
               <span className="text-xs font-bold text-secondary flex items-center gap-1.5">

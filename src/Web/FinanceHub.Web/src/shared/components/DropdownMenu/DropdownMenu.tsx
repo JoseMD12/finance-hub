@@ -108,7 +108,7 @@ export const DropdownMenu: React.FC<DropdownMenuProps> = ({
               top: `${position.top}px`,
               left: `${position.left}px`,
             }}
-            className="z-[9999] w-52 p-1.5 bg-surface-card rounded-2xl shadow-elevated border border-border-subtle flex flex-col gap-0.5 animate-in fade-in zoom-in-95 duration-150 select-none"
+            className="z-[9999] w-52 p-1.5 bg-surface-card rounded-2xl shadow-elevated border border-border-subtle flex flex-col gap-0.5 select-none"
           >
             {items.map((item) => (
               <button

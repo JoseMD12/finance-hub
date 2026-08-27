@@ -355,7 +355,7 @@ const DateRangePickerComponent: React.FC<DateRangePickerProps> = ({
               top: `${position.top}px`,
               left: `${position.left}px`,
             }}
-            className="z-[9999] w-[284px] p-3 bg-surface-card rounded-2xl shadow-elevated border border-border-subtle flex flex-col gap-2.5 animate-in fade-in zoom-in-95 duration-150 select-none text-slate-800"
+            className="z-[9999] w-[284px] p-3 bg-surface-card rounded-2xl shadow-elevated border border-border-subtle flex flex-col gap-2.5 select-none text-slate-800"
           >
             {/* Cabeçalho Compacto do Popover */}
             <div className="flex items-center justify-between pb-2 border-b border-border-subtle/80">

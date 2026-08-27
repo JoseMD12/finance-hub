@@ -129,7 +129,7 @@ const TransactionNotePopoverComponent: React.FC<TransactionNotePopoverProps> = (
         ReactDOM.createPortal(
           <div
             ref={menuRef}
-            className="fixed z-50 animate-in fade-in zoom-in-95 duration-150"
+            className="fixed z-50"
             style={{ top: `${coords.top}px`, left: `${coords.left}px` }}
           >
             <div className="w-72 bg-surface-card rounded-2xl border border-border-subtle shadow-dropdown p-4 flex flex-col gap-3">
