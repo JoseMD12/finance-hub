@@ -57,4 +57,15 @@ public class CategoryRepository : ICategoryRepository
     {
         return await _dbContext.Categories.AnyAsync(cancellationToken);
     }
+
+    public async Task<TransactionNature> GetNatureByCategoryIdAsync(Guid categoryId, CancellationToken cancellationToken)
+    {
+        var natures = await _dbContext.Categories
+            .AsNoTracking()
+            .Where(c => c.Id == categoryId)
+            .Select(c => c.Nature)
+            .ToListAsync(cancellationToken);
+
+        return natures.Count > 0 ? natures[0] : TransactionNature.Operating;
+    }
 }

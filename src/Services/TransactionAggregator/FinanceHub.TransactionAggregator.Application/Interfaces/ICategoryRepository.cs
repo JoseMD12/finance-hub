@@ -13,4 +13,10 @@ public interface ICategoryRepository
     Task<Category?> GetBySlugAsync(string slug, CancellationToken cancellationToken);
     Task AddRangeAsync(IEnumerable<Category> categories, CancellationToken cancellationToken);
     Task<bool> AnyAsync(CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Natureza econômica declarada para a categoria. Devolve <c>Operating</c> quando a
+    /// categoria não existe, para que a ingestão nunca falhe por catálogo incompleto.
+    /// </summary>
+    Task<TransactionNature> GetNatureByCategoryIdAsync(Guid categoryId, CancellationToken cancellationToken);
 }

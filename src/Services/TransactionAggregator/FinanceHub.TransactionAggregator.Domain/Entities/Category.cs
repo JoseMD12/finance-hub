@@ -15,6 +15,17 @@ public class Category
     public bool IsActive { get; private set; }
     public DateTime CreatedAtUtc { get; private set; }
 
+    /// <summary>
+    /// Natureza econômica das transações desta categoria — ortogonal ao propósito, conforme
+    /// `.agents/specs/transit-transfers-and-neutrality-engine-spec.md` §2.1.
+    ///
+    /// É o que torna a neutralidade genérica: em vez de casar texto de descrição no handler de
+    /// ingestão, a categoria resolvida pelo pipeline já diz se aquilo é gasto de vida
+    /// (<c>Operating</c>) ou apenas dinheiro mudando de lugar (<c>Transfer</c>,
+    /// <c>Investment</c>, <c>Adjustment</c>).
+    /// </summary>
+    public TransactionNature Nature { get; private set; }
+
     // EF Navigation property
     public Category? ParentCategory { get; private set; }
     public ICollection<Category> Subcategories { get; private set; } = new List<Category>();
@@ -25,6 +36,7 @@ public class Category
         Slug = string.Empty;
         IconKey = string.Empty;
         ColorToken = string.Empty;
+        Nature = TransactionNature.Operating;
     }
 
     private Category(
@@ -34,7 +46,8 @@ public class Category
         Guid? parentCategoryId,
         string iconKey,
         string colorToken,
-        bool isSystemDefault)
+        bool isSystemDefault,
+        TransactionNature nature)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
@@ -55,6 +68,7 @@ public class Category
         IsSystemDefault = isSystemDefault;
         IsActive = true;
         CreatedAtUtc = DateTime.UtcNow;
+        Nature = nature;
     }
 
     public static Category Create(
@@ -64,7 +78,8 @@ public class Category
         string colorToken,
         bool isSystemDefault = false,
         Guid? parentCategoryId = null,
-        Guid? id = null)
+        Guid? id = null,
+        TransactionNature nature = TransactionNature.Operating)
     {
         return new Category(
             id ?? Guid.NewGuid(),
@@ -73,7 +88,8 @@ public class Category
             parentCategoryId,
             iconKey,
             colorToken,
-            isSystemDefault);
+            isSystemDefault,
+            nature);
     }
 
     public void Deactivate()

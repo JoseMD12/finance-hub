@@ -37,6 +37,12 @@ public class CategoryConfiguration : IEntityTypeConfiguration<Category>
         builder.Property(x => x.CreatedAtUtc)
             .IsRequired();
 
+        builder.Property(x => x.Nature)
+            .HasColumnName("nature")
+            .HasConversion<int>()
+            .IsRequired()
+            .HasDefaultValue(TransactionNature.Operating);
+
         builder.HasIndex(x => x.Slug)
             .IsUnique()
             .HasDatabaseName("idx_categories_slug");
