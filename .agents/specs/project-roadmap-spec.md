@@ -94,6 +94,8 @@ Phase 8: Módulo IRPF & Tax Analytics (Relatórios & Snapshots de Imposto de Ren
   - [x] **Fatia A** — persistir `InvoiceDueDate`, limite e fechamento no sync. Os **dois** consumers (`InvoiceItemIngestedConsumer` e `TransactionsBatchIngestedConsumer`, este último o caminho quente) descartavam a data de vencimento que o evento já carregava. Inclui `CreditAccountInfo` em `AccountBalance`, parcelas reais no mapper e migration aditiva. Descoberta empírica da API concluída em 27/08/2026.
   - [x] **Fatia P0** — remoção de dado pessoal do código: neutralidade passa a derivar de `Category.Nature` (declarada no dataset) em vez de casar texto contra o nome do titular. Corrige dois bugs: tarifa bancária marcada como pagamento de fatura, e resgate de cofrinho catalogado como receita.
   - [ ] **Fatia E** — slice `GetDashboardSummary` reaproveitando `QueryPagedByFilterAsync`, filtro de período e substituição do donut por barras ranqueadas.
+    - [x] **E.1–E.3 (backend)** — query slice, `IDashboardReadRepository` agregando no Postgres, endpoints no Aggregator e no Gateway com filtros de período.
+    - [ ] **E.4 (frontend)** — contrato real em `dashboard.types.ts`, `DashboardFilterBar`, `CategoryRankedBars` e demais componentes.
   - [ ] **Fatia P** — motor genérico de detecção de padrões (recorrência, cadência circular por dia do mês, descontinuidade) e detecção de titularidade própria. Pré-requisito da Fatia C.
   - [ ] **Fatias B, C e D** — fatura como entidade de primeira classe, ciclo ancorado nos salários e projeção diária de saldo.
 

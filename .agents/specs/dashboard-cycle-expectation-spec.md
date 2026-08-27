@@ -639,7 +639,7 @@ associação instituição→hue, porém re-degrauzada até passar. Tokens novos
 | Fatia | Entrega | Depende de | Status |
 | --- | --- | --- | --- |
 | **A** | Fundação: descoberta do payload, persistir vencimento/limite/fechamento no sync | — | ✅ Implementada |
-| **E** | Contrato real do dashboard atual, barras ranqueadas, evolução, filtro de período | — | 🔵 Em implementação |
+| **E** | Contrato real do dashboard atual, barras ranqueadas, evolução, filtro de período | — | 🔵 Backend pronto (E.1–E.3); frontend (E.4) pendente |
 | **B** | `CreditCardInvoice` por `billId`/`billForecastDate`, gráfico "Faturas por Competência" | A | ⚪ Planejada |
 | **C** | `UserFinancialCycleSettings` híbrido, "Fôlego do Ciclo", burn-down | B | ⚪ Planejada |
 | **D** | "Linha do Tempo do Ciclo" | C | ⚪ Planejada |
@@ -750,6 +750,41 @@ desserialização do payload real). Todos verdes, sem regressão nos 207 testes 
   `MapDashboardEndpoints()` no Aggregator, e `/api/v1/gateway/dashboard` aceitando os filtros
   no Gateway. `DashboardResponseDto` e `/balances/consolidated` permanecem intactos — possuem
   outros consumidores. `userId` continua vindo da claim, nunca da query string.
+
+#### Estado de E.1 a E.3 `✅ Implementado`
+
+> Concluído em 27/08/2026. 250/250 testes verdes.
+
+Arquivos entregues:
+
+| Camada | Arquivo |
+| --- | --- |
+| Application | `Queries/GetDashboardSummary/{GetDashboardSummaryQuery,IGetDashboardSummaryQueryHandler,GetDashboardSummaryQueryHandler}.cs` |
+| Application | `DTOs/DashboardSummaryDtos.cs`, `Interfaces/IDashboardReadRepository.cs` |
+| Infrastructure | `Persistence/Repositories/DashboardReadRepository.cs` |
+| Api | `Endpoints/DashboardEndpoints.cs`, `Endpoints/GetDashboardSummaryParameters.cs` |
+| Gateway | `DTOs/GatewayDashboardSummaryDto.cs`, `GetDashboardSummaryAsync` no cliente tipado |
+
+Decisões tomadas durante a implementação, que o desenho não previa:
+
+- **`IsCreditCard` deixou de ser heurística.** O plano usava `balance < 0`, mas a Fatia A
+  passou a persistir `AccountBalance.CreditInfo.IsCreditCard` vindo do snapshot oficial. O
+  repositório de leitura usa o campo real; a heurística de sinal fica só no cálculo antigo de
+  `QueryPagedByFilterAsync`, que não foi tocado.
+- **`InstitutionBalanceDto` carrega os limites e o vencimento**, além do saldo. São dados que a
+  Fatia A tornou disponíveis e que o card por instituição precisa; buscá-los à parte exigiria
+  uma segunda consulta.
+- **Percentual calculado no servidor**, arredondado a 2 casas com `MidpointRounding.AwayFromZero`.
+  Evita que cada cliente refaça a conta e chegue a totais ligeiramente diferentes.
+- **Degradação em vez de exceção no Gateway.** Corpo vazio do downstream devolve um Dashboard
+  zerado em vez de `NullReferenceException`, para a interface renderizar o estado sem dados.
+  Erro HTTP real continua virando `GatewayDownstreamException`, como nas demais rotas.
+- **Flag falsa não entra na query string**, mantendo a URL limpa e o cache do downstream
+  previsível.
+
+Cobertura: `GetDashboardSummaryQueryHandlerTests` (8 casos, incluindo período vazio,
+propagação de filtros e reaproveitamento do sumário) e `DashboardGatewayClientTests` (4 casos,
+incluindo a degradação para Dashboard vazio).
 
 - **E.4** Frontend. `datePresets.ts` e os tipos de filtro são **movidos** para `shared/`
   (Regra 14 proíbe import cross-feature), re-exportados de `transactions.types.ts` para não
