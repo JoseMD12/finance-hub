@@ -516,6 +516,11 @@ namespace FinanceHub.TransactionAggregator.Infrastructure.Migrations
                                 .HasColumnType("numeric(18,2)")
                                 .HasColumnName("credit_limit");
 
+                            b1.Property<decimal?>("CustomizedCreditLimit")
+                                .HasPrecision(18, 2)
+                                .HasColumnType("numeric(18,2)")
+                                .HasColumnName("customized_credit_limit");
+
                             b1.Property<DateTime?>("InvoiceClosingDateUtc")
                                 .HasColumnType("timestamp with time zone")
                                 .HasColumnName("invoice_closing_date_utc");

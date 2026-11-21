@@ -62,6 +62,11 @@ public class AccountBalanceConfiguration : IEntityTypeConfiguration<AccountBalan
                 .HasPrecision(18, 2)
                 .IsRequired(false);
 
+            credit.Property(c => c.CustomizedCreditLimit)
+                .HasColumnName("customized_credit_limit")
+                .HasPrecision(18, 2)
+                .IsRequired(false);
+
             credit.Property(c => c.InvoiceDueDateUtc)
                 .HasColumnName("invoice_due_date_utc")
                 .IsRequired(false);

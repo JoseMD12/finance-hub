@@ -4,6 +4,7 @@ using System.Net.Http.Json;
 using FinanceHub.ApiGateway.Clients;
 using FinanceHub.ApiGateway.DTOs;
 using FinanceHub.Tests.Helpers;
+using AggregatorDtos = FinanceHub.TransactionAggregator.Application.DTOs;
 
 using FluentAssertions;
 
@@ -100,6 +101,43 @@ public class DashboardGatewayClientTests
         result.RecentTransactions.Should().BeEmpty();
         result.MonthlyCashFlow.Should().BeEmpty();
         result.InstitutionBalances.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetDashboardSummaryAsync_ShouldCarryTheCustomizedLimitSentByTheAggregator()
+    {
+        // The payload is the Aggregator's own DTO, so a field renamed or dropped on either side
+        // breaks this test instead of silently reaching the UI as null.
+        var aggregatorPayload = new AggregatorDtos.DashboardSummaryDto(
+            UserId: UserId,
+            Summary: new AggregatorDtos.TransactionSummaryDto(8500m, 5400m, 3100m, 42),
+            InstitutionBalances:
+            [
+                new AggregatorDtos.InstitutionBalanceDto(
+                    "itau", "acc-card", -2000m, "BRL",
+                    IsCreditCard: true,
+                    CreditLimit: 10000m,
+                    AvailableCreditLimit: 8000m,
+                    UsedCreditLimit: 2000m,
+                    InvoiceDueDateUtc: null,
+                    LastUpdatedAtUtc: DateTime.UtcNow,
+                    CustomizedCreditLimit: 3000m)
+            ],
+            CategoryExpenses: [],
+            MonthlyCashFlow: [],
+            RecentTransactions: [],
+            GeneratedAtUtc: DateTime.UtcNow);
+
+        var handler = new MockHttpMessageHandler
+        {
+            ResponseToReturn = new HttpResponseMessage(HttpStatusCode.OK) { Content = JsonContent.Create(aggregatorPayload) }
+        };
+
+        var result = await BuildClient(handler).GetDashboardSummaryAsync(new GatewayDashboardFilterDto(UserId));
+
+        var balance = result.InstitutionBalances.Should().ContainSingle().Subject;
+        balance.CreditLimit.Should().Be(10000m);
+        balance.CustomizedCreditLimit.Should().Be(3000m);
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────

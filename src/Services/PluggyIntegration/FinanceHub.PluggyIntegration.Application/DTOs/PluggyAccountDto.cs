@@ -24,6 +24,22 @@ public record PluggyCreditDataDto(
     /// </summary>
     [JsonExtensionData]
     public IDictionary<string, JsonElement>? AdditionalFields { get; init; }
+
+    public IReadOnlyList<PluggyDisaggregatedCreditLimitDto>? DisaggregatedCreditLimits { get; init; }
+}
+
+/// <summary>
+/// Item de <c>creditData.disaggregatedCreditLimits</c>. A Pluggy declara a lista, mas não documenta
+/// os campos do item; <c>customizedLimitAmount</c> foi observado na API real em 27/08/2026. Por
+/// isso o campo é lido como JSON bruto: um tipo inesperado vira "sem personalização" em vez de
+/// derrubar a desserialização da conta e, com ela, o sync inteiro.
+/// </summary>
+public record PluggyDisaggregatedCreditLimitDto
+{
+    public JsonElement? CustomizedLimitAmount { get; init; }
+
+    [JsonExtensionData]
+    public IDictionary<string, JsonElement>? AdditionalFields { get; init; }
 }
 
 public record PluggyAccountDto(

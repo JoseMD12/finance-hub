@@ -142,7 +142,8 @@ public sealed class DashboardReadRepository(TransactionAggregatorDbContext conte
                     AvailableCreditLimit: b.CreditInfo.AvailableCreditLimit,
                     UsedCreditLimit: b.CreditInfo.UsedCreditLimit,
                     InvoiceDueDateUtc: b.CreditInfo.InvoiceDueDateUtc,
-                    LastUpdatedAtUtc: b.LastUpdatedAtUtc))
+                    LastUpdatedAtUtc: b.LastUpdatedAtUtc,
+                    CustomizedCreditLimit: b.CreditInfo.CustomizedCreditLimit))
         ];
     }
 

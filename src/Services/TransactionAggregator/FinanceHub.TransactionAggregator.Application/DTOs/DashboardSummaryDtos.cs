@@ -29,7 +29,8 @@ public record InstitutionBalanceDto(
     decimal? AvailableCreditLimit,
     decimal? UsedCreditLimit,
     DateTime? InvoiceDueDateUtc,
-    DateTime LastUpdatedAtUtc);
+    DateTime LastUpdatedAtUtc,
+    decimal? CustomizedCreditLimit = null);
 
 /// <summary>
 /// Despesa consolidada por categoria no período. <c>Percentage</c> é a fatia do total de

@@ -13,6 +13,12 @@ public class CreditAccountInfo
     public decimal? CreditLimit { get; private set; }
     public decimal? AvailableCreditLimit { get; private set; }
 
+    /// <summary>
+    /// Limite definido pelo titular no app do banco. Quando existe, é ele que bloqueia a compra,
+    /// então o consumo deve ser medido contra ele e não contra <see cref="CreditLimit"/>.
+    /// </summary>
+    public decimal? CustomizedCreditLimit { get; private set; }
+
     /// <summary>Vencimento da fatura atual, quando a instituição informa.</summary>
     public DateTime? InvoiceDueDateUtc { get; private set; }
 
@@ -44,11 +50,13 @@ public class CreditAccountInfo
         decimal? creditLimit = null,
         decimal? availableCreditLimit = null,
         DateTime? invoiceDueDateUtc = null,
-        DateTime? invoiceClosingDateUtc = null)
+        DateTime? invoiceClosingDateUtc = null,
+        decimal? customizedCreditLimit = null)
     {
         IsCreditCard = isCreditCard;
         CreditLimit = creditLimit;
         AvailableCreditLimit = availableCreditLimit;
+        CustomizedCreditLimit = customizedCreditLimit;
         InvoiceDueDateUtc = NormalizeToUtc(invoiceDueDateUtc);
         InvoiceClosingDateUtc = NormalizeToUtc(invoiceClosingDateUtc);
     }

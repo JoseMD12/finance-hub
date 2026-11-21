@@ -171,6 +171,52 @@ public class PluggyCreditDataMappingTests
         dto.AdditionalFields.Should().ContainKey("payeeMCC");
     }
 
+    // ─── Limite personalizado ──────────────────────────────────────────────────
+
+    [Fact]
+    public void ResolveCustomizedLimit_WhenSeveralLinesAreCustomized_ShouldReturnTheMostRestrictive()
+    {
+        var dto = DeserializeCreditData("""
+        {
+          "creditLimit": 10000,
+          "availableCreditLimit": 8000,
+          "disaggregatedCreditLimits": [
+            { "customizedLimitAmount": 4000.00, "lineName": "CREDITO_A_VISTA" },
+            { "customizedLimitAmount": 3000.00 },
+            { "customizedLimitAmount": null }
+          ]
+        }
+        """);
+
+        PluggyCreditLimitResolver.ResolveCustomizedLimit(dto).Should().Be(3000.00m);
+    }
+
+    [Theory]
+    [InlineData("""{ "customizedLimitAmount": "3500.50" }""", 3500.50)]
+    [InlineData("""{ "customizedLimitAmount": 0 }""", null)]
+    [InlineData("""{ "customizedLimitAmount": -10 }""", null)]
+    [InlineData("""{ "customizedLimitAmount": { "amount": 3000 } }""", null)]
+    [InlineData("""{ "customizedLimitAmount": "nao-numerico" }""", null)]
+    [InlineData("""{ "lineName": "SEM_PERSONALIZACAO" }""", null)]
+    public void ResolveCustomizedLimit_ShouldOnlyAcceptPositiveNumbersAndNeverThrow(string item, double? expected)
+    {
+        var dto = DeserializeCreditData($$"""{ "creditLimit": 10000, "disaggregatedCreditLimits": [ {{item}} ] }""");
+
+        PluggyCreditLimitResolver.ResolveCustomizedLimit(dto).Should().Be((decimal?)expected);
+    }
+
+    [Fact]
+    public void ResolveCustomizedLimit_WhenCreditDataHasNoDisaggregatedLimits_ShouldReturnNull()
+    {
+        PluggyCreditLimitResolver.ResolveCustomizedLimit(DeserializeCreditData("""{ "creditLimit": 10000 }"""))
+            .Should().BeNull();
+        PluggyCreditLimitResolver.ResolveCustomizedLimit(null).Should().BeNull();
+    }
+
+    private static PluggyCreditDataDto DeserializeCreditData(string json)
+        => JsonSerializer.Deserialize<PluggyCreditDataDto>(
+            json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
+
     // ─── Parsing de datas ──────────────────────────────────────────────────────
 
     [Theory]

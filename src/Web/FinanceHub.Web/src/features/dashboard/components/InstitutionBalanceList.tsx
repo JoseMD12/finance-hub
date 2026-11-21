@@ -14,12 +14,13 @@ export interface InstitutionBalanceListProps {
 
 /** Consumo do limite, preferindo o limite personalizado quando a instituição informa. */
 function getUsagePercentage(balance: InstitutionBalanceDto): number | null {
-  if (!balance.isCreditCard || !balance.creditLimit || balance.creditLimit <= 0) {
+  const limit = balance.customizedCreditLimit ?? balance.creditLimit;
+  if (!balance.isCreditCard || !limit || limit <= 0) {
     return null;
   }
 
   const used = balance.usedCreditLimit ?? Math.abs(balance.balanceBrl);
-  return Math.min(100, Math.round((used / balance.creditLimit) * 100));
+  return Math.min(100, Math.round((used / limit) * 100));
 }
 
 function getUsageToneClass(percentage: number): string {

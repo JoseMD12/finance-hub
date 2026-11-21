@@ -19,7 +19,12 @@ public record AccountBalanceSnapshotItem(
     decimal? CreditLimit = null,
     decimal? AvailableCreditLimit = null,
     DateTime? InvoiceDueDateUtc = null,
-    DateTime? InvoiceClosingDateUtc = null);
+    DateTime? InvoiceClosingDateUtc = null,
+    /// <summary>
+    /// Limite definido pelo titular no app do banco, menor que <see cref="CreditLimit"/>.
+    /// <c>null</c> quando não há personalização ou o connector não informa.
+    /// </summary>
+    decimal? CustomizedCreditLimit = null);
 
 public record AccountBalanceSnapshotSynchronized(
     string UserId,

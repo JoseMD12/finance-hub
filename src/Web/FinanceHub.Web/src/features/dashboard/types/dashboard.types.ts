@@ -44,6 +44,8 @@ export interface InstitutionBalanceDto {
   readonly usedCreditLimit?: number | null;
   readonly invoiceDueDateUtc?: string | null;
   readonly lastUpdatedAtUtc: string;
+  /** Limite definido pelo titular no app do banco, menor que `creditLimit`. */
+  readonly customizedCreditLimit?: number | null;
 }
 
 export interface CategoryExpenseDto {

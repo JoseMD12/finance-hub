@@ -81,6 +81,23 @@ public sealed class DashboardReadRepositoryTests : IDisposable
         included.Sum(p => p.ExpenseBrl).Should().Be(800m);
     }
 
+    [Fact]
+    public async Task GetInstitutionBalancesAsync_ShouldExposeTheCustomizedLimitNextToTheBankLimit()
+    {
+        var card = AccountBalance.Create(UserId, new AccountIdentifier("itau", "acc-card"), new Money(-2000m, "BRL"));
+        card.SynchronizeCreditData(new CreditAccountInfo(
+            isCreditCard: true, creditLimit: 10000m, availableCreditLimit: 8000m, customizedCreditLimit: 3000m));
+        _context.AccountBalances.Add(card);
+        await _context.SaveChangesAsync();
+
+        var result = await _repository.GetInstitutionBalancesAsync(UserId, CancellationToken.None);
+
+        var dto = result.Should().ContainSingle().Subject;
+        dto.CreditLimit.Should().Be(10000m);
+        dto.UsedCreditLimit.Should().Be(2000m);
+        dto.CustomizedCreditLimit.Should().Be(3000m);
+    }
+
     private async Task SeedAsync(params CanonicalTransaction[] transactions)
     {
         _context.Transactions.AddRange(transactions);
