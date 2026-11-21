@@ -50,7 +50,7 @@ public sealed class GetDashboardSummaryQueryHandler(
             dashboardFilter, TopCategoriesCount, cancellationToken);
 
         var monthlyCashFlow = await dashboardReadRepository.GetMonthlyCashFlowAsync(
-            query.UserId, CashFlowMonthsBack, cancellationToken);
+            dashboardFilter, CashFlowMonthsBack, cancellationToken);
 
         var institutionBalances = await dashboardReadRepository.GetInstitutionBalancesAsync(
             query.UserId, cancellationToken);
