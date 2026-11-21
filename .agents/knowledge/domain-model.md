@@ -136,11 +136,9 @@ Manages Open Finance connection status, item synchronization timestamps, and acc
 - **Fields**: `string Code` (ISO 4217, e.g., "BRL", "USD"), `string Symbol` ("R$"), `int DecimalPlaces` (2)
 - **Predefined**: `Currency.BRL`, `Currency.USD`, `Currency.EUR`.
 
-### 2.3 `BankCredentials`
-- **Fields**: `string RefreshTokenEncrypted`, `string AccessTokenEncrypted`, `DateTimeOffset ExpiresAt`, `string Scopes`
-- **Rules**:
-  - Stored encrypted at rest using AES-256-GCM via Data Protection API / KMS integration.
-  - Never exposed directly outside infrastructural boundary or logged.
+### 2.3 ~~`BankCredentials`~~ (removido pelo ADR-001)
+O FinanceHub não guarda credenciais bancárias nem tokens de consentimento. O token pessoal da
+Meu.Pluggy trafega por requisição no header `X-Pluggy-Access-Token` e não é persistido.
 
 ### 2.4 `Periodo`
 - **Fields**: `DateOnly DataInicio`, `DateOnly DataFim`
@@ -163,14 +161,12 @@ Manages Open Finance connection status, item synchronization timestamps, and acc
 
 ## 4. Key State Transitions
 
-### 4.1 Consent State Transition (Open Finance)
-```
-[ AwaitingAuthorisation ] ──(User Grants in Bank App)──> [ Authorised ]
-          │                                                    │
-          ├──(User Rejects)──> [ Rejected ]                   ├──(Token Expired / 1 Year)──> [ Expired ]
-          │                                                    │
-          └──(Timeout / Abandoned)──> [ Expired ]             └──(User Revokes in FinanceHub or Bank)──> [ Revoked ]
-```
+### 4.1 Conexão com a instituição (gerida pela Pluggy)
+O ciclo de vida do consentimento Open Finance acontece entre o usuário, a Pluggy e o banco; o
+FinanceHub não o modela (ADR-001). O que o FinanceHub observa é o status do item na Pluggy
+(`UPDATED`, `UPDATING`, `WAITING_USER_INPUT`, `LOGIN_ERROR`) e a validade do token pessoal: token
+ausente ou expirado faz a API `meu.pluggy.ai` responder 403, e o sync para até o usuário informar um
+token novo. Revogar uma instituição é feito no próprio `meu.pluggy.ai`.
 
 ### 4.2 Account Sync & Transaction Ingestion Lifecycle
 1. `PluggyIntegration` verifies active connection status with Meu.Pluggy API.

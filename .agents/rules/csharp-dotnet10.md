@@ -177,10 +177,10 @@ public ValueTask<AccountCacheEntry?> GetAccountFromCacheAsync(string accountId, 
 - **Motivação**: Permitir testes TDD ultra-rápidos manipulando a passagem do tempo com `FakeTimeProvider` sem delays reais.
 
 ### 7.2 Keyed Services Nativos (`AddKeyedScoped`)
-- **Regra**: Registrar estratégias de bancos usando Keyed Services do .NET 10 em vez de factories manuais com `switch/case`:
+- **Regra**: Registrar estratégias intercambiáveis (ex.: parsers de extrato por formato no `FileImporter`) usando Keyed Services do .NET 10 em vez de factories manuais com `switch/case`, com as chaves em constantes (Regra 10):
   ```csharp
-  builder.Services.AddKeyedScoped<IOOAuthBankClientStrategy, ItauOAuthStrategy>("itau");
-  builder.Services.AddKeyedScoped<IOOAuthBankClientStrategy, MercadoPagoOAuthStrategy>("mercadopago");
+  builder.Services.AddKeyedScoped<IStatementParser, OfxStatementParser>(StatementFormats.Ofx);
+  builder.Services.AddKeyedScoped<IStatementParser, CsvStatementParser>(StatementFormats.Csv);
   ```
 
 ### 7.3 Pattern `Result<T>`

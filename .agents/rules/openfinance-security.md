@@ -1,108 +1,96 @@
-# OpenFinance Security Standards & LGPD Compliance
+# Segurança de Dados Financeiros, Meu.Pluggy e LGPD — FinanceHub
 
-This document specifies security architecture guidelines, authentication/authorization protocols, token security, and LGPD compliance for **FinanceHub** under OpenFinance Brasil specifications.
+> **Escopo**: todos os serviços (`src/Services/*`), o frontend (`src/Web/*`) e a documentação.
+> **Decisão de base**: ADR-001 em `.agents/knowledge/system-architecture-and-services.md` — o
+> acesso ao Open Finance é feito pelo Meu.Pluggy, não por conectores diretos com os bancos.
 
----
-
-## 1. OAuth 2.0 / FAPI 1.0 & 2.0 Advanced Profile with PKCE
-All communication with OpenFinance participant APIs must comply with Financial-grade API (FAPI) security profiles.
-
-### Standards
-* **Authorization Code Flow with PKCE**: Confidential clients must use Proof Key for Code Exchange (`code_challenge` / `code_verifier` with `S256`). Plain code challenges are strictly forbidden.
-* **Mutual TLS (mTLS)**: Certificate-bound access tokens (`x5t#S256`) must be validated against client certificates during token exchange and API request execution.
-* **JWE & JWS Claims**: Signed JWT requests (JAR - JWT Secured Authorization Request) and encrypted responses (JWE) must use strong cryptographic algorithms (RS256/ES256 for JWS, RSA-OAEP-256 for JWE).
-* **Token Lifetime**: Access tokens must have short lifespans (max 300 seconds). Refresh tokens must be rotated upon every invocation.
+Esta regra substitui a versão que descrevia FAPI 1.0/2.0, mTLS com certificado ICP-Brasil,
+JAR/JWE e ciclo de vida de consentimento próprio. Nada disso existe no código, e nada disso deve
+ser implementado sem um novo ADR que reverta o ADR-001.
 
 ---
 
-## 2. mTLS Client Certificate Handling & ICP-Brasil Validation
-OpenFinance Brasil requires mutual authentication using certificates issued by approved ICP-Brasil CAs (Certificadoras Credenciadas).
+## 1. Quem é responsável por quê
 
-### Guidelines
-* Pass client certificates via secure TLS termination or reverse proxy with forwarded `X-Client-Cert` headers validated with thumbprint verification.
-* Implement strict validation of certificate chain, revocation lists (CRL / OCSP), and identity attributes (CNPJ in `OU` or `SAN`).
-* Store outbound client private keys inside Hardware Security Modules (HSM) or cloud KMS/Vault key pairs. Never embed certificates or private keys in source code or `.AppSettings.json`.
-
----
-
-## 3. Token & Secret Management (Vault / KMS)
-Secrets, signing keys, and API tokens must be strictly isolated and encrypted.
-
-### Guidelines
-* **Vault Integration**: Fetch dynamic secrets and private keys from HashiCorp Vault, AWS KMS, or Azure Key Vault at runtime.
-* **Encryption at Rest**: Encrypt OAuth access/refresh tokens stored in PostgreSQL or Redis using AES-256-GCM.
-* **Key Rotation**: Implement automated rotation for dynamic client secrets and internal token-signing keys.
+| Camada | Responsável | O que faz |
+| --- | --- | --- |
+| Consentimento Open Finance, FAPI, mTLS e tokens com cada banco | **Pluggy** | O usuário conecta e revoga instituições no `meu.pluggy.ai`. |
+| Autenticação do usuário no FinanceHub | **ApiGateway** | JWT Bearer; o `userId` sai da claim (`NameIdentifier` / `sub`). |
+| Token pessoal da Meu.Pluggy | **Repassado, nunca guardado no backend** | Chega por header, segue até o `PluggyIntegration`, é descartado ao fim da requisição. |
+| Ledger, saldos e categorias | **TransactionAggregator** | Serviço interno, sem autenticação própria — confia no `userId` que o Gateway envia. |
 
 ---
 
-## 4. LGPD Compliance & Data Protection
-FinanceHub processes sensitive personal financial data subject to Brazil's Lei Geral de Proteção de Dados (LGPD - Law 13.709/2018).
+## 2. Token pessoal da Meu.Pluggy
 
-### Mandatory Controls
-1. **Consent Lifecycle Management**:
-   * Explicit, granular user consent must be recorded before invoking OpenFinance consent APIs.
-   * Consents must have an explicit expiration date and support instant user revocation.
-2. **Data Minimization & Purpose Limitation**:
-   * Request only data scopes strictly required for the financial transaction or query (e.g., `accounts`, `payments`).
-3. **PII Masking & Anonymization**:
-   * CPF numbers must be formatted and masked in display APIs (e.g., `***.456.789-**`).
-   * CNPJ numbers must obscure core operational fields (e.g., `12.***.567/0001-**`).
-4. **Right to Erasure (Direito ao Esquecimento)**:
-   * Provide compliant audit trails while supporting non-financial data purging upon user consent withdrawal.
+Obrigatório:
 
----
+1. **Trafega apenas no header `X-Pluggy-Access-Token`**, do cliente para o Gateway e do Gateway
+   para o `PluggyIntegration`. Nunca em query string, corpo de log ou URL.
+2. **Não é persistido no backend** — nem banco, nem cache, nem fila.
+3. **Nunca aparece em log, mensagem de erro, spec, fixture de teste ou chamado de suporte.**
+4. **No frontend web, fica no `sessionStorage`** (`features/connections/hooks/usePluggyToken.ts`),
+   nunca no `localStorage`: expira com a aba e não sobrevive a reinício do navegador. Na extensão,
+   fica no storage da própria extensão, inacessível às páginas.
+5. **Token ausente ou inválido**: a API `meu.pluggy.ai` responde **403** (não 401). O Gateway
+   devolve RFC 7807 com `errorCode` específico e o usuário é orientado a informar um token novo.
 
-## 5. Secure Logging & Zero-PII Policy
-Exposure of PII or credentials in logs is a severe security violation.
-
-### Prohibited Log Contents
-* Raw Bearer tokens, Refresh tokens, OAuth client secrets, or private keys.
-* Full Unmasked CPF, CNPJ, Bank Account Numbers, Card Numbers, CVVs, or Passwords.
-* Raw payloads containing financial payloads without dynamic destructuring.
-
-### Enforcement Mechanism
-* Use structured logging (e.g., Serilog or Microsoft.Extensions.Logging) with custom **Log Sanitizing Enrichers**.
-* Automatically redact fields matching sensitive pattern regexes: `cpf`, `cnpj`, `authorization`, `password`, `token`, `secret`, `accountNumber`.
-
-```csharp
-// Example Serilog PII Redaction Filter
-public class PiiRedactionEnricher : ILogEventEnricher
-{
-    private static readonly HashSet<string> SensitiveKeys = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "Authorization", "Bearer", "Password", "CPF", "CNPJ", "AccessToken", "RefreshToken", "ClientSecret"
-    };
-
-    public void Enrich(LogEvent logEvent, ILogEventPropertyFactory propertyFactory)
-    {
-        foreach (var property in logEvent.Properties.ToList())
-        {
-            if (SensitiveKeys.Contains(property.Key))
-            {
-                logEvent.AddOrUpdateProperty(propertyFactory.CreateProperty(property.Key, "[REDACTED]"));
-            }
-        }
-    }
-}
-```
+Credenciais de aplicação da Pluggy (`CLIENT_ID` / `CLIENT_SECRET`, necessárias só para o Connect
+Widget descrito em `.agents/knowledge/pluggy-connection-refresh-behavior.md`): exclusivamente no
+backend, via variável de ambiente (Regra 12), nunca no navegador nem no repositório.
 
 ---
 
-## 6. OWASP Top 10 API Security Protection Rules
+## 3. Segredos em repouso
 
-### 🛡️ API1:2023 - Broken Object Level Authorization (BOLA / IDOR)
-- **Proteção**: Todo endpoint ou handler que acesse recursos (consentimentos, contas, transações) **deve validar explicitamente se o `UserId` do JWT do chamador é idêntico ao proprietário do recurso**.
-- **Regra**: Proibido buscar recursos passando apenas o ID sem filtrar pelo `UserId` do contexto autenticado.
+- **Estado atual**: o FinanceHub não persiste nenhum segredo bancário. Não há token de
+  consentimento, refresh token de banco ou credencial para cifrar.
+- **Se uma feature futura precisar persistir um segredo**, ele deve ser cifrado com AES-256-GCM.
+  `FinanceHub.Shared.Observability/Security/EnvelopeEncryptionService` já implementa o algoritmo,
+  mas não está registrado em DI nem é usado. A chave mestra vem de variável de ambiente ou cofre de
+  segredos, com fail-fast se ausente; adotar KMS gerenciado só quando houver ambiente implantado e
+  um segredo real a proteger.
 
-### 🛡️ API2:2023 - Broken Authentication
-- **Proteção**: Renovação automática com `refresh_token` de uso único (rotacionado a cada uso). Tokens at-rest sempre criptografados com AES-256-GCM.
+---
 
-### 🛡️ API3:2023 - Broken Object Property Level Authorization (Data Leaks)
-- **Proteção**: Entidades de domínio nunca são serializadas diretamente na resposta HTTP. Usar exclusivamente DTOs imutáveis com mapeamento estrito.
+## 4. LGPD
 
-### 🛡️ API4:2023 - Unrestricted Resource Consumption (Rate Limiting)
-- **Proteção**: O `ApiGateway` aplica `AddRateLimiter` do .NET 10 limitando sincronizações manuais a no máximo 10 requisições por minuto por IP/Usuário.
+1. **Consentimento**: é concedido pelo usuário ao conectar a instituição no Meu.Pluggy. O
+   FinanceHub sincroniza apenas o que o usuário conectou e não amplia escopo por conta própria.
+2. **Minimização**: buscar e guardar só o necessário para as features. Campos que a Pluggy envia e
+   não usamos ficam em `AdditionalFields` apenas em memória, para descoberta de contrato, e só têm
+   os **nomes** registrados em log.
+3. **Mascaramento na interface**: CPF, conta e chave PIX passam pelos utilitários de
+   `src/shared/utils/formatters.ts` (`maskSensitiveCpf`, `maskSensitiveAccount`,
+   `maskSensitivePixKey`).
+4. **Logs sem PII**: proibido registrar token, CPF, CNPJ, número de conta, número de cartão, nome
+   de contraparte ou descrição bruta de transação. Use propriedades estruturadas com identificadores
+   técnicos (`UserId`, `AccountId` interno, contagens).
+5. **Dado real nunca entra no repositório**: saldos, limites, salários, dígitos de cartão, IDs de
+   fatura ou de conexão e nomes observados na API real servem só para aceitação manual. Fixtures,
+   specs e exemplos usam valores fictícios (Bogus ou números redondos).
 
-### 🛡️ API8:2023 - Security Misconfiguration & Logging Leakage
-- **Proteção**: Redação automática de PII (CPF, Tokens, Senhas) nos logs do Serilog via `PiiRedactionEnricher`.
+---
 
+## 5. OWASP API Security Top 10 aplicado
+
+| Risco | Controle | Onde está |
+| --- | --- | --- |
+| **API1 — BOLA / IDOR** | O `userId` vem sempre da claim do JWT, nunca da query string do cliente. Todo acesso a recurso filtra pelo `userId` do contexto. | `ApiGateway/Endpoints/*Endpoints.cs` |
+| **API1 — serviços internos** | `TransactionAggregator` e `PluggyIntegration` não têm autenticação própria; o Aggregator recebe `userId` na requisição. Por isso **não publicam porta no host** em ambientes compartilhados — só o Gateway é exposto. | `docker-compose.yml` (`expose` no Aggregator) |
+| **API3 — vazamento de propriedades** | Entidades de domínio nunca são serializadas; só DTOs imutáveis. | DTOs por serviço |
+| **API4 — consumo de recursos** | Rate limiting no Gateway: 30 req/min por janela fixa para anônimos e 120 req/min por janela deslizante por usuário autenticado. | `ApiGateway/DependencyInjection.cs`, `GatewayConstants.RateLimiting` |
+| **API8 — configuração** | Variáveis obrigatórias com fail-fast (Regra 12); erros em RFC 7807 sem stack trace. | `Program.cs` / `DependencyInjection.cs` de cada serviço |
+
+---
+
+## 6. Lacunas conhecidas
+
+Requisitos desta regra que **ainda não estão implementados**. Não presuma que existem.
+
+| Lacuna | Situação |
+| --- | --- |
+| Redação automática de PII nos logs | Não há enricher nem destructuring policy no Serilog (`ObservabilityExtensions.UseFinanceHubSerilog`). Hoje a proteção depende de não registrar PII na origem (seção 4.4). |
+| JWT do FinanceHub no `localStorage` | `src/shared/utils/authStorage.ts` guarda access e refresh token no `localStorage`, contrariando `frontend-http-and-rfc7807.md` §1 (access token em memória, refresh em cookie `HttpOnly`). |
+| `PluggyIntegration` publicado na porta 5056 | Exige o token do usuário em toda chamada, mas segue alcançável fora do Gateway. A skill `manual-api-curl-testing` depende dessa porta. |
+| Direito ao esquecimento | Não há endpoint para apagar os dados de um usuário. |

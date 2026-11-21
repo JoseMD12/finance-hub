@@ -1,5 +1,9 @@
 # Open Finance Brasil API Specification & Integration Standard
 
+> **Status:** Histórico — substituído pelo ADR-001 (`.agents/knowledge/system-architecture-and-services.md`).
+> O FinanceHub não chama as APIs do Open Finance Brasil diretamente; os fluxos de FAPI, consentimento
+> e mTLS descritos abaixo não existem no código e não devem ser implementados sem um novo ADR.
+>
 > **Architecture Transition Note**: Online Open Finance connectivity is centralized in `FinanceHub.PluggyIntegration` using the Meu.Pluggy Open Finance API infrastructure, handling OAuth2 and authentication seamlessly without requiring local ICP-Brasil mTLS certificates or `AuthConsent` service.
 
 ---

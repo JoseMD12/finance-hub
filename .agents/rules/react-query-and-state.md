@@ -74,26 +74,28 @@ export function useTransactionsQuery(filters: TransactionFiltersDto) {
 
 ### 5.1 Mutação Padrão com Feedback e Invalidação Cirúrgica
 ```typescript
-// src/features/consents/hooks/useRevokeConsentMutation.ts
+// Versão simplificada de src/features/connections/hooks/useSyncPluggyMutation.ts
+// (o hook real também acompanha o job assíncrono por polling).
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { consentKeys } from '../api/consentKeys';
-import { revokeConsentApi } from '../api/consentsApi';
+import { connectionKeys } from '../api/connectionKeys';
+import { syncPluggyAccountsApi } from '../api/connectionsApi';
 import { showApiError } from '@/shared/utils/apiError';
 import type { ApiError } from '@/shared/types/api.types';
 
-export function useRevokeConsentMutation() {
+export function useSyncPluggyMutation() {
   const queryClient = useQueryClient();
 
-  return useMutation<void, ApiError, string>({
-    mutationFn: (consentId: string) => revokeConsentApi(consentId),
+  return useMutation<unknown, ApiError, string>({
+    mutationFn: (pluggyToken: string) => syncPluggyAccountsApi(pluggyToken),
     onSuccess: () => {
-      toast.success('Consentimento revogado com sucesso!');
-      queryClient.invalidateQueries({ queryKey: consentKeys.all });
+      toast.success('Sincronização concluída.');
+      queryClient.invalidateQueries({ queryKey: connectionKeys.all });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
     },
     onError: (error) => {
-      showApiError(error);
+      showApiError(error, 'Não foi possível sincronizar as contas do Meu.Pluggy no momento.');
     },
   });
 }

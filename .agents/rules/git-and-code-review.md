@@ -21,7 +21,7 @@ All commit messages must follow the [Conventional Commits](https://www.conventio
 * `fix`: A bug fix (e.g., `fix(ledger): fix decimal rounding issue on credit settlement`).
 * `refactor`: Code change that neither fixes a bug nor adds a feature.
 * `perf`: A code change that improves performance (e.g., `perf(query): add compiled async query for balance check`).
-* `sec`: Security-related changes or hardening (e.g., `sec(oauth): mandate FAPI PKCE verification`).
+* `sec`: Security-related changes or hardening (e.g., `sec(gateway): stop publishing the aggregator port to the host`).
 * `test`: Adding missing tests or correcting existing tests.
 * `docs`: Documentation updates only.
 * `chore`: Maintenance, build tasks, or dependency updates.
@@ -38,7 +38,8 @@ Before submitting or approving a Pull Request in FinanceHub, the PR author and r
 ### Security & Privacy
 - [ ] **Zero PII Exposure**: Verified that no log statements contain CPF, CNPJ, account numbers, card CVVs, or raw names.
 - [ ] **No Exposed Secrets**: Guaranteed that no private keys, JWT tokens, API secrets, or certificates are committed.
-- [ ] **OpenFinance Security**: OAuth 2.0 PKCE, mTLS header validation, and token encryption comply with `openfinance-security.md`.
+- [ ] **Meu.Pluggy Token**: The user's Pluggy token travels only in the `X-Pluggy-Access-Token` header, is never persisted or logged, and internal services publish no host ports (`openfinance-security.md`).
+- [ ] **No Real Data in Fixtures**: Tests, specs, and examples use fictitious values — never balances, limits, card digits, invoice IDs, or names observed in the real API.
 
 ### Financial Data & Math Integrity
 - [ ] **Decimal Precision**: All monetary calculations use `decimal` / `numeric(18,4)`. No `float` or `double` used.

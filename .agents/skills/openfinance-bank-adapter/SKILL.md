@@ -1,6 +1,6 @@
 ---
 name: openfinance-bank-adapter
-description: Technical guide for adding a new Open Finance bank integration adapter (e.g., Itaú, Banco Inter, Mercado Pago) in FinanceHub (.NET 10), implementing IBankConnector, OAuth2/mTLS authentication, rate limiting, and publishing TransactionIngested events via MassTransit Outbox.
+description: HISTORICAL — do not use to add institutions. Direct bank connectors (FAPI/mTLS/ICP-Brasil) were rejected by ADR-001; new institutions are connected through Meu.Pluggy and ingested by FinanceHub.PluggyIntegration. Kept only as a record of the superseded design.
 ---
 
 > **Histórico Arquitetural & Status**: Este guia representa a especificação histórica para conectores bancários diretos individuais com mTLS ICP-Brasil (`FinanceHub.ItauIntegration`, etc.). Conforme decidido no ADR de Arquitetura ([`.agents/knowledge/system-architecture-and-services.md`](../../knowledge/system-architecture-and-services.md)), a conectividade Open Finance online foi unificada no microsserviço **`FinanceHub.PluggyIntegration`** via Meu.Pluggy.

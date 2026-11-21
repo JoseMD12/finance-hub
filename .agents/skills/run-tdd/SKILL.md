@@ -229,7 +229,7 @@ public static class FakeTransactionIngested
 ## 🔒 Regras de Segurança em Testes
 
 1. **Nunca use credenciais reais** (tokens, senhas, CPFs reais) em testes.
-2. **Não commite arquivos `.pfx`** — use `NSubstitute` para mockar `ICertificateProvider`.
+2. **Nunca use valores observados na API real em fixtures** — saldos, limites, dígitos de cartão, IDs de fatura e nomes viram dado pessoal versionado. Use Bogus ou valores redondos fictícios.
 3. **Redija PII nos logs de teste** — configure Serilog com `MinimumLevel.Warning` nos testes.
 4. **Isole bancos de dados** — cada teste de infraestrutura usa um container separado via `IAsyncLifetime`.
 
@@ -245,7 +245,7 @@ dotnet test
 dotnet test --collect:"XPlat Code Coverage"
 
 # Filtrar por serviço
-dotnet test --filter "FullyQualifiedName~AuthConsent"
+dotnet test --filter "FullyQualifiedName~TransactionAggregator"
 
 # Filtrar por categoria
 dotnet test --filter "Category=Integration"
