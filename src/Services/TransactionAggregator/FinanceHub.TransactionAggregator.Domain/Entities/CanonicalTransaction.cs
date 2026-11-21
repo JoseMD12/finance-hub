@@ -89,7 +89,7 @@ public class CanonicalTransaction
     ///
     /// Quem quiser divergir dessa derivação usa <see cref="ToggleIgnoreInTotals"/> depois.
     /// </summary>
-    public void CategorizeManually(Guid newCategoryId, TransactionNature nature = TransactionNature.Operating)
+    public void CategorizeManually(Guid newCategoryId, TransactionNature nature)
     {
         if (newCategoryId == Guid.Empty)
         {

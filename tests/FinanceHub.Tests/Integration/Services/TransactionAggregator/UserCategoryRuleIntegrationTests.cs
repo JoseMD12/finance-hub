@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using FinanceHub.TransactionAggregator.Application.Commands.CategorizeTransaction;
 using FinanceHub.TransactionAggregator.Application.Commands.IngestTransaction;
 using FinanceHub.TransactionAggregator.Application.Services.Categorization;
+using FinanceHub.TransactionAggregator.Domain.Constants;
 using FinanceHub.TransactionAggregator.Domain.Entities;
 using FinanceHub.TransactionAggregator.Domain.ValueObjects;
 using FinanceHub.TransactionAggregator.Infrastructure.Persistence;
@@ -80,11 +81,48 @@ public class UserCategoryRuleIntegrationTests : IDisposable
 
         await _categorizeHandler.Handle(categorizeCommand, CancellationToken.None);
 
-        // Assert: Past transaction must have been updated in batch
+        // Without clearing, the read returns the tracked in-memory instance and passes even when
+        // nothing was persisted — which is how the missing SaveChanges went unnoticed.
+        _context.ChangeTracker.Clear();
+
         var updatedPastTx = await _txRepo.GetByIdAsync(pastTxId, CancellationToken.None);
         updatedPastTx.Should().NotBeNull();
         updatedPastTx!.CategoryId.Should().Be(petShopCatId);
         updatedPastTx.IsManuallyCategorized.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task CategorizeTransaction_WithApplyToPastTransactionsToTransferCategory_ShouldMakePastTransactionsNeutral()
+    {
+        const string userId = "test-user-transfer";
+        const string description = "TRANSFERENCIA ENTRE CONTAS PROPRIAS";
+        _context.Categories.AddRange(CategorySeedData.GetDefaultCategories());
+        await _context.SaveChangesAsync();
+
+        var pastTxId = await _ingestHandler.Handle(new IngestTransactionCommand(
+            userId, "Inter", "acc-001", "tx-past-transfer", 500.00m, "BRL",
+            TransactionType.Debit, description,
+            DateTime.UtcNow.AddDays(-20), TransactionChannel.Other, description), CancellationToken.None);
+
+        var recentTxId = await _ingestHandler.Handle(new IngestTransactionCommand(
+            userId, "Inter", "acc-001", "tx-recent-transfer", 300.00m, "BRL",
+            TransactionType.Debit, description,
+            DateTime.UtcNow, TransactionChannel.Other, description), CancellationToken.None);
+
+        await _categorizeHandler.Handle(new CategorizeTransactionCommand(
+            recentTxId, userId, SystemCategoryIds.Transferencias,
+            CreateCustomRule: false, ApplyToPastTransactions: true), CancellationToken.None);
+
+        _context.ChangeTracker.Clear();
+
+        var pastTx = await _txRepo.GetByIdAsync(pastTxId, CancellationToken.None);
+        pastTx!.CategoryId.Should().Be(SystemCategoryIds.Transferencias);
+        pastTx.Nature.Should().Be(TransactionNature.Transfer);
+        pastTx.IsIgnoredInTotals.Should().BeTrue();
+
+        var recentTx = await _txRepo.GetByIdAsync(recentTxId, CancellationToken.None);
+        recentTx!.Nature.Should().Be(TransactionNature.Transfer);
+        recentTx.IsIgnoredInTotals.Should().BeTrue();
     }
 
     [Fact]

@@ -90,7 +90,8 @@ public sealed class SyncAllPluggyAccountsCommandHandler(
                 // fechada, frequentemente no passado — rolar para frente é responsabilidade do
                 // ciclo, não da ingestão (ver seção 2.2 da spec do Dashboard).
                 InvoiceDueDateUtc: PluggyAccount.ParseUtcDate(acc.CreditData?.BalanceDueDate),
-                InvoiceClosingDateUtc: PluggyAccount.ParseUtcDate(acc.CreditData?.BalanceCloseDate));
+                InvoiceClosingDateUtc: PluggyAccount.ParseUtcDate(acc.CreditData?.BalanceCloseDate),
+                CustomizedCreditLimit: PluggyCreditLimitResolver.ResolveCustomizedLimit(acc.CreditData));
         }).ToList();
 
         LogCreditDataDiscovery(accounts);
@@ -140,13 +141,14 @@ public sealed class SyncAllPluggyAccountsCommandHandler(
                 : "(nenhum)";
 
             logger.LogInformation(
-                "Descoberta creditData [Type: {Type}/{Subtype}] HasDueDate={HasDueDate} HasCloseDate={HasCloseDate} HasCreditLimit={HasCreditLimit} HasAvailableLimit={HasAvailableLimit} CamposNaoMapeados=[{UnmappedFields}]",
+                "Descoberta creditData [Type: {Type}/{Subtype}] HasDueDate={HasDueDate} HasCloseDate={HasCloseDate} HasCreditLimit={HasCreditLimit} HasAvailableLimit={HasAvailableLimit} HasCustomizedLimit={HasCustomizedLimit} CamposNaoMapeados=[{UnmappedFields}]",
                 account.Type,
                 account.Subtype,
                 !string.IsNullOrWhiteSpace(account.CreditData.BalanceDueDate),
                 !string.IsNullOrWhiteSpace(account.CreditData.BalanceCloseDate),
                 account.CreditData.CreditLimit.HasValue,
                 account.CreditData.AvailableCreditLimit.HasValue,
+                PluggyCreditLimitResolver.ResolveCustomizedLimit(account.CreditData).HasValue,
                 unmappedFields);
         }
     }

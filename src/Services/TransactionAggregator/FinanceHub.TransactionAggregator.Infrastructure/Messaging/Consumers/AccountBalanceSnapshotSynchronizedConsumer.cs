@@ -107,6 +107,7 @@ public class AccountBalanceSnapshotSynchronizedConsumer : IConsumer<AccountBalan
             creditLimit: accountItem.CreditLimit,
             availableCreditLimit: accountItem.AvailableCreditLimit,
             invoiceDueDateUtc: accountItem.InvoiceDueDateUtc,
-            invoiceClosingDateUtc: accountItem.InvoiceClosingDateUtc);
+            invoiceClosingDateUtc: accountItem.InvoiceClosingDateUtc,
+            customizedCreditLimit: accountItem.CustomizedCreditLimit);
     }
 }

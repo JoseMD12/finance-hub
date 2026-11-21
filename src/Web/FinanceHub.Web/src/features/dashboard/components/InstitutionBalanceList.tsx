@@ -14,12 +14,13 @@ export interface InstitutionBalanceListProps {
 
 /** Consumo do limite, preferindo o limite personalizado quando a instituição informa. */
 function getUsagePercentage(balance: InstitutionBalanceDto): number | null {
-  if (!balance.isCreditCard || !balance.creditLimit || balance.creditLimit <= 0) {
+  const limit = balance.customizedCreditLimit ?? balance.creditLimit;
+  if (!balance.isCreditCard || !limit || limit <= 0) {
     return null;
   }
 
   const used = balance.usedCreditLimit ?? Math.abs(balance.balanceBrl);
-  return Math.min(100, Math.round((used / balance.creditLimit) * 100));
+  return Math.min(100, Math.round((used / limit) * 100));
 }
 
 function getUsageToneClass(percentage: number): string {
@@ -72,15 +73,17 @@ const InstitutionBalanceRow: React.FC<{ balance: InstitutionBalanceDto }> = ({ b
 
       {usage !== null && (
         <div className="flex items-center gap-2">
-          <div
-            className="flex-1 h-1.5 bg-slate-200/80 rounded-full overflow-hidden"
-            role="progressbar"
-            aria-valuenow={usage}
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-label={`Limite utilizado em ${institution.name}`}
-          >
+          <div className="relative flex-1 h-1.5 bg-slate-200/80 rounded-full overflow-hidden">
+            <progress
+              className="sr-only"
+              value={usage}
+              max={100}
+              aria-label={`Limite utilizado em ${institution.name}`}
+            >
+              {`${usage}%`}
+            </progress>
             <div
+              aria-hidden="true"
               className={cn('h-full rounded-full transition-[width] duration-500', getUsageToneClass(usage))}
               style={{ width: `${usage}%` }}
             />

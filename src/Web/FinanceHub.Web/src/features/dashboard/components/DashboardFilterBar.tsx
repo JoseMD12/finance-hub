@@ -93,7 +93,8 @@ const DashboardFilterBarComponent: React.FC<DashboardFilterBarProps> = ({
         <span className="text-xs font-semibold">Período</span>
       </div>
 
-      <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Presets de período">
+      <fieldset className="flex flex-wrap items-center gap-1.5 border-0 p-0 m-0">
+        <legend className="sr-only">Presets de período</legend>
         {DATE_PRESET_OPTIONS.map((option) => (
           <button
             key={option.key}
@@ -110,7 +111,7 @@ const DashboardFilterBarComponent: React.FC<DashboardFilterBarProps> = ({
             {option.label}
           </button>
         ))}
-      </div>
+      </fieldset>
 
       <DateRangePicker
         startDate={filters.startDate}

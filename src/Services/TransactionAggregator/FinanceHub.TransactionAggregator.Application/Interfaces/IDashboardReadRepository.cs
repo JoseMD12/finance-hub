@@ -24,10 +24,12 @@ public interface IDashboardReadRepository
 
     /// <summary>
     /// Receita, despesa e resultado dos últimos <paramref name="monthsBack"/> meses.
-    /// Ignora o filtro de período: a série de evolução é justamente o contexto em volta dele.
+    /// Ignora o filtro de período, porque a série de evolução é justamente o contexto em volta
+    /// dele, mas respeita instituição e neutralidade: sem isso o gráfico mostraria um recorte
+    /// diferente dos KPIs e das categorias na mesma tela.
     /// </summary>
     Task<IReadOnlyList<MonthlyCashFlowPointDto>> GetMonthlyCashFlowAsync(
-        string userId,
+        DashboardFilterDto filter,
         int monthsBack,
         CancellationToken cancellationToken);
 

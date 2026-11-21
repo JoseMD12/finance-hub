@@ -62,6 +62,7 @@ public class CategorizeTransactionCommandHandler : ICategorizeTransactionCommand
                 command.UserId,
                 transaction.Description.CleanText,
                 command.NewCategoryId,
+                nature,
                 cancellationToken);
         }
     }

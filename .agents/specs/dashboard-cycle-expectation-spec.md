@@ -711,17 +711,23 @@ implementação e a autorrevisão não pegaram.
 | 5 | Deploy parcial **apagava** dados de crédito | `IsCreditCard = false` por default de desserialização era indistinguível de `false` afirmado; toda mensagem da versão anterior zerava limites e vencimentos. `IsCreditCard` virou `bool?` e o consumer preserva o estado quando a mensagem nada informa. |
 | 6 | `canonical_transactions.CategoryId` sem índice | A quebra por categoria e o backfill faziam varredura sequencial. Índice criado, e o backfill movido para depois dele. |
 
+### Corrigidos depois do tribunal (21/11/2026)
+
+| Achado | Correção |
+| --- | --- |
+| **Histórico do git com a PII do achado 1** — e mais: fixtures de teste recortadas do payload real (limites, saldos, dígitos do cartão, ID de fatura), nomes de terceiros, uma terapeuta no dataset de comerciantes e IDs das conexões Pluggy | Histórico reescrito e branches antigas apagadas; o remoto ficou só com `main` e `develop`. As refs dos PRs antigos continuam no GitHub, por decisão do usuário de não acionar o suporte. Valores reais substituídos por fictícios coerentes em todas as versões. |
+| **"Aplicar às transações passadas" nunca gravava** | `UpdateCategoryForPatternAsync` alterava as entidades sem `SaveChangesAsync`, e o teste passava porque relia pelo mesmo `DbContext`. Além disso, `CategorizeManually` tinha `Operating` como natureza padrão, então recategorizar o histórico para "Transferências" o faria contar como gasto. Agora o repositório recebe a natureza e grava, `nature` é obrigatório, e o teste lê do banco. O caminho de contorno da §4-A.0 passa a funcionar. |
+| `disaggregatedCreditLimits` nunca mapeado | Mapeado de ponta a ponta como `CustomizedCreditLimit` (Pluggy → snapshot → `CreditAccountInfo` → Dashboard → Gateway → UI). A barra mede o consumo contra o limite personalizado quando existe. A Pluggy não documenta os campos do item, então `customizedLimitAmount` é lido como JSON bruto e um formato inesperado vira "sem personalização" em vez de derrubar o sync; com várias linhas personalizadas vale a mais restritiva. O log de descoberta registra `HasCustomizedLimit` para confirmar o formato no próximo sync real. Migration `AddCustomizedCreditLimitToAccountBalances`, aditiva. |
+| Evolução mensal ignora filtro de instituição | A série recebe o mesmo filtro dos KPIs e das categorias, exceto o período. O filtro de instituição virou uma extensão única (`InstitutionQueryExtensions`) usada pelos dois repositórios, o que também o tornou testável em memória. |
+| Aggregator publicado em `5002` sem autorização | `expose:` em vez de `ports:` no compose. A skill `manual-api-curl-testing` passa a checar o Aggregator pelo `/health/detailed` do Gateway. Chamadas diretas ao Aggregator (coleção do Postman) só funcionam rodando o serviço fora do Docker. |
+
 ### Abertos — decisão do usuário
 
 | Achado | Situação |
 | --- | --- |
-| **Histórico do git contém a PII do achado 1** | A redação corrige o estado atual, não o histórico. Como nada foi enviado ao remoto, um `rebase` resolve; depois de um push, exigiria reescrita coordenada. |
 | **A lacuna da P0 infla a receita** | A perna de débito de uma transferência própria é neutra, mas a de crédito cai em `Receitas > Pix Recebido` (`Operating`) e **soma às entradas**. O erro é `+V` no disponível. Mitigado em parte pelo `TransferPairMatchingEngine` (valores idênticos, janela de 96h). Fecha na fatia P. |
-| `disaggregatedCreditLimits` nunca mapeado | A barra de limite usa `creditLimit` do banco, e o comentário do componente afirma usar o personalizado. Mostra 23% onde o real é 71%. |
-| Evolução mensal ignora filtro de instituição | Filtrar por um banco estreita KPIs e categorias, mas não o gráfico — dois recortes na mesma tela. |
 | `GroupBy` cai em subconsulta correlacionada | O `Sum` sobre o owned type `Money` impede o agregado plano. Projetar antes do `GroupBy` resolve. |
 | `Down()` de `AddNatureToCategories` não reverte dado | Deliberado: a correção de `CategoryId` perde a informação que permitiria distinguir as linhas movidas. Rollback real é restore de backup. |
-| Aggregator publicado em `5002` sem autorização | Pré-existente, mas esta branch acrescenta a esse perímetro o endpoint mais denso em dados. `expose:` em vez de `ports:` resolve. |
 | Migração no startup sem lock distribuído | Com múltiplas réplicas, `MigrateAsync` concorrente pode falhar no boot. |
 
 ---

@@ -38,7 +38,7 @@ public class GetDashboardSummaryQueryHandlerTests
             .Returns([]);
 
         _dashboardReadRepository
-            .GetMonthlyCashFlowAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .GetMonthlyCashFlowAsync(Arg.Any<DashboardFilterDto>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns([]);
 
         _dashboardReadRepository
@@ -161,7 +161,7 @@ public class GetDashboardSummaryQueryHandlerTests
             ]);
 
         _dashboardReadRepository
-            .GetMonthlyCashFlowAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .GetMonthlyCashFlowAsync(Arg.Any<DashboardFilterDto>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns([new MonthlyCashFlowPointDto(2026, 8, 8500m, 5400m, 3100m)]);
 
         var result = await _handler.Handle(BuildQuery(), CancellationToken.None);
@@ -170,6 +170,18 @@ public class GetDashboardSummaryQueryHandlerTests
         result.CategoryExpenses.Sum(c => c.Percentage).Should().Be(100m);
         result.MonthlyCashFlow.Should().ContainSingle();
         result.MonthlyCashFlow[0].NetBrl.Should().Be(3100m);
+    }
+
+    [Fact]
+    public async Task Handle_WhenInstitutionFilterIsSet_ShouldScopeTheCashFlowSeriesToIt()
+    {
+        await _handler.Handle(BuildQuery(institutionId: "inter", includeIgnored: true), CancellationToken.None);
+
+        await _dashboardReadRepository.Received(1).GetMonthlyCashFlowAsync(
+            Arg.Is<DashboardFilterDto>(f =>
+                f.UserId == UserId && f.InstitutionId == "inter" && f.IncludeIgnoredInTotals),
+            Arg.Any<int>(),
+            Arg.Any<CancellationToken>());
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────

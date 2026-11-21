@@ -21,7 +21,7 @@ src/
 │   ├── auth/             # Login, sessão e autenticação Bearer
 │   ├── dashboard/        # Saldo consolidado, métricas multi-bancos, gráficos agregados
 │   ├── transactions/     # Extrato, categorização, conciliação e detalhes de parcelas
-│   └── consents/         # Gestão de conexões Open Finance (Itaú, Inter, Mercado Pago)
+│   └── connections/      # Instituições conectadas no Meu.Pluggy e sincronização (Itaú, Inter, Mercado Pago)
 └── shared/               # Recursos transversais e Design System
     ├── api/              # Cliente HTTP centralizado (Axios) com interceptor RFC 7807
     ├── components/       # Design System UI (Button, Input, Modal, Badge, Table, Card)

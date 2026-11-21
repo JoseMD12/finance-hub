@@ -32,8 +32,7 @@ node .agents/skills/manual-api-curl-testing/scripts/test-runner.js '{
   "userId": "<USER_ID>",
   "urls": {
     "pluggy": "http://localhost:5056",
-    "gateway": "http://localhost:5050",
-    "aggregator": "http://localhost:5002"
+    "gateway": "http://localhost:5050"
   }
 }'
 ```
@@ -44,7 +43,7 @@ node .agents/skills/manual-api-curl-testing/scripts/test-runner.js '{
 
 1. **`PluggyIntegration Health`**: `GET http://localhost:5056/health` $\rightarrow$ `200 OK`
 2. **`ApiGateway Health`**: `GET http://localhost:5050/health` $\rightarrow$ `200 OK`
-3. **`TransactionAggregator Health`**: `GET http://localhost:5002/health` $\rightarrow$ `200 OK`
+3. **`TransactionAggregator Health (via Gateway)`**: `GET http://localhost:5050/health/detailed` $\rightarrow$ `200 OK`. O Aggregator não publica porta no host (só `expose` na rede do compose), porque não tem autenticação e recebe o `userId` na requisição; por isso a saúde dele é verificada pelo Gateway.
 4. **`Missing Token RFC 7807 Validation`**: `GET http://localhost:5056/api/v1/pluggy/items` $\rightarrow$ `400 Bad Request`
 5. **`GET /items (Connected Institutions)`**: `GET http://localhost:5056/api/v1/pluggy/items` $\rightarrow$ `200 OK`
 6. **`GET /accounts (Bank & Credit Accounts)`**: `GET http://localhost:5056/api/v1/pluggy/accounts` $\rightarrow$ `200 OK`

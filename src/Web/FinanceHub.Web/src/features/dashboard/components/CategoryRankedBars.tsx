@@ -72,15 +72,17 @@ const CategoryRankedBarsComponent: React.FC<CategoryRankedBarsProps> = ({ catego
                   </span>
                 </div>
 
-                <div
-                  className="h-2 bg-slate-100 rounded-full overflow-hidden"
-                  role="progressbar"
-                  aria-valuenow={Math.round(category.percentage)}
-                  aria-valuemin={0}
-                  aria-valuemax={100}
-                  aria-label={`${category.categoryName}: ${formatCurrencyBRL(category.amountBrl)}`}
-                >
+                <div className="relative h-2 bg-slate-100 rounded-full overflow-hidden">
+                  <progress
+                    className="sr-only"
+                    value={Math.round(category.percentage)}
+                    max={100}
+                    aria-label={`${category.categoryName}: ${formatCurrencyBRL(category.amountBrl)}`}
+                  >
+                    {`${category.percentage.toFixed(1)}%`}
+                  </progress>
                   <div
+                    aria-hidden="true"
                     className={cn(
                       'h-full rounded-full transition-[width] duration-500',
                       getBarClass(category.colorToken),

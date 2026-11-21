@@ -5,7 +5,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using FinanceHub.TransactionAggregator.Application.DTOs;
 using FinanceHub.TransactionAggregator.Application.Interfaces;
-using FinanceHub.TransactionAggregator.Domain.Constants;
 using FinanceHub.TransactionAggregator.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -86,7 +85,7 @@ public sealed class DashboardReadRepository(TransactionAggregatorDbContext conte
     }
 
     public async Task<IReadOnlyList<MonthlyCashFlowPointDto>> GetMonthlyCashFlowAsync(
-        string userId,
+        DashboardFilterDto filter,
         int monthsBack,
         CancellationToken cancellationToken)
     {
@@ -95,11 +94,8 @@ public sealed class DashboardReadRepository(TransactionAggregatorDbContext conte
         var firstMonth = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc)
             .AddMonths(-(monthsBack - 1));
 
-        var grouped = await context.Transactions
-            .AsNoTracking()
-            .Where(t => t.UserId == userId
-                     && !t.IsIgnoredInTotals
-                     && t.TransactionDateUtc >= firstMonth)
+        var grouped = await BuildBaseQuery(filter with { StartDate = null, EndDate = null })
+            .Where(t => t.TransactionDateUtc >= firstMonth)
             .GroupBy(t => new { t.TransactionDateUtc.Year, t.TransactionDateUtc.Month })
             .Select(g => new
             {
@@ -146,7 +142,8 @@ public sealed class DashboardReadRepository(TransactionAggregatorDbContext conte
                     AvailableCreditLimit: b.CreditInfo.AvailableCreditLimit,
                     UsedCreditLimit: b.CreditInfo.UsedCreditLimit,
                     InvoiceDueDateUtc: b.CreditInfo.InvoiceDueDateUtc,
-                    LastUpdatedAtUtc: b.LastUpdatedAtUtc))
+                    LastUpdatedAtUtc: b.LastUpdatedAtUtc,
+                    CustomizedCreditLimit: b.CreditInfo.CustomizedCreditLimit))
         ];
     }
 
@@ -173,13 +170,7 @@ public sealed class DashboardReadRepository(TransactionAggregatorDbContext conte
             query = query.Where(t => t.TransactionDateUtc <= endUtc);
         }
 
-        if (!string.IsNullOrWhiteSpace(filter.InstitutionId))
-        {
-            var keywords = BankAliases.GetKeywordsFor(filter.InstitutionId);
-            query = query.Where(t => keywords.Any(k => t.AccountInfo.InstitutionId.ToLower().Contains(k)));
-        }
-
-        return query;
+        return query.WhereInstitution(filter.InstitutionId);
     }
 
     private static decimal CalculatePercentage(decimal amount, decimal total)

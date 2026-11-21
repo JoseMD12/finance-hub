@@ -28,7 +28,6 @@ function parseConfig() {
     urls: {
       pluggy: config.urls?.pluggy || process.env.PLUGGY_SERVICE_URL || 'http://localhost:5056',
       gateway: config.urls?.gateway || process.env.GATEWAY_SERVICE_URL || 'http://localhost:5050',
-      aggregator: config.urls?.aggregator || process.env.AGGREGATOR_SERVICE_URL || 'http://localhost:5002',
     }
   };
 }
@@ -92,7 +91,6 @@ async function runTestSuite() {
   console.log(`📌 User ID: ${config.userId}`);
   console.log(`📌 Pluggy URL: ${config.urls.pluggy}`);
   console.log(`📌 Gateway URL: ${config.urls.gateway}`);
-  console.log(`📌 Aggregator URL: ${config.urls.aggregator}`);
   console.log(`📌 Token Provided: ${config.token ? 'Yes (Length: ' + config.token.length + ')' : 'No'}`);
   console.log('------------------------------------------------------\n');
 
@@ -125,7 +123,8 @@ async function runTestSuite() {
   console.log('--- 1. Health Checks ---');
   record('PluggyIntegration Health', `${config.urls.pluggy}/health`, 200, await makeRequest(`${config.urls.pluggy}/health`));
   record('ApiGateway Health', `${config.urls.gateway}/health`, 200, await makeRequest(`${config.urls.gateway}/health`));
-  record('TransactionAggregator Health', `${config.urls.aggregator}/health`, 200, await makeRequest(`${config.urls.aggregator}/health`));
+  // The Aggregator is internal to the compose network; its health is checked through the gateway.
+  record('TransactionAggregator Health (via Gateway)', `${config.urls.gateway}/health/detailed`, 200, await makeRequest(`${config.urls.gateway}/health/detailed`));
 
   // 2. Domain Exception (RFC 7807) Validation without token
   console.log('--- 2. Domain Validation (Missing Token) ---');

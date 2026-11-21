@@ -154,6 +154,25 @@ describe('DashboardPage', () => {
     expect(screen.getAllByRole('progressbar', { name: /limite utilizado/i })).toHaveLength(1);
   });
 
+  it('mede o consumo contra o limite personalizado quando o titular definiu um', async () => {
+    const withCustomizedLimit: DashboardSummaryDto = {
+      ...mockDashboard,
+      institutionBalances: mockDashboard.institutionBalances.map((balance) =>
+        balance.isCreditCard ? { ...balance, customizedCreditLimit: 2000 } : balance,
+      ),
+    };
+    vi.mocked(dashboardApi.getDashboardSummaryApi).mockResolvedValue(withCustomizedLimit);
+
+    renderPage();
+
+    // 1000 usados contra o limite personalizado de 2000 = 50%. Contra o limite do banco
+    // (4000) seriam 25%, subestimando justamente o número que importa.
+    await waitFor(() => {
+      expect(screen.getByText('50% do limite')).toBeInTheDocument();
+    });
+    expect(screen.getByRole('progressbar', { name: /limite utilizado/i })).toHaveValue(50);
+  });
+
   it('renderiza as categorias como barras ranqueadas com percentual', async () => {
     vi.mocked(dashboardApi.getDashboardSummaryApi).mockResolvedValue(mockDashboard);
 
@@ -164,7 +183,12 @@ describe('DashboardPage', () => {
     });
 
     expect(screen.getByText('Transporte')).toBeInTheDocument();
-    expect(screen.getByText('59.3%')).toBeInTheDocument();
+
+    // O percentual aparece duas vezes por categoria: no rótulo visível e no texto de fallback
+    // do <progress>, que só é lido por tecnologia assistiva. Asserir sobre o valor semântico
+    // do elemento nativo é mais estável que casar o texto solto.
+    const alimentacaoBar = screen.getByRole('progressbar', { name: /Alimentação/i });
+    expect(alimentacaoBar).toHaveValue(59);
   });
 
   it('mostra empty state quando não há dados no período', async () => {

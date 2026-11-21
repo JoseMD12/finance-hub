@@ -7,33 +7,38 @@
 
 ## 📊 1. Endpoint de Dashboard Agregado (`GET /api/v1/gateway/dashboard`)
 
-### Resposta TypeScript
+**Fonte da verdade:** `src/Web/FinanceHub.Web/src/features/dashboard/types/dashboard.types.ts`, que
+espelha `GatewayDashboardSummaryDto` (Gateway) e `DashboardSummaryDto` (Aggregator). O `userId` vem
+da claim do JWT, nunca da query string.
+
+**Query string (todos opcionais):** `startDate`, `endDate`, `institutionId`, `includeIgnoredInTotals`.
+O filtro de período não se aplica à série de evolução mensal (`monthlyCashFlow`, últimos seis
+meses); instituição e neutralidade se aplicam a tudo.
+
+### Resposta TypeScript (resumo)
 ```typescript
-export interface BankAccountBalanceDto {
-  readonly bankId: string; // 'itau' | 'mercadopago' | 'inter'
-  readonly bankName: string; // 'Itaú Unibanco' | 'Mercado Pago' | 'Banco Inter'
-  readonly accountId: string;
-  readonly balance: number;
-  readonly currency: string; // 'BRL'
-  readonly lastSyncAt: string; // ISO 8601
-  readonly status: 'ACTIVE' | 'WARNING' | 'ERROR';
-}
-
-export interface ExpenseByCategoryDto {
-  readonly categoryId: string;
-  readonly categoryName: string;
-  readonly totalAmount: number;
-  readonly percentage: number; // Ex: 45.0
-  readonly colorHex?: string;
-}
-
-export interface DashboardResponseDto {
-  readonly totalConsolidatedBalance: number;
-  readonly totalIncomeCurrentMonth: number;
-  readonly totalExpenseCurrentMonth: number;
-  readonly accounts: readonly BankAccountBalanceDto[];
-  readonly categoryExpenses: readonly ExpenseByCategoryDto[];
+export interface DashboardSummaryDto {
+  readonly userId: string;
+  readonly summary: DashboardSummaryTotalsDto; // KPIs, mesmo cálculo da tela de Transações
+  readonly institutionBalances: readonly InstitutionBalanceDto[];
+  readonly categoryExpenses: readonly CategoryExpenseDto[]; // top N + cauda "Outras"
+  readonly monthlyCashFlow: readonly MonthlyCashFlowPointDto[];
   readonly recentTransactions: readonly TransactionDto[];
+  readonly generatedAtUtc: string;
+}
+
+export interface InstitutionBalanceDto {
+  readonly institutionId: string; // nome e logo resolvidos no cliente por getInstitutionInfo()
+  readonly accountNumber: string;
+  readonly balanceBrl: number;
+  readonly currency: string;
+  readonly isCreditCard: boolean;
+  readonly creditLimit?: number | null; // limite concedido pelo banco
+  readonly availableCreditLimit?: number | null;
+  readonly usedCreditLimit?: number | null; // creditLimit - availableCreditLimit
+  readonly customizedCreditLimit?: number | null; // limite definido pelo titular; mede o consumo quando existe
+  readonly invoiceDueDateUtc?: string | null; // vencimento da última fatura fechada, como a Pluggy envia
+  readonly lastUpdatedAtUtc: string;
 }
 ```
 
@@ -111,27 +116,21 @@ export interface PaginatedTransactionsDto {
 
 ---
 
-## 🏦 3. Endpoint de Consentimentos (`GET /api/v1/consents`)
+## 🏦 3. Conexões Meu.Pluggy (`/api/v1/gateway/pluggy`)
 
-### Resposta TypeScript
-```typescript
-export interface BankConsentDto {
-  readonly id: string;
-  readonly bankId: 'itau' | 'mercadopago' | 'inter';
-  readonly bankName: string;
-  readonly status: 'AUTHORISED' | 'AWAITING_AUTHORISATION' | 'REJECTED' | 'REVOKED';
-  readonly createdAt: string;
-  readonly expiresAt: string;
-  readonly accountsCount: number;
-}
+Não existe endpoint de consentimentos: o consentimento Open Finance é concedido e revogado pelo
+usuário no `meu.pluggy.ai` (ADR-001). As rotas que falam com a Pluggy exigem, além do JWT do
+FinanceHub, o header `X-Pluggy-Access-Token` com o token pessoal do usuário; sem ele o Gateway
+responde RFC 7807. A consulta de status do job não fala com a Pluggy e dispensa o token.
 
-export interface CreateConsentRequestDto {
-  readonly bankId: 'itau' | 'mercadopago' | 'inter';
-  readonly permissions: readonly string[];
-}
+| Rota | Uso |
+| --- | --- |
+| `GET /items` | Instituições conectadas, com status, saldo total e quantidade de contas (`PluggyItemDto`). |
+| `GET /accounts` | Contas correntes e de cartão, com dados de crédito. |
+| `POST /items/{itemId}/sync` | Ressincroniza uma única instituição. |
+| `POST /sync` | Dispara a sincronização em segundo plano; responde 202 com `jobId` (`SyncJobAcceptedDto`). |
+| `GET /sync/jobs/{jobId}` | Status do job, com o resumo ao concluir (`SyncJobStatusDto`). |
 
-export interface CreateConsentResponseDto {
-  readonly consentId: string;
-  readonly redirectUri: string; // URL do banco para autorização FAPI
-}
-```
+**Fonte da verdade:** `src/Web/FinanceHub.Web/src/features/connections/types/connections.types.ts`
+e `src/shared/api/apiEndpoints.ts`.
+

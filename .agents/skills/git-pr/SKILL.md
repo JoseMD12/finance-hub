@@ -37,13 +37,15 @@ Every Pull Request description MUST adhere to the following standard template st
 
 ## 🧪 Testing Checklist
 - [ ] Unit tests added/updated and passing (`dotnet test`)
-- [ ] Integration tests executed for Open Finance / bank connector APIs
+- [ ] Integration tests executed for the Meu.Pluggy integration and Gateway routes (if applicable)
 - [ ] EF Core migration tested against target microservice PostgreSQL database
 - [ ] No regression in financial calculation decimal precision
 - [ ] Concurrency/Race condition scenarios tested (if applicable)
 
 ## 🔒 Financial Security & Compliance Audit
-- [ ] FAPI 1.0/2.0 security profile compliance verified (PKCE, PAR, private_key_jwt, DPoP)
+- [ ] Meu.Pluggy token only in the `X-Pluggy-Access-Token` header, never persisted or logged
+- [ ] Internal services publish no host ports; the ApiGateway is the only entrypoint
+- [ ] No real financial data (balances, limits, card digits, names) in fixtures, specs, or examples
 - [ ] No hardcoded secrets, connection strings, or API private keys
 - [ ] Sensitive financial data (PAN, account numbers, tokens) masked in logs (`ILogger`)
 - [ ] Monetary operations strictly use `decimal` type with explicit rounding

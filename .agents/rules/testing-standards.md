@@ -39,7 +39,8 @@ TesteSyncTransacoes()
 
 ## 5. Segurança em Testes
 - Nunca commitar tokens, senhas, CPFs ou certificados reais em arquivos de teste.
-- Mockar `ICertificateProvider` para retornar `null` (modo Dev Fallback) em testes unitários.
+- Nunca usar valores observados na API real (saldos, limites, salários, dígitos de cartão, IDs de fatura ou de conexão, nomes de contrapartes) em fixtures. Use Bogus ou números redondos fictícios. Fixture "recortada do payload real" é dado pessoal versionado.
+- Teste que relê uma entidade depois de gravá-la deve ler do banco, não do change tracker: use `ChangeTracker.Clear()` ou um `DbContext` novo antes da asserção. Reler pelo mesmo contexto devolve a instância em memória e passa mesmo sem `SaveChanges`.
 - Configurar Serilog em `MinimumLevel.Warning` em ambientes de teste para evitar logs com PII.
 
 ## 6. Organização dos Arquivos de Teste

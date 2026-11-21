@@ -62,8 +62,10 @@ services:
       RabbitMQ__Username: "${RabbitMQ__Username:-guest}"
       RabbitMQ__Password: "${RabbitMQ__Password:-guest}"
       OTEL_EXPORTER_OTLP_ENDPOINT: "http://financehub-jaeger:4317"
-    ports:
-      - "5002:5002"
+    # Internal only: the Aggregator has no authentication and takes userId from the request,
+    # so publishing the port would expose every user's ledger. The gateway is the entrypoint.
+    expose:
+      - "5002"
     depends_on:
       financehub-postgres:
         condition: service_healthy

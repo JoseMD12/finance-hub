@@ -4,7 +4,7 @@
 [![Frontend](https://img.shields.io/badge/React-19.0-61DAFB?logo=react)](https://react.dev/)
 [![Language](https://img.shields.io/badge/C%23-13.0-239120?logo=csharp)](https://docs.microsoft.com/dotnet/csharp/)
 [![Architecture](https://img.shields.io/badge/Architecture-Microservices%20%2B%20DDD-blue)](#-arquitetura-do-sistema)
-[![Security](https://img.shields.io/badge/Security-FAPI%201.0%2F2.0%20%7C%20mTLS-red)](#-segurança--conformidade-bancária)
+[![Security](https://img.shields.io/badge/Security-Meu.Pluggy%20%7C%20LGPD-red)](#-segurança--conformidade-bancária)
 [![AI Harness](https://img.shields.io/badge/AI%20Harness-.agents-green)](#-harness-de-ia-agents)
 
 **FinanceHub** é uma plataforma corporativa de agregação e controle de finanças pessoais conectada diretamente às APIs do **Open Finance Brasil** (Itaú, Mercado Pago e Banco Inter). Construída sobre **.NET 10**, **C# 13** e **React 19 (Vite + TailwindCSS)**, a aplicação adota uma arquitetura baseada em **Microsserviços Autônomos** com **Clean Architecture + DDD** em cada serviço, banco de dados isolado por serviço (Database-per-Service), mensageria resiliente com o **Transactional Outbox Pattern** e conciliação bancária em tempo real.
@@ -85,7 +85,7 @@ Este repositório inclui um **Harness de IA** estruturado para garantir desenvol
 ├── GEMINI.md                   # Contexto e restrições para agentes Gemini
 ├── rules/                      # Regras arquiteturais, de segurança e frontend
 │   ├── csharp-dotnet10.md      # Idiomas C# 13, record types, Minimal APIs
-│   ├── openfinance-security.md # FAPI 1.0/2.0, mTLS, criptografia e LGPD
+│   ├── openfinance-security.md # Token Meu.Pluggy, segredos, LGPD e OWASP API
 │   ├── clean-arch-vertical-slice.md # Isolamento de microsserviços e DDD
 │   ├── react-frontend-architecture.md # Slices verticais sob src/features/<feature>/
 │   ├── react-query-and-state.md # Gerenciamento de Server State via TanStack Query
@@ -114,10 +114,10 @@ Este repositório inclui um **Harness de IA** estruturado para garantir desenvol
 ## 🔐 Segurança & Conformidade Bancária
 
 - **Database per Service**: Cada microsserviço possui e gerencia seu próprio banco PostgreSQL. Acesso direto ao DB de outro serviço é estritamente proibido.
-- **Financial-Grade API (FAPI 1.0/2.0)**: Suporte a `private_key_jwt`, Pushed Authorization Requests (PAR) e PKCE quando aplicável.
-- **Conexões Seguras**: Conexões com o ecossistema Open Finance executadas via canais seguros HTTPS/OAuth2 gerenciados pelo `PluggyIntegration`.
-- **Criptografia em Repouso**: Tokens de acesso e dados sensíveis criptografados via **AES-256-GCM** / Data Protection API / KMS com envelope encryption.
-- **Conformidade LGPD**: Sanitização de logs sem exibição de PII (CPF, nomes ou chaves JWT) e rastreabilidade total do ciclo de vida dos consentimentos.
+- **Open Finance via Meu.Pluggy (ADR-001)**: consentimento, FAPI e mTLS com cada banco são responsabilidade da Pluggy. O FinanceHub não implementa OAuth com bancos nem guarda credenciais bancárias.
+- **Token pessoal da Meu.Pluggy**: trafega só no header `X-Pluggy-Access-Token`, via Gateway, e nunca é persistido no backend nem registrado em log.
+- **Gateway como única entrada**: serviços internos sem autenticação própria, como o `TransactionAggregator`, não publicam porta no host.
+- **Conformidade LGPD**: logs sem PII, mascaramento de CPF, conta e chave PIX na interface, e nenhum dado financeiro real em testes ou documentação. Detalhes e lacunas conhecidas em `.agents/rules/openfinance-security.md`.
 
 ---
 

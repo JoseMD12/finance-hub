@@ -6,9 +6,9 @@ This document provides operational instructions and context for subagents, autom
 
 ## 🎯 Overview & Context
 
-FinanceHub is an enterprise **.NET 10 / C# 13** personal financial aggregation and control platform structured as independent **Microservices** following **Clean Architecture + DDD** per service. It connects directly to Open Finance APIs provided by Brazilian financial institutions (**Itaú**, **Mercado Pago**, and **Banco Inter**).
+FinanceHub is an enterprise **.NET 10 / C# 13** personal financial aggregation and control platform structured as independent **Microservices** following **Clean Architecture + DDD** per service. It reads Open Finance data from **Itaú**, **Mercado Pago**, and **Banco Inter** through **Meu.Pluggy**, the free personal aggregator — it does not connect to the banks directly (ADR-001 in `.agents/knowledge/system-architecture-and-services.md`).
 
-Subagents operating in this workspace perform autonomous tasks such as scaffolding microservice features, auditing FAPI compliance, executing test suites, and synchronizing project skills.
+Subagents operating in this workspace perform autonomous tasks such as scaffolding microservice features, auditing security and LGPD compliance, executing test suites, and synchronizing project skills.
 
 ---
 
@@ -66,20 +66,24 @@ When generating code or configuring integrations, subagents **must** adhere to:
 2. **Transactional Outbox Pattern**:
    - All asynchronous inter-service domain events are published via Transactional Outbox Pattern using `FinanceHub.Shared.Messaging`.
 
-3. **Financial-Grade API (FAPI 1.0 / 2.0) Profile**:
-   - OAuth 2.0 implementation with `private_key_jwt`, Pushed Authorization Requests (PAR), and PKCE.
-   - DPoP (Demonstrating Proof-of-Possession) header generation for all protected API calls.
+3. **Open Finance Access Is Delegated to Meu.Pluggy (ADR-001)**:
+   - FinanceHub does not implement FAPI, OAuth with banks, PAR, PKCE, DPoP, or mTLS. Pluggy handles consent, FAPI, and mTLS with each institution; the user connects and revokes institutions at `meu.pluggy.ai`.
+   - A new institution is connected in Meu.Pluggy, not by writing a connector. Reintroducing direct bank connectors requires a new ADR.
 
-4. **mTLS & Authentication**:
-   - Direct bank API connections use Bearer Token authentication via Meu.Pluggy (OAuth2 HTTPS). `FinanceHub.Shared.Certificates` was decommissioned — mTLS negotiation is handled by the Pluggy platform layer.
+4. **Meu.Pluggy Personal Token Handling**:
+   - The token travels only in the `X-Pluggy-Access-Token` header, client → ApiGateway → PluggyIntegration. Never in query strings, logs, specs, fixtures, or support tickets.
+   - It is never persisted by the backend. The web frontend keeps it in `sessionStorage` (never `localStorage`); the extension keeps it in extension storage.
+   - Pluggy answers 403 for a missing or expired token; surface it as RFC 7807 so the user can provide a new one.
 
-5. **Data Encryption (AES-256-GCM / KMS)**:
-   - Sensitive user tokens, consent tokens, and PII must be encrypted at rest using AES-256-GCM.
-   - Keys must be fetched dynamically from KMS (AWS KMS / Azure Key Vault).
+5. **Secrets at Rest**:
+   - Today no bank credential, consent token, or refresh token is persisted, so there is nothing to encrypt at rest.
+   - Any secret a future feature persists must be encrypted with AES-256-GCM (`Shared.Observability/Security/EnvelopeEncryptionService`), with the master key loaded from the environment or a secret store and fail-fast when missing (Rule 12). Adopt a managed KMS only once there is a deployed environment and a real secret to protect.
 
 6. **LGPD Compliance**:
-   - Strictly enforce consent verification before fetching bank statements or balances.
-   - Redact all sensitive fields (CPF, account numbers, names) in logs.
+   - Consent is granted by the user when connecting an institution in Meu.Pluggy; sync only what the user connected and keep data minimal.
+   - Never log PII (CPF, account or card numbers, counterpart names, raw transaction descriptions). Automatic log redaction is **not implemented yet**, so this depends on not logging PII at the source.
+   - Real financial data observed in the API never enters the repository — fixtures, specs, and examples use fictitious values.
+   - Internal services (`TransactionAggregator`) have no authentication of their own and must not publish ports to the host; the ApiGateway is the only entrypoint. Details and known gaps: `.agents/rules/openfinance-security.md`.
 
 7. **DDD Aggregate Root & Rich Domain Model**:
    - Strictly enforce Rich Domain Models (no anemic DTO-like entities with public `get; set;`).

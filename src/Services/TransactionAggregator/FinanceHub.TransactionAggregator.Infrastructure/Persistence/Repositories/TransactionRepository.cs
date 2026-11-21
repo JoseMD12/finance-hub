@@ -6,9 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using FinanceHub.TransactionAggregator.Application.DTOs;
 using FinanceHub.TransactionAggregator.Application.Interfaces;
-using FinanceHub.TransactionAggregator.Domain.Constants;
 using FinanceHub.TransactionAggregator.Domain.Entities;
-using FinanceHub.TransactionAggregator.Domain.Exceptions;
 using FinanceHub.TransactionAggregator.Domain.ValueObjects;
 using FinanceHub.TransactionAggregator.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -105,7 +103,7 @@ public class TransactionRepository : ITransactionRepository
             .Where(t => t.UserId == filter.UserId);
 
         query = ApplyDateFilters(query, filter.StartDate, filter.EndDate);
-        query = ApplyInstitutionFilter(query, filter.InstitutionId);
+        query = query.WhereInstitution(filter.InstitutionId);
         query = await ApplyCategoryFilterAsync(query, filter.CategoryId, cancellationToken);
         query = ApplyTypeFilter(query, filter.Type);
         query = ApplySearchFilter(query, filter.Search);
@@ -198,17 +196,6 @@ public class TransactionRepository : ITransactionRepository
         return query;
     }
 
-    private static IQueryable<CanonicalTransaction> ApplyInstitutionFilter(IQueryable<CanonicalTransaction> query, string? institutionId)
-    {
-        if (!string.IsNullOrWhiteSpace(institutionId))
-        {
-            var keywords = BankAliases.GetKeywordsFor(institutionId);
-            query = query.Where(BuildInstitutionFilterExpression(keywords));
-        }
-
-        return query;
-    }
-
     private async Task<IQueryable<CanonicalTransaction>> ApplyCategoryFilterAsync(
         IQueryable<CanonicalTransaction> query,
         Guid? categoryId,
@@ -272,35 +259,7 @@ public class TransactionRepository : ITransactionRepository
         return query;
     }
 
-    private static Expression<Func<CanonicalTransaction, bool>> BuildInstitutionFilterExpression(IReadOnlyList<string> keywords)
-    {
-        var parameter = Expression.Parameter(typeof(CanonicalTransaction), "t");
-        var accountInfoProperty = Expression.Property(parameter, nameof(CanonicalTransaction.AccountInfo));
-        var institutionIdProperty = Expression.Property(accountInfoProperty, nameof(AccountIdentifier.InstitutionId));
-
-        var toLowerMethod = typeof(string).GetMethod(nameof(string.ToLower), Type.EmptyTypes)
-            ?? throw new MethodReflectionFailedDomainException("string.ToLower");
-        var containsMethod = typeof(string).GetMethod(nameof(string.Contains), [typeof(string)])
-            ?? throw new MethodReflectionFailedDomainException("string.Contains");
-
-        var lowerInstitutionId = Expression.Call(institutionIdProperty, toLowerMethod);
-
-        Expression? combined = null;
-
-        foreach (var keyword in keywords)
-        {
-            var keywordConstant = Expression.Constant(keyword.ToLowerInvariant());
-            var containsExpression = Expression.Call(lowerInstitutionId, containsMethod, keywordConstant);
-
-            combined = combined == null
-                ? containsExpression
-                : Expression.OrElse(combined, containsExpression);
-        }
-
-        return Expression.Lambda<Func<CanonicalTransaction, bool>>(combined ?? Expression.Constant(true), parameter);
-    }
-
-    public async Task UpdateCategoryForPatternAsync(string userId, string pattern, Guid newCategoryId, CancellationToken cancellationToken)
+    public async Task UpdateCategoryForPatternAsync(string userId, string pattern, Guid newCategoryId, TransactionNature nature, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(pattern))
         {
@@ -314,8 +273,10 @@ public class TransactionRepository : ITransactionRepository
 
         foreach (var tx in transactionsToUpdate)
         {
-            tx.CategorizeManually(newCategoryId);
+            tx.CategorizeManually(newCategoryId, nature);
         }
+
+        await _context.SaveChangesAsync(cancellationToken);
     }
 
     public async Task<IEnumerable<CanonicalTransaction>> GetUnpairedTransfersCandidateAsync(string userId, DateTime fromUtc, DateTime toUtc, CancellationToken cancellationToken)

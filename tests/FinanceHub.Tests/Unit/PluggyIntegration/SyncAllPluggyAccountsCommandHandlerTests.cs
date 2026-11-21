@@ -98,4 +98,28 @@ public class SyncAllPluggyAccountsCommandHandlerTests
             Arg.Any<CancellationToken>()
         );
     }
+
+    [Fact]
+    public async Task HandleAsync_WhenCardHasCustomizedLimit_ShouldPublishItInTheBalanceSnapshot()
+    {
+        const string token = "mock-pluggy-valid-token-123";
+        var creditData = System.Text.Json.JsonSerializer.Deserialize<PluggyCreditDataDto>(
+            """{ "creditLimit": 10000, "availableCreditLimit": 8000, "disaggregatedCreditLimits": [ { "customizedLimitAmount": 3000 } ] }""",
+            new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+        _pluggyClient.GetItemsAsync(token, Arg.Any<CancellationToken>())
+            .Returns(new List<PluggyItemDto> { new("item-1", "UPDATED", new(341, "Banco Itaú")) });
+        _aggregationService.FetchAllAccountsAsync(token, Arg.Any<CancellationToken>())
+            .Returns(new List<PluggyAccountDto> { new("acc-card", "CREDIT", "CREDIT_CARD", "Cartão", 2000m, "BRL", "item-1", creditData) });
+        _aggregationService.FetchAllTransactionsAsync(token, Arg.Any<CancellationToken>())
+            .Returns(new List<PluggyTransactionDto>());
+
+        await _handler.HandleAsync(new SyncAllPluggyAccountsCommand("user-01", token), CancellationToken.None);
+
+        await _publishEndpoint.Received(1).Publish(
+            Arg.Is<AccountBalanceSnapshotSynchronized>(e =>
+                e.Accounts.Single().CreditLimit == 10000m &&
+                e.Accounts.Single().CustomizedCreditLimit == 3000m),
+            Arg.Any<CancellationToken>());
+    }
 }
