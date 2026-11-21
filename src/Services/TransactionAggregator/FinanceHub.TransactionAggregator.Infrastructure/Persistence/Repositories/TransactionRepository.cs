@@ -300,7 +300,7 @@ public class TransactionRepository : ITransactionRepository
         return Expression.Lambda<Func<CanonicalTransaction, bool>>(combined ?? Expression.Constant(true), parameter);
     }
 
-    public async Task UpdateCategoryForPatternAsync(string userId, string pattern, Guid newCategoryId, CancellationToken cancellationToken)
+    public async Task UpdateCategoryForPatternAsync(string userId, string pattern, Guid newCategoryId, TransactionNature nature, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(pattern))
         {
@@ -314,8 +314,10 @@ public class TransactionRepository : ITransactionRepository
 
         foreach (var tx in transactionsToUpdate)
         {
-            tx.CategorizeManually(newCategoryId);
+            tx.CategorizeManually(newCategoryId, nature);
         }
+
+        await _context.SaveChangesAsync(cancellationToken);
     }
 
     public async Task<IEnumerable<CanonicalTransaction>> GetUnpairedTransfersCandidateAsync(string userId, DateTime fromUtc, DateTime toUtc, CancellationToken cancellationToken)

@@ -52,7 +52,7 @@ public class EntitiesTests
         var newCategoryId = Guid.NewGuid();
 
         // Act
-        transaction.CategorizeManually(newCategoryId);
+        transaction.CategorizeManually(newCategoryId, TransactionNature.Operating);
 
         // Assert
         transaction.CategoryId.Should().Be(newCategoryId);
