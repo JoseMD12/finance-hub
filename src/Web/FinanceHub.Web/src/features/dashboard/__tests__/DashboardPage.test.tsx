@@ -164,7 +164,12 @@ describe('DashboardPage', () => {
     });
 
     expect(screen.getByText('Transporte')).toBeInTheDocument();
-    expect(screen.getByText('59.3%')).toBeInTheDocument();
+
+    // O percentual aparece duas vezes por categoria: no rótulo visível e no texto de fallback
+    // do <progress>, que só é lido por tecnologia assistiva. Asserir sobre o valor semântico
+    // do elemento nativo é mais estável que casar o texto solto.
+    const alimentacaoBar = screen.getByRole('progressbar', { name: /Alimentação/i });
+    expect(alimentacaoBar).toHaveValue(59);
   });
 
   it('mostra empty state quando não há dados no período', async () => {

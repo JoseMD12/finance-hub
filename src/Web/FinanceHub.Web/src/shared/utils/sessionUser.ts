@@ -26,13 +26,13 @@ function decodeClaims(token: string): JwtClaims | null {
     const payload = token.split('.')[1];
     if (!payload) return null;
 
-    const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
-    const decoded = decodeURIComponent(
-      atob(normalized)
-        .split('')
-        .map((char) => `%${`00${char.charCodeAt(0).toString(16)}`.slice(-2)}`)
-        .join(''),
-    );
+    const normalized = payload.replaceAll('-', '+').replaceAll('_', '/');
+    const binary = atob(normalized);
+    const hexArray = Array.from(binary, (char) => {
+      const hex = (char.codePointAt(0) ?? 0).toString(16).padStart(2, '0');
+      return `%${hex}`;
+    });
+    const decoded = decodeURIComponent(hexArray.join(''));
 
     return JSON.parse(decoded) as JwtClaims;
   } catch {

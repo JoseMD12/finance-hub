@@ -72,15 +72,17 @@ const InstitutionBalanceRow: React.FC<{ balance: InstitutionBalanceDto }> = ({ b
 
       {usage !== null && (
         <div className="flex items-center gap-2">
-          <div
-            className="flex-1 h-1.5 bg-slate-200/80 rounded-full overflow-hidden"
-            role="progressbar"
-            aria-valuenow={usage}
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-label={`Limite utilizado em ${institution.name}`}
-          >
+          <div className="relative flex-1 h-1.5 bg-slate-200/80 rounded-full overflow-hidden">
+            <progress
+              className="sr-only"
+              value={usage}
+              max={100}
+              aria-label={`Limite utilizado em ${institution.name}`}
+            >
+              {`${usage}%`}
+            </progress>
             <div
+              aria-hidden="true"
               className={cn('h-full rounded-full transition-[width] duration-500', getUsageToneClass(usage))}
               style={{ width: `${usage}%` }}
             />
